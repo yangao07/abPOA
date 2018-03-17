@@ -25,7 +25,7 @@ bpoa_para_t *bpoa_init_para(void) {
 
     bpt->inf_min = MAX_OF_TWO(INF_32_MIN + POA_MISMATCH, INF_32_MIN + POA_GAP_OPEN + POA_GAP_EXT);
 
-    bpt->bw = -1; // TODO band width
+    bpt->bw = 10; // TODO band width
     bpt->zdrop = 100;
     bpt->end_bonus = 5;
 
@@ -140,10 +140,10 @@ int bpoa_main(int seq_n, char (*seq)[100], bpoa_para_t *bpt){
 }
 
 int main(int argc, char **argv) {
-    int seq_n = 2;
+    int seq_n = 6;
     char seq[100][100] = {
-        "ACGAATAG",
-        "ACGTAG",
+        //"ACGAATAG",
+        //"ACGTAG",
         //"ATCAG",
         //"ATCAG",
         //"ATCAG",

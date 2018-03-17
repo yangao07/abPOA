@@ -221,17 +221,22 @@ int simd_check(void) {
 }
 
 #ifdef __CHECK_SIMD_MAIN__
-// AVX512_BW:4
-// AVX512_F :3
-// AVX2     :2  
-// SSE41    :1 
 int main(void) {
-    int simd_flag = simd_check();
-    if (simd_flag & SIMD_AVX512BW) printf("__AVX512BW__\n");
-    else if (simd_flag & SIMD_AVX512F) printf("__AVX512F__\n");
-    else if (simd_flag & SIMD_AVX2) printf("__AVX2__\n");
-    else if (simd_flag & SIMD_SSE41) printf("__SSE4_1__\n");
-    else printf("NO SIMD\n");
+    char simd_label[5][20] = {"No SIMD", "SSE4.1 (128 bits)", "AVX2 (256 bits)", "AVX512F (512 bits)", "AVX512BW (512 bits)"};
+    int simd_flag = simd_check(), t=0;
+    if (simd_flag & SIMD_AVX512BW) printf("__AVX512BW__\n"), t = 4;
+    else if (simd_flag & SIMD_AVX512F) printf("__AVX512F__\n"), t = 3;
+    else if (simd_flag & SIMD_AVX2) printf("__AVX2__\n"), t = 2;
+    else if (simd_flag & SIMD_SSE41) printf("__SSE4_1__\n"), t = 1;
+    else printf("NO SIMD\n"), t = 0;
+
+    char msg[100], i;
+    fprintf(stderr, "\n");
+    sprintf(msg, "==== %s will be used. ====", simd_label[t]);
+    for (i = 0; i < strlen(msg); ++i) fprintf(stderr, "="); fprintf(stderr, "\n");
+    fprintf(stderr, "%s\n",msg);
+    for (i = 0; i < strlen(msg); ++i) fprintf(stderr, "="); fprintf(stderr, "\n");
+    fprintf(stderr, "\n");
     return simd_flag;
 }
 #endif

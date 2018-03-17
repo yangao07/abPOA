@@ -23,7 +23,7 @@ FLAG_AVX512F    = -mavx512f
 FLAG_AVX512BW   = -mavx512bw
 SIMD_FLAG       =
 
-.PHONY: all clean
+.PHONY: all clean check
 .SUFFIXES:.c .o
 
 .c.o:
@@ -37,15 +37,6 @@ GDB_DEBUG   	= $(BIN_DIR)/gdb_miniTandem
 SIMD_CHECK_D	= -D __CHECK_SIMD_MAIN__
 DMARCRO 		= -D __DEBUG__
 
-# dependencies
-
-all:		    $(BIN) 
-miniTandem:     $(BIN)
-simd_check:     $(SIMD_CHECK)
-gdb_miniTandem: $(SOURCE) $(GDB_DEBUG) 
-libbpoa:        $(BPOALIB)
-
-
 simd_flag := ${shell ./bin/simd_check 2> /dev/null}
 
 ifeq ($(simd_flag), $(AVX512BW))
@@ -57,6 +48,16 @@ else ifeq ($(simd_flag), $(AVX2))
 else ifeq ($(simd_flag), $(SSE41))
 	SIMD_FLAG = $(FLAG_SSE4)
 endif
+
+all:		    $(BIN) 
+#simd_check:     $(SIMD_CHECK)
+miniTandem:     $(BIN)
+gdb_miniTandem: $(SOURCE) $(GDB_DEBUG) 
+libbpoa:        $(BPOALIB)
+
+
+simd_check:$(SIMD_CHECK)
+	$(shell ~/program/banded_poa/bin/simd_check > /dev/null)
 
 $(SIMD_CHECK):$(SRC_DIR)/simd_check.c $(SRC_DIR)/simd_instruction.h
 	if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi
@@ -81,9 +82,9 @@ $(SRC_DIR)/simd_check.o:$(SRC_DIR)/simd_check.c $(SRC_DIR)/simd_instruction.h
 $(SRC_DIR)/simd_bpoa_align.o:$(SRC_DIR)/simd_bpoa_align.c $(SRC_DIR)/bpoa_graph.h $(SRC_DIR)/bpoa_align.h $(SRC_DIR)/simd_instruction.h $(SRC_DIR)/utils.h
 	$(CC) -c $(CFLAGS) $(SIMD_FLAG) $< -o $@
 
-$(GDB_DEBUG):
+$(GDB_DEBUG): $(SOURCE)
 	if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi
-	$(CC) $(DFLAGS) $(SOURCE) $(DMARCRO) $(INCLUDE) -o $@ $(LIB)
+	$(CC) $(DFLAGS) $(SIMD_FLAG) $(SOURCE) $(DMARCRO) $(INCLUDE) -o $@ $(LIB)
 
 clean:
 	rm -f $(SRC_DIR)/*.[oa] $(BIN) $(SIMD_CHECK)
