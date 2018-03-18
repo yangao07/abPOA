@@ -31,6 +31,7 @@ typedef struct {
     // ID, pos ???
 } bpoa_node_t;
 
+// TODO remove index_to_min/max_rank, only keep node_id_to_min/max_rank
 // TODO imitate bwt index, use uint64 for all variables
 // XXX merge index_to_node_id and index_to_rank together uint64_t ???
 typedef struct {

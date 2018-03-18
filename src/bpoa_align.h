@@ -45,8 +45,8 @@
 // then: min_len = min_rank + min_remain, max_len = min_rank + max_remain
 // range: (min_of_two(min_rank, min_rank+qlen-max_len), max_of_two(min_rank+qlen-min_len, max_rank))
 // with w: (min-w, max+w)
-#define GET_DP_BEGIN(graph, w, i) MAX_OF_TWO(0, MIN_OF_TWO(bpoa_graph_index_to_min_rank(graph, i), qlen - bpoa_graph_index_to_max_remain(graph, i))-w)
-#define GET_DP_END(graph, w, i) MIN_OF_TWO(qlen, MAX_OF_TWO(bpoa_graph_index_to_max_rank(graph, i), qlen - bpoa_graph_index_to_min_remain(graph, i))+w)
+#define GET_DP_BEGIN(graph, w, i) MAX_OF_TWO(0, MIN_OF_TWO(bpoa_graph_node_id_to_min_rank(graph, i), qlen - bpoa_graph_node_id_to_max_remain(graph, i))-w)
+#define GET_DP_END(graph, w, i) MIN_OF_TWO(qlen, MAX_OF_TWO(bpoa_graph_node_id_to_max_rank(graph, i), qlen - bpoa_graph_node_id_to_min_remain(graph, i))+w)
 
 #ifdef __cplusplus
 extern "C" {
@@ -61,7 +61,7 @@ void gen_simple_mat(int m, int *mat, int match, int mismatch);
 int bpoa_banded_global_align_sequence_with_graph(bpoa_graph_t *graph, uint8_t *query, int qlen, bpoa_para_t *bpt, int *n_cigar, bpoa_cigar_t **graph_cigar);
 
 /* Adaptive banded global partial order graph alignment */
-int bpoa_ada_forefront_global_align_sequence_with_graph(bpoa_graph_t *graph, uint8_t *query, int qlen, bpoa_para_t *bpt, int *n_cigar, bpoa_cigar_t **graph_cigar);
+int ada_bpoa_banded_global_align_sequence_with_graph(bpoa_graph_t *graph, uint8_t *query, int qlen, bpoa_para_t *bpt, int *n_cigar, bpoa_cigar_t **graph_cigar);
 
 
 /* Banded global partial order graph alignment */
@@ -186,7 +186,6 @@ static inline void bpoa_backtrack(int *DP_H, int *DP_E, int matrix_col_n, int8_t
 #endif
     }
 }
-
 
 #define _set_max_score(best_score, best_i, best_j, score, i, j) { \
     if (score > best_score) {                                     \

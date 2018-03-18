@@ -256,7 +256,7 @@ next_out_node:;
 set_remain:
     graph->min_rank_n = graph->node_id_to_min_rank[sink_id]-1;
     graph->max_rank_n = graph->node_id_to_max_rank[sink_id]-1;
-    
+
     graph->node_id_to_min_remain[sink_id] = graph->node_id_to_max_remain[sink_id] = -1;
     for (i = graph->node_n-1; i >= 0; --i) {
         cur_id = bpoa_graph_index_to_node_id(graph, i);
@@ -277,7 +277,8 @@ set_remain:
 
 #ifdef __DEBUG__
     for (i = 0; i < graph->node_n; ++i) {
-        printf("%d, %d ==> %d\t%d\t%d\t%d\n", i, graph->index_to_node_id[i], graph->index_to_min_rank[i], graph->index_to_max_rank[i], graph->index_to_min_remain[i], graph->index_to_max_remain[i]);
+        int id = bpoa_graph_index_to_node_id(graph, i);
+        printf("%d, %d ==> %d\t%d\t%d\t%d\n", i, id, graph->node_id_to_min_rank[id], graph->node_id_to_max_rank[id], graph->node_id_to_min_remain[id], graph->node_id_to_max_remain[id]);
     }
 #endif
     return 0;

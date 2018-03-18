@@ -51,7 +51,7 @@ int bpoa_global_align_sequence_with_graph(bpoa_graph_t *graph, uint8_t *query, i
     dp_matrix_t *dp_matrix; // Full: (tlen + 1) * (qlen + 1); Banded: (tlen+1) * (2 * w + 1)
     int *qp, *mat = bpt->mat; // query profile
     int i, j, k, gap_o = bpt->gap_open, gap_e = bpt->gap_ext, gap_oe = bpt->gap_open + bpt->gap_ext, w, matrix_row_n, matrix_col_n, z_col_n;
-    int node_i, target_node_n = graph->node_n - 2; // exclude start and end nodes
+    int node_id, target_node_n = graph->node_n - 2; // exclude start and end nodes
     uint64_t *z; // backtrack matrix; in each cell: hd << 33 | ed << 2 | fd
     //                                 h<<62|h_id<<33|e<<31|e_i<<2|f
     //                                 h_id/e_i: 29 bit XXX cause error when in_edge_n >= pow(2,29)
@@ -78,13 +78,13 @@ int bpoa_global_align_sequence_with_graph(bpoa_graph_t *graph, uint8_t *query, i
     for (; j < matrix_col_n; ++j) dp_matrix[j].h = dp_matrix[j].e = INF_32_MIN; // everything outside the band is -INF
     // DP loop
     for (i = 1; i <= target_node_n; ++i) { // target graph is in the outer loop
-        node_i = bpoa_graph_index_to_node_id(graph, i); // i: node index, node_i: node id
+        node_id = bpoa_graph_index_to_node_id(graph, i); // i: node index, node_i: node id
         int32_t f = INF_32_MIN, beg, beg_, end;
-        int *q = &qp[graph->node[node_i].base * qlen];
+        int *q = &qp[graph->node[node_id].base * qlen];
         beg = i > w ? i - w : 0; // set band boundary FIXME for multi-in node
         end = i + w + 1 < qlen + 1 ? i + w + 1: qlen + 1; // only loop through [beg,end) of the query sequence 
-        int pre_n = graph->node[node_i].in_edge_n;
-        int *pre_i = graph->node[node_i].in_id;
+        int pre_n = graph->node[node_id].in_edge_n;
+        int *pre_i = graph->node[node_id].in_id;
         int *pre_index = (int*)_err_malloc(pre_n * sizeof(int));
         for (j = 0; j < pre_n; ++j)
             pre_index[j] = bpoa_graph_node_id_to_index(graph, pre_i[j]);
@@ -97,7 +97,7 @@ int bpoa_global_align_sequence_with_graph(bpoa_graph_t *graph, uint8_t *query, i
             int32_t m, h, e, tmp; uint64_t pre_i, m_i, fd, ed, e_i, hd, mx, m0=0, e1=1, f2=2, x3=3; // h<<62|h_id<<33|e<<31|e_i<<2|f
             // fill the first column
             if (beg == 0) {
-                int min_rank = bpoa_graph_index_to_min_rank(graph, i);
+                int min_rank = bpoa_graph_node_id_to_min_rank(graph, node_id);
                 cur_matrix[beg].h = -(gap_o + gap_e * min_rank);
                 cur_matrix[beg].e = -(gap_o + gap_e * min_rank);
                 cur_matrix[beg].f = INF_32_MIN;
@@ -354,7 +354,7 @@ int bpoa_ada_extend_align_sequence_with_graph(bpoa_graph_t *graph, uint8_t *quer
     for (index_i = 1; index_i < matrix_row_n-1; ++index_i) {
         cur_line = &dp_matrix[index_i * matrix_col_n];
         node_id = bpoa_graph_index_to_node_id(graph, index_i);
-        min_rank = bpoa_graph_index_to_min_rank(graph, index_i);
+        min_rank = bpoa_graph_node_id_to_min_rank(graph, node_id);
         int *q = &qp[graph->node[node_id].base * qlen];
         beg = dp_beg_cen[index_i] >= w ? dp_beg_cen[index_i] - w : 0;
         end = dp_end_cen[index_i] + w <= qlen ? dp_end_cen[index_i] + w : qlen;
@@ -624,7 +624,7 @@ int bpoa_ada_extend_align_sequence_with_graph(bpoa_graph_t *graph, uint8_t *quer
         dp_h = DP_H + index_i * matrix_col_n; dp_e = DP_E + index_i * matrix_col_n;
         z = &backtrack_z[(index_i-1) * qlen];
 
-        dp_beg[index_i] = GET_DP_BEGIN(graph, w, index_i); dp_end[index_i] = GET_DP_END(graph, w, index_i);
+        dp_beg[index_i] = GET_DP_BEGIN(graph, w, node_id); dp_end[index_i] = GET_DP_END(graph, w, node_id);
 
         beg = dp_beg[index_i]; end = dp_end[index_i];
         // init h, e
@@ -795,13 +795,13 @@ int bpoa_banded_global_align_sequence_with_graph(bpoa_graph_t *graph, uint8_t *q
             dp_h = DP_H + index_i * matrix_col_n; dp_e = DP_E + index_i * matrix_col_n;
             z = &backtrack_z[(index_i-1) * qlen];
 
-            dp_beg[index_i] = GET_DP_BEGIN(graph, w, index_i); dp_end[index_i] = GET_DP_END(graph, w, index_i);
+            dp_beg[index_i] = GET_DP_BEGIN(graph, w, node_id); dp_end[index_i] = GET_DP_END(graph, w, node_id);
 
             beg = dp_beg[index_i]; end = dp_end[index_i];
             // first column
             dp_f[beg] = inf_min;
             if (beg == 0) {
-                int min_rank = bpoa_graph_index_to_min_rank(graph, index_i);
+                int min_rank = bpoa_graph_node_id_to_min_rank(graph, node_id);
                 dp_h[0] = -(gap_o + gap_e * min_rank);
                 dp_e[0] = dp_h[0] - gap_e;
                 beg = 1;
@@ -889,6 +889,260 @@ int bpoa_banded_global_align_sequence_with_graph(bpoa_graph_t *graph, uint8_t *q
                     // fd for next cell
                     dp_f[q_i] -= gap_e;
                     z[q_i-1] = hd[q_i-1] | ed | fd;
+                }
+            }
+        }
+    }
+
+#ifdef __DEBUG__
+    for (j = 0; j <= target_node_n; ++j) {
+        printf("index: %d\t", j);
+        for (i = dp_beg[j]; i <= dp_end[j]; ++i) {
+            printf("%d:(%d,%d)\t", i, DP_H[j*matrix_col_n+i], DP_E[j*matrix_col_n+i]);
+        } printf("\n");
+    }
+#endif
+    int in_id, in_index;
+    for (i = 0; i < graph->node[POA_SINK_NODE_ID].in_edge_n; ++i) { // for global alignment, find best backtrack position
+        in_id = graph->node[POA_SINK_NODE_ID].in_id[i];
+        in_index = bpoa_graph_node_id_to_index(graph, in_id);
+        _set_max_score(best_score, best_i, best_j, DP_H[in_index * matrix_col_n + qlen], in_index, qlen);
+    }
+
+    printf("best_score: (%d, %d) -> %d\n", best_i, best_j, best_score);
+    { // backtrack from best score
+        if (n_cigar && graph_cigar) bpoa_backtrack(DP_H, DP_E, matrix_col_n, bpt->match, bpt->mismatch, bpt->gap_ext, pre_index, pre_n, backtrack_z, best_i, best_j, z_col_n, graph, query, n_cigar, graph_cigar);
+    }
+
+    { // free variables
+        free(DP_H); free(DP_E); free(dp_f); free(qp); free(dp_beg); free(dp_end);
+        if (n_cigar && graph_cigar) free(backtrack_z), free(hd);
+        for (i = 0; i < graph->node_n; ++i) free(pre_index[i]); 
+        free(pre_index); free(pre_n);
+    }
+    return best_score;
+}
+
+int ada_bpoa_banded_global_align_sequence_with_graph(bpoa_graph_t *graph, uint8_t *query, int qlen, bpoa_para_t *bpt, int *n_cigar, bpoa_cigar_t **graph_cigar) {
+    int **pre_index, *pre_n, pre_i;
+    int target_node_n = graph->node_n - 2, matrix_row_n = graph->node_n, matrix_col_n = qlen + 1, z_col_n = qlen;
+    int i, j, k, w, *dp_beg, *dp_end, node_id, index_i, q_i;
+    int *DP_H, *DP_E, *dp_h, *pre_dp_h, *dp_e, *pre_dp_e, *dp_f, tmp; // score type: 8/16/32
+
+    uint8_t *backtrack_z, *z; // backtrack cell: f<<4|e<<2|h, MATCH:0, DELETION:1, INSERTION:2
+    uint8_t *hd, fd, ed, m0=0x0, e1=0x1, f2=0x2, he, hf, hm, ee, em, ff, fm; 
+    int best_score = bpt->inf_min, inf_min = bpt->inf_min, best_i=0, best_j=0;
+    int *qp, *mat = bpt->mat, gap_o = bpt->gap_open, gap_e = bpt->gap_ext, gap_oe = bpt->gap_open + bpt->gap_ext;
+
+    {   // allocate memory 
+        qp = (int*)_err_malloc(qlen * bpt->m * sizeof(int)); // qp should has the same type to H/E/F
+        DP_H = (int*)_err_malloc(matrix_row_n * matrix_col_n * sizeof(int));
+        DP_E = (int*)_err_malloc(matrix_row_n * matrix_col_n * sizeof(int));
+        dp_f = (int*)_err_malloc(matrix_col_n * sizeof(int));
+
+        dp_beg = (int*)_err_malloc((matrix_row_n) * sizeof(int)); dp_end = (int*)_err_calloc(matrix_row_n, sizeof(int));
+        // when w <= 0, do whole global
+        w = bpt->bw <= 0 ? qlen : bpt->bw;
+
+        if (graph_cigar && n_cigar) {
+            backtrack_z = (uint8_t*)_err_malloc(z_col_n * target_node_n * sizeof(uint8_t));
+
+            // for backtrack
+            hd = (uint8_t*)_err_malloc(qlen * sizeof(uint8_t));
+            hm = m0 << HOP_OFF_SET, he = e1 << HOP_OFF_SET, hf = f2 << HOP_OFF_SET;
+            em = m0 << EOP_OFF_SET, ee = e1 << EOP_OFF_SET; fm = m0 << FOP_OFF_SET, ff = f2 << FOP_OFF_SET; 
+        }
+
+        pre_index = (int**)_err_malloc(graph->node_n * sizeof(int*));
+        pre_n = (int*)_err_malloc(graph->node_n * sizeof(int*));
+    }
+
+    {   // generate the query profile
+        for (k = i = 0; k < bpt->m; ++k) { // SIMD parallelization
+            const int *p = &mat[k * bpt->m];
+            for (j = 0; j < qlen; ++j) qp[i++] = p[query[j]];
+        }
+
+        // index of pre-node
+        for (i = 0; i < graph->node_n; ++i) {
+            node_id = bpoa_graph_index_to_node_id(graph, i); // i: node index
+            pre_n[i] = graph->node[node_id].in_edge_n;
+            pre_index[i] = (int*)_err_malloc(pre_n[i] * sizeof(int));
+            for (j = 0; j < pre_n[i]; ++j) {
+                pre_index[i][j] = bpoa_graph_node_id_to_index(graph, graph->node[node_id].in_id[j]);
+            }
+        }
+
+        // init min/max_rank
+        for (i = 2; i < graph->node_n; ++i) {
+            node_id = graph->index_to_node_id[i];
+            graph->node_id_to_min_rank[node_id] = graph->node_n;
+            graph->node_id_to_max_rank[node_id] = 0;
+        }
+    }
+
+    {   // DP loop
+        // DP cell: H[i,j], E[i+1,j], F[i,j+1]
+        int beg, end, _beg, _end, pre_beg, pre_end;
+        // fill the first row
+        // get beg and end based on min/max_rank and min/max_remain
+        dp_beg[0] = GET_DP_BEGIN(graph, w, 0); dp_end[0] = GET_DP_END(graph, w, 0);
+
+        DP_H[0] = 0; DP_E[0] = -gap_oe;
+        for (i = 1; i <= dp_end[0]; ++i) { // SIMD parallelization
+            DP_H[i] = -gap_o - gap_e * i; DP_E[i] = inf_min;
+        }
+
+        for (index_i = 1; index_i < matrix_row_n-1; ++index_i) {
+            node_id = bpoa_graph_index_to_node_id(graph, index_i);
+
+            int *q = &qp[graph->node[node_id].base * qlen];
+            dp_h = DP_H + index_i * matrix_col_n; dp_e = DP_E + index_i * matrix_col_n;
+            z = &backtrack_z[(index_i-1) * qlen];
+
+            printf("index: %d, min_rank: %d, max_rank: %d\n", index_i, graph->node_id_to_min_rank[node_id], graph->node_id_to_max_rank[node_id]);
+            dp_beg[index_i] = GET_DP_BEGIN(graph, w, node_id); dp_end[index_i] = GET_DP_END(graph, w, node_id);
+
+            beg = dp_beg[index_i]; end = dp_end[index_i];
+            // first column
+            dp_f[beg] = inf_min;
+            if (beg == 0) {
+                int min_rank = bpoa_graph_node_id_to_min_rank(graph, node_id);
+                dp_h[0] = -(gap_o + gap_e * min_rank);
+                dp_e[0] = dp_h[0] - gap_e;
+                beg = 1;
+            }
+
+            // loop query
+            // init h, e                       SIMD parallelization
+            for (q_i = beg; q_i <= end; ++q_i) dp_h[q_i] = dp_e[q_i] = inf_min;
+
+            // get max m and e
+            for (i = 0; i < pre_n[index_i]; ++i) {
+                pre_i = pre_index[index_i][i];
+                pre_dp_h = DP_H + pre_i * matrix_col_n; pre_dp_e = DP_E + pre_i * matrix_col_n;
+                pre_beg = dp_beg[pre_i]; pre_end = dp_end[pre_i];
+                // set M from (pre_i, q_i-1)
+                _beg = MAX_OF_TWO(beg-1, pre_beg), _end = MIN_OF_TWO(end-1, pre_end);
+                for (q_i = _beg; q_i <= _end; ++q_i) { // SIMD parallelization
+                    dp_h[q_i+1] = MAX_OF_TWO(pre_dp_h[q_i], dp_h[q_i+1]);
+                }
+                // set E from (pre_i, q_i)
+                _beg = MAX_OF_TWO(beg, pre_beg), _end = MIN_OF_TWO(end, pre_end);
+                for (q_i = _beg; q_i <= _end; ++q_i) { // SIMD parallelization
+                    dp_e[q_i] = MAX_OF_TWO(pre_dp_e[q_i], dp_e[q_i]);
+                }
+            }
+
+            if (n_cigar && graph_cigar) {
+                // compare M, E, and F
+                for (q_i = beg; q_i <= end; ++q_i) { // SIMD parallelization
+                    // get M score; h, hd for current cell
+                    dp_h[q_i] += q[q_i-1]; 
+                    hd[q_i-1] = dp_h[q_i] >= dp_e[q_i] ? hm : he;
+                    dp_h[q_i] = MAX_OF_TWO(dp_h[q_i], dp_e[q_i]);
+                }
+
+                // set F from (index_i, q_i-1)
+                _beg = dp_beg[index_i] == 0 ? 0 : beg;
+                for (q_i = _beg+1; q_i <= end; ++q_i) { // no SIMD parallelization
+                    dp_f[q_i] = MAX_OF_TWO(dp_h[q_i-1] - gap_oe, dp_f[q_i-1] - gap_e);
+                    // fd = h - oe > f - e ? 0 : f2
+                }
+
+                // since we have score of M, E and F, now we need to set H for cur cell, set E and F for next cell
+                for (q_i = beg; q_i <= end; ++q_i) { // SIMD parallelization
+                    // h, hd for current cell
+                    hd[q_i-1] = dp_h[q_i] >= dp_f[q_i] ? hd[q_i-1] : hf;
+                    dp_h[q_i] = MAX_OF_TWO(dp_h[q_i], dp_f[q_i]);
+
+                    // e, ed for next cell
+                    tmp = dp_h[q_i] - gap_oe;
+                    dp_e[q_i] -= gap_e;
+                    ed = gap_o ? (dp_e[q_i] > tmp ? ee : em) : (hd[q_i-1] == hm ? em : ee);
+                    dp_e[q_i] = MAX_OF_TWO(dp_e[q_i], tmp);
+
+                    // fd for next cell
+                    dp_f[q_i] -= gap_e;
+                    fd = gap_o ? (dp_f[q_i] > tmp ? ff : fm) : (hd[q_i-1] == hm ? fm : ff);
+                    z[q_i-1] = hd[q_i-1] | ed | fd;
+                }
+            } else {
+                // compare M, E, and F
+                for (q_i = beg; q_i <= end; ++q_i) { // SIMD parallelization
+                    // get M score; h, hd for current cell
+                    dp_h[q_i] += q[q_i-1]; 
+                    dp_h[q_i] = MAX_OF_TWO(dp_h[q_i], dp_e[q_i]);
+                }
+
+                // set F from (index_i, q_i-1)
+                _beg = dp_beg[index_i] == 0 ? 0 : beg;
+                for (q_i = _beg+1; q_i <= end; ++q_i) { // no SIMD parallelization
+                    dp_f[q_i] = MAX_OF_TWO(dp_h[q_i-1] - gap_oe, dp_f[q_i-1] - gap_e);
+                    // fd = h - oe > f - e ? 0 : f2
+                }
+
+                // since we have score of M, E and F, now we need to set H for cur cell, set E and F for next cell
+                for (q_i = beg; q_i <= end; ++q_i) { // SIMD parallelization
+                    // h, hd for current cell
+                    dp_h[q_i] = MAX_OF_TWO(dp_h[q_i], dp_f[q_i]);
+
+                    // e, ed for next cell
+                    tmp = dp_h[q_i] - gap_oe;
+                    dp_e[q_i] -= gap_e;
+                    dp_e[q_i] = MAX_OF_TWO(dp_e[q_i], tmp);
+
+                    // fd for next cell
+                    dp_f[q_i] -= gap_e;
+                    z[q_i-1] = hd[q_i-1] | ed | fd;
+                }
+            }
+
+            // XXX need hd here
+            { // set current rank, set min/max rank for next nodes
+                // select max dp_h
+                int max = INF_32_MIN, max_i = -1;
+                for (q_i = beg; q_i <= end; ++q_i) { // beg >= 1
+                    if (dp_h[q_i] > max) {
+                        max_i = q_i;
+                        max = dp_h[q_i];
+                    }
+                }
+                // determine max pre_i, then determin current rank
+                int which, s, max_pre_i=-1, max_pre_id;
+                which = (hd[max_i-1] >> HOP_OFF_SET) & 3;
+                if (which == 0) { // match
+                    s = graph->node[node_id].base == query[max_i-1] ? bpt->match : -bpt->mismatch;
+                    for (k = 0; k < pre_n[index_i]; ++k) {
+                        pre_i = pre_index[index_i][k];
+                        if (DP_H[pre_i * matrix_col_n + max_i-1] + s == DP_H[index_i * matrix_col_n + max_i]) {
+                            max_pre_i = pre_i;
+                            break;
+                        }
+                    }
+                    max_pre_id = bpoa_graph_index_to_node_id(graph, max_pre_i);
+                } else if (which == 1) { // deletion
+                    for (k = 0; k < pre_n[index_i]; ++k) {
+                        pre_i = pre_index[index_i][k];
+                        if (DP_E[pre_i * matrix_col_n + max_i] == DP_H[index_i * matrix_col_n + max_i]) {
+                            max_pre_i = pre_i;
+                            break;
+                        }
+                    }
+                    max_pre_id = bpoa_graph_index_to_node_id(graph, max_pre_i);
+                } else { // insertion
+                    err_fatal_simple("Unexpected cigar op.\n");
+                }  
+                // set min/max_rank for next nodes
+                graph->node_id_to_max_rank[node_id] = graph->node_id_to_max_rank[max_pre_id] + 1;
+                graph->node_id_to_min_rank[node_id] = graph->node_id_to_min_rank[max_pre_id] + 1;
+                int out_rank = graph->node_id_to_max_rank[node_id] + 1;
+                for (i = 0; i < graph->node[node_id].out_edge_n; ++i) {
+                    int out_node_id = graph->node[node_id].out_id[i];
+                    if (out_rank > graph->node_id_to_max_rank[out_node_id])
+                        graph->node_id_to_max_rank[out_node_id] = out_rank;
+                    if (out_rank < graph->node_id_to_min_rank[out_node_id])
+                        graph->node_id_to_min_rank[out_node_id] = out_rank;
                 }
             }
         }
