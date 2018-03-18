@@ -9,7 +9,7 @@ BIN_DIR =	./bin
 SRC_DIR =   ./src
 
 SOURCE  =	$(wildcard ${SRC_DIR}/*.c) 
-OBJS    =	$(SRC_DIR)/bpoa_align.o $(SRC_DIR)/bpoa_graph.o $(SRC_DIR)/simd_bpoa_align.o $(SRC_DIR)/simd_check.o $(SRC_DIR)/utils.o $(SRC_DIR)/bpoa_graph_visual.o
+OBJS    =	$(SRC_DIR)/abpoa_align.o $(SRC_DIR)/abpoa_graph.o $(SRC_DIR)/simd_abpoa_align.o $(SRC_DIR)/simd_check.o $(SRC_DIR)/utils.o $(SRC_DIR)/abpoa_graph_visual.o
 
 # SIMD label
 SSE41 			= __SSE4_1__
@@ -30,7 +30,7 @@ SIMD_FLAG       =
 		$(CC) -c $(CFLAGS) $(INCLUDE) $< -o $@
 
 BIN     		= $(BIN_DIR)/miniTandem
-BPOALIB         = $(SRC_DIR)/libbpoa.a
+BPOALIB         = $(SRC_DIR)/libabpoa.a
 
 SIMD_CHECK  	= $(BIN_DIR)/simd_check
 GDB_DEBUG   	= $(BIN_DIR)/gdb_miniTandem
@@ -53,7 +53,7 @@ all:		    $(BIN)
 #simd_check:     $(SIMD_CHECK)
 miniTandem:     $(BIN)
 gdb_miniTandem: $(SOURCE) $(GDB_DEBUG) 
-libbpoa:        $(BPOALIB)
+libabpoa:        $(BPOALIB)
 
 
 simd_check:$(SIMD_CHECK)
@@ -63,23 +63,23 @@ $(SIMD_CHECK):$(SRC_DIR)/simd_check.c $(SRC_DIR)/simd_instruction.h
 	if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi
 	$(CC) $(SIMD_CHECK_D) $(SRC_DIR)/simd_check.c -o $@
 
-$(BIN):$(SRC_DIR)/bpoa.o $(BPOALIB)
+$(BIN):$(SRC_DIR)/abpoa.o $(BPOALIB)
 	if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi
-	$(CC) $(CFLAGS) $(SRC_DIR)/bpoa.o -o $@ -L$(SRC_DIR) -lbpoa $(LIB) 
+	$(CC) $(CFLAGS) $(SRC_DIR)/abpoa.o -o $@ -L$(SRC_DIR) -labpoa $(LIB) 
 
 #TODO example.c
 
 $(BPOALIB):$(OBJS)
 	$(AR) -csr $@ $(OBJS)
 
-$(SRC_DIR)/bpoa.o:$(SRC_DIR)/bpoa.c $(SRC_DIR)/bpoa.h $(SRC_DIR)/bpoa_graph.h $(SRC_DIR)/bpoa_align.h \
-				  $(SRC_DIR)/bpoa_graph_visual.h $(SRC_DIR)/align.h $(SRC_DIR)/utils.h $(SRC_DIR)/simd_instruction.h
+$(SRC_DIR)/abpoa.o:$(SRC_DIR)/abpoa.c $(SRC_DIR)/abpoa.h $(SRC_DIR)/abpoa_graph.h $(SRC_DIR)/abpoa_align.h \
+				  $(SRC_DIR)/abpoa_graph_visual.h $(SRC_DIR)/align.h $(SRC_DIR)/utils.h $(SRC_DIR)/simd_instruction.h
 	$(CC) -c $(CFLAGS) $(SIMD_FLAG) $< -o $@
 
 $(SRC_DIR)/simd_check.o:$(SRC_DIR)/simd_check.c $(SRC_DIR)/simd_instruction.h
 	$(CC) -c $(CFLAGS) $(SIMD_FLAG) $< -o $@
 
-$(SRC_DIR)/simd_bpoa_align.o:$(SRC_DIR)/simd_bpoa_align.c $(SRC_DIR)/bpoa_graph.h $(SRC_DIR)/bpoa_align.h $(SRC_DIR)/simd_instruction.h $(SRC_DIR)/utils.h
+$(SRC_DIR)/simd_abpoa_align.o:$(SRC_DIR)/simd_abpoa_align.c $(SRC_DIR)/abpoa_graph.h $(SRC_DIR)/abpoa_align.h $(SRC_DIR)/simd_instruction.h $(SRC_DIR)/utils.h
 	$(CC) -c $(CFLAGS) $(SIMD_FLAG) $< -o $@
 
 $(GDB_DEBUG): $(SOURCE)

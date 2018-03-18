@@ -1,64 +1,64 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "bpoa.h"
-#include "bpoa_graph.h"
-#include "bpoa_align.h"
-#include "bpoa_graph_visual.h"
+#include "abpoa.h"
+#include "abpoa_graph.h"
+#include "abpoa_align.h"
+#include "abpoa_graph_visual.h"
 #include "align.h"
 #include "simd_instruction.h"
 #include "utils.h"
 
-bpoa_para_t *bpoa_init_para(void) {
-    bpoa_para_t *bpt = (bpoa_para_t*)_err_malloc(sizeof(bpoa_para_t));
-    bpt->align_mode = POA_GLOBAL_FLAG;
+abpoa_para_t *abpoa_init_para(void) {
+    abpoa_para_t *abpt = (abpoa_para_t*)_err_malloc(sizeof(abpoa_para_t));
+    abpt->align_mode = POA_GLOBAL_FLAG;
 
     // number of residue types
-    bpt->m = 5; // nucleotides
-    bpt->mat = NULL; // TODO score matrix for aa
+    abpt->m = 5; // nucleotides
+    abpt->mat = NULL; // TODO score matrix for aa
 
     // score matrix
-    bpt->match = POA_MATCH;
-    bpt->mismatch = POA_MISMATCH;
-    bpt->gap_open = POA_GAP_OPEN;
-    bpt->gap_ext = POA_GAP_EXT;
+    abpt->match = POA_MATCH;
+    abpt->mismatch = POA_MISMATCH;
+    abpt->gap_open = POA_GAP_OPEN;
+    abpt->gap_ext = POA_GAP_EXT;
 
-    bpt->inf_min = MAX_OF_TWO(INF_32_MIN + POA_MISMATCH, INF_32_MIN + POA_GAP_OPEN + POA_GAP_EXT);
+    abpt->inf_min = MAX_OF_TWO(INF_32_MIN + POA_MISMATCH, INF_32_MIN + POA_GAP_OPEN + POA_GAP_EXT);
 
-    bpt->bw = 10; // TODO band width
-    bpt->zdrop = 100;
-    bpt->end_bonus = 5;
+    abpt->bw = 10; // TODO band width
+    abpt->zdrop = 100;
+    abpt->end_bonus = 5;
 
-    bpt->simd_flag = simd_check();
+    abpt->simd_flag = simd_check();
 
-    return bpt;
+    return abpt;
 }
 
-void bpoa_free_para(bpoa_para_t *bpt) {
-    if (bpt->mat != NULL) free(bpt->mat);
-    free(bpt);
+void abpoa_free_para(abpoa_para_t *abpt) {
+    if (abpt->mat != NULL) free(abpt->mat);
+    free(abpt);
 }
 
-void cons_to_seq_score(int cons_l, uint8_t *cons_seq, int seq_n, char (*seq)[100], bpoa_para_t *bpt) {
+void cons_to_seq_score(int cons_l, uint8_t *cons_seq, int seq_n, char (*seq)[100], abpoa_para_t *abpt) {
     int i, j;
-    bpt->bw = -1; // disable band width
+    abpt->bw = -1; // disable band width
     printf("cons_to_seq:\n");
     uint8_t *bseq = (uint8_t*)_err_malloc(100 * sizeof(uint8_t)); int bseq_m = 100;
     // progressively partial order alignment
     for (i = 0; i < seq_n; ++i) {
-        bpoa_graph_t *graph = bpoa_init_graph(1);
+        abpoa_graph_t *graph = abpoa_init_graph(1);
         int seq_l = strlen(seq[i]);
         if (seq_l > bseq_m) {
             bseq_m = seq_l;
             bseq = (uint8_t*)_err_realloc(bseq, bseq_m * sizeof(uint8_t));
         }
-        bpoa_cigar_t *bpoa_cigar=0; int n_cigar=0;
-        bpoa_align_sequence_with_graph(graph, cons_seq, cons_l, bpt, &n_cigar, &bpoa_cigar); 
-        bpoa_add_graph_alignment(graph, cons_seq, cons_l, n_cigar, bpoa_cigar, NULL, NULL); if (n_cigar) free(bpoa_cigar);
+        abpoa_cigar_t *abpoa_cigar=0; int n_cigar=0;
+        abpoa_align_sequence_with_graph(graph, cons_seq, cons_l, abpt, &n_cigar, &abpoa_cigar); 
+        abpoa_add_graph_alignment(graph, cons_seq, cons_l, n_cigar, abpoa_cigar, NULL, NULL); if (n_cigar) free(abpoa_cigar);
 
         for (j = 0; j < seq_l; ++j) bseq[j] = nst_nt4_table[(int)(seq[i][j])];
-        bpoa_align_sequence_with_graph(graph, bseq, seq_l, bpt, &n_cigar, &bpoa_cigar); if (n_cigar) free(bpoa_cigar);
-        bpoa_free_graph(graph, 1);
+        abpoa_align_sequence_with_graph(graph, bseq, seq_l, abpt, &n_cigar, &abpoa_cigar); if (n_cigar) free(abpoa_cigar);
+        abpoa_free_graph(graph, 1);
     }
 
     int rest_n = 0, rest_l, rest_i;
@@ -73,28 +73,28 @@ void cons_to_seq_score(int cons_l, uint8_t *cons_seq, int seq_n, char (*seq)[100
         for (i = 0; i < rest_l; ++i) rest_seq[i] = nst_nt4_table[(int)(rest[rest_i][i])];
         // progressively partial order alignment
         for (i = 0; i < seq_n; ++i) {
-            bpoa_graph_t *graph = bpoa_init_graph(1);
+            abpoa_graph_t *graph = abpoa_init_graph(1);
             int seq_l = strlen(seq[i]);
             if (seq_l > bseq_m) {
                 bseq_m = seq_l;
                 bseq = (uint8_t*)_err_realloc(bseq, bseq_m * sizeof(uint8_t));
             }
-            bpoa_cigar_t *bpoa_cigar=0; int n_cigar=0;
-            bpoa_align_sequence_with_graph(graph, rest_seq, rest_l, bpt, &n_cigar, &bpoa_cigar); 
-            bpoa_add_graph_alignment(graph, rest_seq, rest_l, n_cigar, bpoa_cigar, NULL, NULL); if (n_cigar) free(bpoa_cigar);
+            abpoa_cigar_t *abpoa_cigar=0; int n_cigar=0;
+            abpoa_align_sequence_with_graph(graph, rest_seq, rest_l, abpt, &n_cigar, &abpoa_cigar); 
+            abpoa_add_graph_alignment(graph, rest_seq, rest_l, n_cigar, abpoa_cigar, NULL, NULL); if (n_cigar) free(abpoa_cigar);
 
             for (j = 0; j < seq_l; ++j) bseq[j] = nst_nt4_table[(int)(seq[i][j])];
-            bpoa_align_sequence_with_graph(graph, bseq, seq_l, bpt, &n_cigar, &bpoa_cigar); if (n_cigar) free(bpoa_cigar);
-            bpoa_free_graph(graph, 1);
+            abpoa_align_sequence_with_graph(graph, bseq, seq_l, abpt, &n_cigar, &abpoa_cigar); if (n_cigar) free(abpoa_cigar);
+            abpoa_free_graph(graph, 1);
         }
     }
     free(bseq);
 }
 
-// int bpoa_main(const char *seq_fn, bpoa_para_t *bpt) { TODO
-int bpoa_main(int seq_n, char (*seq)[100], bpoa_para_t *bpt){
+// int abpoa_main(const char *seq_fn, abpoa_para_t *abpt) { TODO
+int abpoa_main(int seq_n, char (*seq)[100], abpoa_para_t *abpt){
     int i, j;
-    bpoa_graph_t *graph = bpoa_init_graph(1);
+    abpoa_graph_t *graph = abpoa_init_graph(1);
 
     int **seq_node_ids = (int**)_err_malloc(seq_n * sizeof(int*));
     int *seq_node_ids_l = (int*)_err_malloc(seq_n * sizeof(int));
@@ -111,30 +111,30 @@ int bpoa_main(int seq_n, char (*seq)[100], bpoa_para_t *bpt){
         }
         seq_node_ids[i] = (int*)_err_malloc(seq_l * sizeof(int));
         for (j = 0; j < seq_l; ++j) bseq[j] = nst_nt4_table[(int)(seq[i][j])];
-        bpoa_cigar_t *bpoa_cigar=0; int n_cigar=0;
-        bpoa_align_sequence_with_graph(graph, bseq, seq_l, bpt, &n_cigar, &bpoa_cigar);
+        abpoa_cigar_t *abpoa_cigar=0; int n_cigar=0;
+        abpoa_align_sequence_with_graph(graph, bseq, seq_l, abpt, &n_cigar, &abpoa_cigar);
         seq_node_ids_l[i] = 0;
-        bpoa_add_graph_alignment(graph, bseq, seq_l, n_cigar, bpoa_cigar, seq_node_ids[i], seq_node_ids_l+i);
+        abpoa_add_graph_alignment(graph, bseq, seq_l, n_cigar, abpoa_cigar, seq_node_ids[i], seq_node_ids_l+i);
         //printf("%d %d %d\n", seq_l, graph->rank_n, seq_node_ids_l[i]);
-        char bpoa_dot_fn[100]; sprintf(bpoa_dot_fn, "./dot_plot/bpoa_%d.dot", i);
-        //bpoa_graph_visual(graph, bpoa_dot_fn);
-        if (n_cigar) free(bpoa_cigar);
+        char abpoa_dot_fn[100]; sprintf(abpoa_dot_fn, "./dot_plot/abpoa_%d.dot", i);
+        //abpoa_graph_visual(graph, abpoa_dot_fn);
+        if (n_cigar) free(abpoa_cigar);
     }
     for (i = 0; i < seq_n; ++i) {
         printf("%s\n", seq[i]);
     }
 
     // generate consensus from graph
-    bpoa_generate_consensus(graph);
+    abpoa_generate_consensus(graph);
     /*printf("consensus:\n");
     for (i = 0; i < graph->cons_l; ++i) {
         printf("%c", "ACGTN"[graph->cons_seq[i]]);
     } printf("\n");*/
     // generate multiple sequence alignment
-    bpoa_generate_multiple_sequence_alingment(graph, seq_node_ids, seq_node_ids_l, seq_n, 1, stdout);
-    //cons_to_seq_score(graph->cons_l, graph->cons_seq, seq_n, seq, bpt);
+    abpoa_generate_multiple_sequence_alingment(graph, seq_node_ids, seq_node_ids_l, seq_n, 1, stdout);
+    //cons_to_seq_score(graph->cons_l, graph->cons_seq, seq_n, seq, abpt);
 
-    bpoa_free_graph(graph, 1); free(bseq);
+    abpoa_free_graph(graph, 1); free(bseq);
     for (i = 0; i < seq_n; ++i) free(seq_node_ids[i]); free(seq_node_ids); free(seq_node_ids_l);
     return 0;
 }
@@ -180,13 +180,13 @@ int main(int argc, char **argv) {
         "CGTAAATAGGTAATGATTATCATTACATATCACAACTAGGGCCGTATTAATCATGATATCATCA",
         "GTCGCTAGAGGCATCGTGAGTCGCTTCCGTACCGCAAGGATGACGAGTCACTTAAAGTGATAAT",
     };
-    bpoa_para_t *bpt = bpoa_init_para();
+    abpoa_para_t *abpt = abpoa_init_para();
     // parse argv TODO
 
-    bpt->mat = (int*)_err_malloc(bpt->m * bpt->m * sizeof(int));
-    gen_simple_mat(bpt->m, bpt->mat, bpt->match, bpt->mismatch);
-    bpoa_main(seq_n, seq, bpt);
-    bpoa_free_para(bpt);
+    abpt->mat = (int*)_err_malloc(abpt->m * abpt->m * sizeof(int));
+    gen_simple_mat(abpt->m, abpt->mat, abpt->match, abpt->mismatch);
+    abpoa_main(seq_n, seq, abpt);
+    abpoa_free_para(abpt);
 
     return 0;
 }
