@@ -14,7 +14,7 @@ typedef struct {
     int bw; // band width
     int zdrop, end_bonus; // from minimap2
     // alignment mode
-    int align_mode; // 0: global, 1: local, 2: extend
+    int8_t align_mode:2, use_ada:2; // mode: 0: global, 1: local, 2: extend
     // available SIMD instruction
     int simd_flag;
 } abpoa_para_t;

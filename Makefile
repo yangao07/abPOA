@@ -57,7 +57,7 @@ libabpoa:        $(BPOALIB)
 
 
 simd_check:$(SIMD_CHECK)
-	$(shell ~/program/banded_poa/bin/simd_check > /dev/null)
+	$(shell ~/program/abPOA/bin/simd_check > /dev/null)
 
 $(SIMD_CHECK):$(SRC_DIR)/simd_check.c $(SRC_DIR)/simd_instruction.h
 	if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi

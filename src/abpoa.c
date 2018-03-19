@@ -12,6 +12,7 @@
 abpoa_para_t *abpoa_init_para(void) {
     abpoa_para_t *abpt = (abpoa_para_t*)_err_malloc(sizeof(abpoa_para_t));
     abpt->align_mode = POA_GLOBAL_FLAG;
+    abpt->use_ada = 1; // use adaptive band
 
     // number of residue types
     abpt->m = 5; // nucleotides
