@@ -9,6 +9,7 @@ BIN_DIR =	./bin
 SRC_DIR =   ./src
 
 SOURCE  =	$(wildcard ${SRC_DIR}/*.c) 
+HEADER  =	$(wildcard ${SRC_DIR}/*.h) 
 OBJS    =	$(SRC_DIR)/abpoa_align.o $(SRC_DIR)/abpoa_graph.o $(SRC_DIR)/simd_abpoa_align.o $(SRC_DIR)/simd_check.o $(SRC_DIR)/utils.o $(SRC_DIR)/abpoa_graph_visual.o
 
 # SIMD label
@@ -52,7 +53,7 @@ endif
 all:		    $(BIN) 
 #simd_check:     $(SIMD_CHECK)
 miniTandem:     $(BIN)
-gdb_miniTandem: $(SOURCE) $(GDB_DEBUG) 
+gdb_miniTandem: $(SOURCE) $(HEADER) $(GDB_DEBUG) 
 libabpoa:        $(BPOALIB)
 
 
@@ -82,7 +83,7 @@ $(SRC_DIR)/simd_check.o:$(SRC_DIR)/simd_check.c $(SRC_DIR)/simd_instruction.h
 $(SRC_DIR)/simd_abpoa_align.o:$(SRC_DIR)/simd_abpoa_align.c $(SRC_DIR)/abpoa_graph.h $(SRC_DIR)/abpoa_align.h $(SRC_DIR)/simd_instruction.h $(SRC_DIR)/utils.h
 	$(CC) -c $(CFLAGS) $(SIMD_FLAG) $< -o $@
 
-$(GDB_DEBUG): $(SOURCE)
+$(GDB_DEBUG): $(SOURCE) $(HEADER)
 	if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi
 	$(CC) $(DFLAGS) $(SIMD_FLAG) $(SOURCE) $(DMARCRO) $(INCLUDE) -o $@ $(LIB)
 

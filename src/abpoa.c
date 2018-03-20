@@ -12,7 +12,9 @@
 abpoa_para_t *abpoa_init_para(void) {
     abpoa_para_t *abpt = (abpoa_para_t*)_err_malloc(sizeof(abpoa_para_t));
     abpt->align_mode = POA_GLOBAL_FLAG;
-    abpt->use_ada = 1; // use adaptive band
+    abpt->zdrop = -1;     // disable zdrop
+    abpt->end_bonus = -1; // disable end bouns
+    abpt->use_ada = 1;    // use adaptive band
 
     // number of residue types
     abpt->m = 5; // nucleotides
@@ -140,6 +142,8 @@ int abpoa_main(int seq_n, char (*seq)[100], abpoa_para_t *abpt){
     return 0;
 }
 
+// TODO optget
+// TODO multi-thread
 int main(int argc, char **argv) {
     int seq_n = 6;
     char seq[100][100] = {

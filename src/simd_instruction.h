@@ -486,7 +486,7 @@ typedef __m128i SIMDi; //for integers
 #define SIMDSetOnei16(x) _mm_set1_epi16(x)
 #define SIMDSetOnei32(x) _mm_set1_epi32(x)
 #define SIMDSetOnei64(x) _mm_set1_epi64(x)
-#define SIMDSetZeroi(x) _mm_setzero_si128(x)
+#define SIMDSetZeroi() _mm_setzero_si128()
 #define SIMDAdd(x,y) _mm_add_ps(x,y)
 #define SIMDAddi8(x,y) _mm_add_epi8(x,y)
 #define SIMDAddi16(x,y) _mm_add_epi16(x,y)

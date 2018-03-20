@@ -36,8 +36,8 @@ typedef struct {
 // XXX merge index_to_node_id and index_to_rank together uint64_t ???
 typedef struct {
     abpoa_node_t *node; int node_n, node_m; 
-    int *index_to_node_id, *index_to_min_rank, *index_to_max_rank, *index_to_min_remain, *index_to_max_remain;
-    int *node_id_to_index, *node_id_to_min_rank, *node_id_to_max_rank, *node_id_to_min_remain, *node_id_to_max_remain;
+    int *index_to_node_id;
+    int *node_id_to_index, *node_id_to_min_rank, *node_id_to_max_rank, *node_id_to_min_remain, *node_id_to_max_remain, *node_id_to_msa_rank;
     int min_rank_n, max_rank_n;
     int cons_l, cons_m; uint8_t *cons_seq;
     uint8_t is_topological_sorted:1, is_called_cons:1; 
@@ -95,26 +95,10 @@ static inline int abpoa_graph_index_to_node_id(abpoa_graph_t *graph, int index_i
     return graph->index_to_node_id[index_i];
 }
 
-static inline int abpoa_graph_index_to_max_rank(abpoa_graph_t * graph, int index_i) {
-    if (index_i < 0 || index_i >= graph->node_n) err_fatal(__func__, "Wrong index: %d\n", index_i);
-    return graph->index_to_max_rank[index_i];
+static inline int abpoa_graph_node_id_to_msa_rank(abpoa_graph_t *graph, int node_id) {
+    if (node_id < 0 || node_id >= graph->node_n) err_fatal(__func__, "Wrong node id: %d\n", node_id);
+    return graph->node_id_to_msa_rank[node_id];
 }
-
-static inline int abpoa_graph_index_to_min_rank(abpoa_graph_t * graph, int index_i) {
-    if (index_i < 0 || index_i >= graph->node_n) err_fatal(__func__, "Wrong index: %d\n", index_i);
-    return graph->index_to_min_rank[index_i];
-}
-
-static inline int abpoa_graph_index_to_max_remain(abpoa_graph_t * graph, int index_i) {
-    if (index_i < 0 || index_i >= graph->node_n) err_fatal(__func__, "Wrong index: %d\n", index_i);
-    return graph->index_to_max_remain[index_i];
-}
-
-static inline int abpoa_graph_index_to_min_remain(abpoa_graph_t * graph, int index_i) {
-    if (index_i < 0 || index_i >= graph->node_n) err_fatal(__func__, "Wrong index: %d\n", index_i);
-    return graph->index_to_min_remain[index_i];
-}
-
 #ifdef __cplusplus
 }
 #endif
