@@ -30,11 +30,11 @@ SIMD_FLAG       =
 .c.o:
 		$(CC) -c $(CFLAGS) $(INCLUDE) $< -o $@
 
-BIN     		= $(BIN_DIR)/miniTandem
+BIN     		= $(BIN_DIR)/abPOA
 BPOALIB         = $(SRC_DIR)/libabpoa.a
 
 SIMD_CHECK  	= $(BIN_DIR)/simd_check
-GDB_DEBUG   	= $(BIN_DIR)/gdb_miniTandem
+GDB_DEBUG   	= $(BIN_DIR)/gdb_abPOA
 SIMD_CHECK_D	= -D __CHECK_SIMD_MAIN__
 DMARCRO 		= -D __DEBUG__
 
@@ -52,8 +52,8 @@ endif
 
 all:		    $(BIN) 
 #simd_check:     $(SIMD_CHECK)
-miniTandem:     $(BIN)
-gdb_miniTandem: $(SOURCE) $(HEADER) $(GDB_DEBUG) 
+abPOA:     		$(BIN)
+gdb_abPOA: 		$(SOURCE) $(HEADER) $(GDB_DEBUG) 
 libabpoa:        $(BPOALIB)
 
 

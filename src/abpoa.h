@@ -22,8 +22,7 @@ typedef struct {
 abpoa_para_t *abpoa_para_init(void);
 void abpoa_para_free(abpoa_para_t *abpt);
 
-// int abpoa_main(const char *seq_fn, abpoa_para_t *abpt) { TODO
-int abpoa_main(int seq_n, char (*seq)[100], abpoa_para_t *abpt);
+int abpoa_main(const char *read_fn, abpoa_para_t *abpt);
 
 #ifdef __cplusplus
 }
