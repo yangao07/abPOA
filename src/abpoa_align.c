@@ -225,7 +225,9 @@ int abpoa_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *query,
         _set_max_score(best_score, best_i, best_j, dp_matrix[in_index * matrix_col_n + qlen].h, in_index, qlen);
     }
 
+#ifdef __DEBUG__
     printf("best_score: (%d, %d) -> %d\n", best_i, best_j, best_score);
+#endif
     // backtrack from best score
     if (n_cigar && graph_cigar) {
         int n_c = 0, m_c = 0, id, which;
@@ -486,7 +488,9 @@ int abpoa_ada_extend_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *qu
         _set_max_score(best_score, best_i, best_j, dp_matrix[in_index * matrix_col_n + qlen].h, in_index, qlen);
     }
 
+#ifdef __DEBUG__
     printf("best_score: (%d, %d) -> %d\n", best_i, best_j, best_score);
+#endif
     // backtrack from best score
     if (n_cigar && graph_cigar) {
         int n_c = 0, m_c = 0, id, which;
@@ -909,7 +913,9 @@ int abpoa_banded_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t 
         _set_max_score(best_score, best_i, best_j, DP_H[in_index * matrix_col_n + qlen], in_index, qlen);
     }
 
+#ifdef __DEBUG__
     printf("best_score: (%d, %d) -> %d\n", best_i, best_j, best_score);
+#endif
     { // backtrack from best score
         if (n_cigar && graph_cigar) abpoa_backtrack(DP_H, DP_E, matrix_col_n, abpt->match, abpt->mismatch, abpt->gap_ext, pre_index, pre_n, backtrack_z, best_i, best_j, z_col_n, graph, query, n_cigar, graph_cigar);
     }
@@ -1000,7 +1006,7 @@ int ada_abpoa_banded_global_align_sequence_with_graph(abpoa_graph_t *graph, uint
             dp_h = DP_H + index_i * matrix_col_n; dp_e = DP_E + index_i * matrix_col_n;
             z = &backtrack_z[(index_i-1) * qlen];
 
-            printf("index: %d, min_rank: %d, max_rank: %d\n", index_i, graph->node_id_to_min_rank[node_id], graph->node_id_to_max_rank[node_id]);
+            //printf("index: %d, min_rank: %d, max_rank: %d\n", index_i, graph->node_id_to_min_rank[node_id], graph->node_id_to_max_rank[node_id]);
             dp_beg[index_i] = GET_DP_BEGIN(graph, w, node_id); dp_end[index_i] = GET_DP_END(graph, w, node_id);
 
             beg = dp_beg[index_i]; end = dp_end[index_i];
@@ -1163,7 +1169,9 @@ int ada_abpoa_banded_global_align_sequence_with_graph(abpoa_graph_t *graph, uint
         _set_max_score(best_score, best_i, best_j, DP_H[in_index * matrix_col_n + qlen], in_index, qlen);
     }
 
+#ifdef __DEBUG__
     printf("best_score: (%d, %d) -> %d\n", best_i, best_j, best_score);
+#endif
     { // backtrack from best score
         if (n_cigar && graph_cigar) abpoa_backtrack(DP_H, DP_E, matrix_col_n, abpt->match, abpt->mismatch, abpt->gap_ext, pre_index, pre_n, backtrack_z, best_i, best_j, z_col_n, graph, query, n_cigar, graph_cigar);
     }
