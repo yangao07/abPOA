@@ -1,5 +1,5 @@
-#ifndef POA_GRAPH_H
-#define POA_GRAPH_H
+#ifndef ABPOA_GRAPH_H
+#define ABPOA_GRAPH_H
 
 #include <stdint.h>
 #include "abpoa.h"
@@ -10,16 +10,16 @@ extern "C" {
 #endif
 
 //#define CIGAR_STR "MIDNSHP=XB"
-//#define POA_GRAPH_CIGAR_STR "=XIDNSH"
-//#define POA_GRAPH_CEQUAL 0
-//#define POA_GRAPH_CMISMATCH 1
-//#define POA_GRAPH_CINS 2
-//#define POA_GRAPH_CDEL 3
-//#define POA_GRAPH_CREF_SKIP 4
-//#define POA_GRAPH_CCLIP 5
+//#define ABPOA_GRAPH_CIGAR_STR "=XIDNSH"
+//#define ABPOA_GRAPH_CEQUAL 0
+//#define ABPOA_GRAPH_CMISMATCH 1
+//#define ABPOA_GRAPH_CINS 2
+//#define ABPOA_GRAPH_CDEL 3
+//#define ABPOA_GRAPH_CREF_SKIP 4
+//#define ABPOA_GRAPH_CCLIP 5
 
-#define POA_SRC_NODE_ID 0
-#define POA_SINK_NODE_ID 1
+#define ABPOA_SRC_NODE_ID 0
+#define ABPOA_SINK_NODE_ID 1
 
 typedef struct {
     int node_id, index, rank;

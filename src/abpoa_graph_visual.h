@@ -1,5 +1,5 @@
-#ifndef _POA_GRAPH_VISUAL_H
-#define _POA_GRAPH_VISUAL_H
+#ifndef _ABPOA_GRAPH_VISUAL_H
+#define _ABPOA_GRAPH_VISUAL_H
 
 #include "abpoa_graph.h"
 

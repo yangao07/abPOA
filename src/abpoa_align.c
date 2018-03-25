@@ -219,8 +219,8 @@ int abpoa_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *query,
     }
 #endif
     int in_id, in_index;
-    for (i = 0; i < graph->node[POA_SINK_NODE_ID].in_edge_n; ++i) {
-        in_id = graph->node[POA_SINK_NODE_ID].in_id[i];
+    for (i = 0; i < graph->node[ABPOA_SINK_NODE_ID].in_edge_n; ++i) {
+        in_id = graph->node[ABPOA_SINK_NODE_ID].in_id[i];
         in_index = abpoa_graph_node_id_to_index(graph, in_id);
         _set_max_score(best_score, best_i, best_j, dp_matrix[in_index * matrix_col_n + qlen].h, in_index, qlen);
     }
@@ -238,27 +238,27 @@ int abpoa_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *query,
         while (i > 0 && j > 0) {
             d = z[(long)(i-1) * z_col_n + (j-1 - (i-1 > w ? i-1 - w : 0))];
             which = (d >> op_shift[which]) & 3;
-            // printf("(%d,%d) %c\n", i, j, POA_CIGAR_STR[which]);
+            // printf("(%d,%d) %c\n", i, j, ABPOA_CIGAR_STR[which]);
             if (which == 0) { // match
-                cigar = abpoa_push_cigar(&n_c, &m_c, cigar, POA_CMATCH, 1, id/*index_to_id*/, j-1);
+                cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CMATCH, 1, id/*index_to_id*/, j-1);
                 i = (d >> id_shift[which]) & 0x1fffffff;
                 id = abpoa_graph_index_to_node_id(graph, i);
                 j--;
             } else if (which == 3) { // mismatch
-                cigar = abpoa_push_cigar(&n_c, &m_c, cigar, POA_CDIFF, 1, id, j-1);
+                cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CDIFF, 1, id, j-1);
                 i = (d >> id_shift[which]) & 0x1fffffff;
                 id = abpoa_graph_index_to_node_id(graph, i);
                 j--;
             } else if (which == 1) { // deletion
-                cigar = abpoa_push_cigar(&n_c, &m_c, cigar, POA_CDEL, 1, id, j-1);
+                cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CDEL, 1, id, j-1);
                 i = (d >> id_shift[which]) & 0x1fffffff;
                 id = abpoa_graph_index_to_node_id(graph, i);
             } else { // insertion
-                cigar = abpoa_push_cigar(&n_c, &m_c, cigar, POA_CINS, 1, id, j-1);
+                cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, 1, id, j-1);
                 j--;
             }
         }
-        if (j > 0) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, POA_CSOFT_CLIP, j, -1, j-1);
+        if (j > 0) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CSOFT_CLIP, j, -1, j-1);
         // reverse cigar
         *graph_cigar = abpoa_reverse_cigar(n_c, cigar);
         *n_cigar = n_c;
@@ -336,8 +336,8 @@ int abpoa_ada_extend_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *qu
         cur_dp->fl = i+1; cur_dp->el = cur_dp->xl = 0; 
         cur_dp->todo_map = HAS_MX; 
     }
-    for (i = 0; i < next_n[POA_SRC_NODE_ID]; ++i) {
-        next_i = next_index[POA_SRC_NODE_ID][i];
+    for (i = 0; i < next_n[ABPOA_SRC_NODE_ID]; ++i) {
+        next_i = next_index[ABPOA_SRC_NODE_ID][i];
         next_line = dp_matrix + next_i * matrix_col_n;
         next_line[0].todo_map = TODO_E;
         for (j = 1; j<= w+1; ++j) {
@@ -482,8 +482,8 @@ int abpoa_ada_extend_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *qu
     int in_id, in_index;
     // for global alignment, find best backtrack position
     // TODO semi-global, local
-    for (i = 0; i < graph->node[POA_SINK_NODE_ID].in_edge_n; ++i) {
-        in_id = graph->node[POA_SINK_NODE_ID].in_id[i];
+    for (i = 0; i < graph->node[ABPOA_SINK_NODE_ID].in_edge_n; ++i) {
+        in_id = graph->node[ABPOA_SINK_NODE_ID].in_id[i];
         in_index = abpoa_graph_node_id_to_index(graph, in_id);
         _set_max_score(best_score, best_i, best_j, dp_matrix[in_index * matrix_col_n + qlen].h, in_index, qlen);
     }
@@ -501,27 +501,27 @@ int abpoa_ada_extend_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *qu
         while (i > 0 && j > 0) {
             d = backtrack_z[(long)(i-1) * z_col_n + j-1];
             which = (d >> op_shift[which]) & 3;
-            // printf("(%d,%d) %c\n", i, j, POA_CIGAR_STR[which]);
+            // printf("(%d,%d) %c\n", i, j, ABPOA_CIGAR_STR[which]);
             if (which == 0) { // match
-                cigar = abpoa_push_cigar(&n_c, &m_c, cigar, POA_CMATCH, 1, id, j-1);
+                cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CMATCH, 1, id, j-1);
                 i = (d >> id_shift[which]) & 0x1fffffff;
                 id = abpoa_graph_index_to_node_id(graph, i);
                 j--;
             } else if (which == 3) { // mismatch
-                cigar = abpoa_push_cigar(&n_c, &m_c, cigar, POA_CDIFF, 1, id, j-1);
+                cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CDIFF, 1, id, j-1);
                 i = (d >> id_shift[which]) & 0x1fffffff;
                 id = abpoa_graph_index_to_node_id(graph, i);
                 j--;
             } else if (which == 1) { // deletion
-                cigar = abpoa_push_cigar(&n_c, &m_c, cigar, POA_CDEL, 1, id, j-1);
+                cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CDEL, 1, id, j-1);
                 i = (d >> id_shift[which]) & 0x1fffffff;
                 id = abpoa_graph_index_to_node_id(graph, i);
             } else { // insertion
-                cigar = abpoa_push_cigar(&n_c, &m_c, cigar, POA_CINS, 1, id, j-1);
+                cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, 1, id, j-1);
                 j--;
             }
         }
-        if (j > 0) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, POA_CSOFT_CLIP, j, -1, j-1);
+        if (j > 0) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CSOFT_CLIP, j, -1, j-1);
         // reverse cigar
         *graph_cigar = abpoa_reverse_cigar(n_c, cigar);
         *n_cigar = n_c;
@@ -706,8 +706,8 @@ int abpoa_ada_extend_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *qu
     int in_id, in_index;
     // for global alignment, find best backtrack position
     // TODO semi-global, local
-    for (i = 0; i < graph->node[POA_SINK_NODE_ID].in_edge_n; ++i) {
-        in_id = graph->node[POA_SINK_NODE_ID].in_id[i];
+    for (i = 0; i < graph->node[ABPOA_SINK_NODE_ID].in_edge_n; ++i) {
+        in_id = graph->node[ABPOA_SINK_NODE_ID].in_id[i];
         in_index = abpoa_graph_node_id_to_index(graph, in_id);
         _set_max_score(best_score, best_i, best_j, DP_H[in_index * matrix_col_n + qlen], in_index, qlen);
     }
@@ -783,7 +783,7 @@ int abpoa_banded_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t 
     {   // DP loop
         // DP cell: H[i,j], E[i+1,j], F[i,j+1]
         // fill the first row
-        dp_beg[0] = GET_DP_BEGIN(graph, w, 0); dp_end[0] = GET_DP_END(graph, w, 0);
+        dp_beg[0] = GET_DP_BEGIN(graph, w, 0, qlen); dp_end[0] = GET_DP_END(graph, w, 0, qlen);
 
         DP_H[0] = 0; DP_E[0] = -gap_oe;
         for (i = 1; i <= dp_end[0]; ++i) { // SIMD parallelization
@@ -799,7 +799,7 @@ int abpoa_banded_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t 
             dp_h = DP_H + index_i * matrix_col_n; dp_e = DP_E + index_i * matrix_col_n;
             z = &backtrack_z[(index_i-1) * qlen];
 
-            dp_beg[index_i] = GET_DP_BEGIN(graph, w, node_id); dp_end[index_i] = GET_DP_END(graph, w, node_id);
+            dp_beg[index_i] = GET_DP_BEGIN(graph, w, node_id, qlen); dp_end[index_i] = GET_DP_END(graph, w, node_id, qlen);
 
             beg = dp_beg[index_i]; end = dp_end[index_i];
             // first column
@@ -907,8 +907,8 @@ int abpoa_banded_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t 
     }
 #endif
     int in_id, in_index;
-    for (i = 0; i < graph->node[POA_SINK_NODE_ID].in_edge_n; ++i) { // for global alignment, find best backtrack position
-        in_id = graph->node[POA_SINK_NODE_ID].in_id[i];
+    for (i = 0; i < graph->node[ABPOA_SINK_NODE_ID].in_edge_n; ++i) { // for global alignment, find best backtrack position
+        in_id = graph->node[ABPOA_SINK_NODE_ID].in_id[i];
         in_index = abpoa_graph_node_id_to_index(graph, in_id);
         _set_max_score(best_score, best_i, best_j, DP_H[in_index * matrix_col_n + qlen], in_index, qlen);
     }
@@ -992,7 +992,7 @@ int ada_abpoa_banded_global_align_sequence_with_graph(abpoa_graph_t *graph, uint
         int beg, end, _beg, _end, pre_beg, pre_end;
         // fill the first row
         // get beg and end based on min/max_rank and min/max_remain
-        dp_beg[0] = GET_DP_BEGIN(graph, w, 0); dp_end[0] = GET_DP_END(graph, w, 0);
+        dp_beg[0] = GET_DP_BEGIN(graph, w, 0, qlen); dp_end[0] = GET_DP_END(graph, w, 0, qlen);
 
         DP_H[0] = 0; DP_E[0] = -gap_oe;
         for (i = 1; i <= dp_end[0]; ++i) { // SIMD parallelization
@@ -1007,7 +1007,7 @@ int ada_abpoa_banded_global_align_sequence_with_graph(abpoa_graph_t *graph, uint
             z = &backtrack_z[(index_i-1) * qlen];
 
             //printf("index: %d, min_rank: %d, max_rank: %d\n", index_i, graph->node_id_to_min_rank[node_id], graph->node_id_to_max_rank[node_id]);
-            dp_beg[index_i] = GET_DP_BEGIN(graph, w, node_id); dp_end[index_i] = GET_DP_END(graph, w, node_id);
+            dp_beg[index_i] = GET_DP_BEGIN(graph, w, node_id, qlen); dp_end[index_i] = GET_DP_END(graph, w, node_id, qlen);
 
             beg = dp_beg[index_i]; end = dp_end[index_i];
             // first column
@@ -1163,8 +1163,8 @@ int ada_abpoa_banded_global_align_sequence_with_graph(abpoa_graph_t *graph, uint
     }
 #endif
     int in_id, in_index;
-    for (i = 0; i < graph->node[POA_SINK_NODE_ID].in_edge_n; ++i) { // for global alignment, find best backtrack position
-        in_id = graph->node[POA_SINK_NODE_ID].in_id[i];
+    for (i = 0; i < graph->node[ABPOA_SINK_NODE_ID].in_edge_n; ++i) { // for global alignment, find best backtrack position
+        in_id = graph->node[ABPOA_SINK_NODE_ID].in_id[i];
         in_index = abpoa_graph_node_id_to_index(graph, in_id);
         _set_max_score(best_score, best_i, best_j, DP_H[in_index * matrix_col_n + qlen], in_index, qlen);
     }
@@ -1184,3 +1184,4 @@ int ada_abpoa_banded_global_align_sequence_with_graph(abpoa_graph_t *graph, uint
     }
     return best_score;
 }
+// TODO local, extend, semi-global

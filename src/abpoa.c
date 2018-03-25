@@ -17,26 +17,21 @@ char PROG[20] = "abPOA";
 
 abpoa_para_t *abpoa_init_para(void) {
     abpoa_para_t *abpt = (abpoa_para_t*)_err_malloc(sizeof(abpoa_para_t));
-    abpt->align_mode = POA_GLOBAL_FLAG;
+    abpt->align_mode = ABPOA_GLOBAL_MODE;
     abpt->zdrop = -1;     // disable zdrop
     abpt->end_bonus = -1; // disable end bouns
-    abpt->use_ada = 1;    // use adaptive band
+    abpt->bw = -1;        // disable bandwidth
+    abpt->use_ada = 0;    // use adaptive band
 
     // number of residue types
     abpt->m = 5; // nucleotides
     abpt->mat = NULL; // TODO score matrix for aa
 
     // score matrix
-    abpt->match = POA_MATCH;
-    abpt->mismatch = POA_MISMATCH;
-    abpt->gap_open = POA_GAP_OPEN;
-    abpt->gap_ext = POA_GAP_EXT;
-
-    abpt->inf_min = MAX_OF_TWO(INF_32_MIN + POA_MISMATCH, INF_32_MIN + POA_GAP_OPEN + POA_GAP_EXT);
-
-    abpt->bw = 10; // TODO band width
-    abpt->zdrop = 100;
-    abpt->end_bonus = 5;
+    abpt->match = ABPOA_MATCH;
+    abpt->mismatch = ABPOA_MISMATCH;
+    abpt->gap_open = ABPOA_GAP_OPEN;
+    abpt->gap_ext = ABPOA_GAP_EXT;
 
     abpt->simd_flag = simd_check();
 
@@ -51,7 +46,7 @@ void abpoa_free_para(abpoa_para_t *abpt) {
 const struct option abpoa_long_opt [] = {
     { "align-mode", 1, NULL, 'm' },
     { "ada-band", 0, NULL, 'a' },
-    { "band-width", 1, NULL, 'w' },
+    { "bandwidth", 1, NULL, 'w' },
     { "zdrop", 1, NULL, 'z' },
     { "end-bouns", 1, NULL, 'b' },
     { "match", 1, NULL, 'M' },
@@ -67,15 +62,15 @@ int abpoa_usage(void)
     err_printf("Usage:   %s [option] <in.fa/fq> > msa.out\n\n", PROG);
     err_printf("Options:\n\n");
     err_printf("         -m --align-mode  [INT]    align mode. [0]\n");
-    err_printf("                                         0: glogal\n");
-    err_printf("                                         1: local\n");
-    err_printf("                                         2: extension\n");
-    err_printf("                                         3: semi-global\n");
-    err_printf("         -M --match       [INT]    match score. [%d]\n", POA_MATCH);
-    err_printf("         -x --mismatch    [INT]    mismatch penalty. [%d]\n", POA_MISMATCH);
-    err_printf("         -o --gap-open    [INT]    gap open penalty. [%d]\n", POA_GAP_OPEN);
-    err_printf("         -e --gap-ext     [INT]    gap extension penalty [%d]\n", POA_GAP_EXT);
-    err_printf("         -w --band-width  [INT]    band width used in alignment. [-1]\n");
+    err_printf("                                     0: glogal\n");
+    err_printf("                                     1: local\n");
+    err_printf("                                     2: extension\n");
+    err_printf("                                     3: semi-global\n");
+    err_printf("         -M --match       [INT]    match score. [%d]\n", ABPOA_MATCH);
+    err_printf("         -x --mismatch    [INT]    mismatch penalty. [%d]\n", ABPOA_MISMATCH);
+    err_printf("         -o --gap-open    [INT]    gap open penalty. [%d]\n", ABPOA_GAP_OPEN);
+    err_printf("         -e --gap-ext     [INT]    gap extension penalty [%d]\n", ABPOA_GAP_EXT);
+    err_printf("         -w --bandwidth   [INT]    bandwidth used in alignment. [-1]\n");
     err_printf("         -a --ada-band             adaptively update band during alignment. [False]\n");
     err_printf("         -z --zdrop       [INT]    Z-drop score. [-1]\n");
     err_printf("         -e --end-bonus   [INT]    end bonus score. [-1]\n");
@@ -150,8 +145,7 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
 int abpoa_main(const char *read_fn, abpoa_para_t *abpt){
     int i, j, n_seqs=0, tot_seq_n=0;
     abpoa_graph_t *graph = abpoa_init_graph(1);
-    gzFile readfp = xzopen(read_fn, "r");
-    kstream_t *fs = ks_init(readfp);
+    gzFile readfp = xzopen(read_fn, "r"); kstream_t *fs = ks_init(readfp);
     kseq_t *read_seq = (kseq_t*)calloc(CHUNK_READ_N, sizeof(kseq_t));
     for (i = 0; i < CHUNK_READ_N; ++i) read_seq[i].f = fs;
 

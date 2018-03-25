@@ -1,5 +1,5 @@
-#ifndef POA_H
-#define POA_H
+#ifndef ABPOA_H
+#define ABPOA_H
 
 #include <stdint.h>
 

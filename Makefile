@@ -1,5 +1,5 @@
 CC      =	gcc
-CFLAGS  =	-Wall -O2 -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function
+CFLAGS  =	-Wall -O3 -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function
 DFLAGS  =	-g -Wall
 PYLIB   =   -lpython2.7
 LIB     =	-lm -lz -lpthread $(PYLIB)
@@ -8,8 +8,8 @@ INCLUDE =   -I $(PY_DIR)
 BIN_DIR =	./bin
 SRC_DIR =   ./src
 
-SOURCE  =	$(wildcard ${SRC_DIR}/*.c) 
-HEADER  =	$(wildcard ${SRC_DIR}/*.h) 
+SOURCE  =	$(SRC_DIR)/abpoa.c $(SRC_DIR)/abpoa_align.c $(SRC_DIR)/abpoa_graph.c $(SRC_DIR)/simd_abpoa_align.c $(SRC_DIR)/simd_check.c $(SRC_DIR)/utils.c $(SRC_DIR)/abpoa_graph_visual.c
+HEADER  =	$(SRC_DIR)/abpoa.h $(SRC_DIR)/abpoa_align.h $(SRC_DIR)/abpoa_graph.h $(SRC_DIR)/align.h $(SRC_DIR)/abpoa_graph_visual.h $(SRC_DIR)/kdq.h $(SRC_DIR)/kseq.h $(SRC_DIR)/ksort.h $(SRC_DIR)/simd_instruction.h $(SRC_DIR)/simd_abpoa_align.h $(SRC_DIR)/utils.h
 OBJS    =	$(SRC_DIR)/abpoa_align.o $(SRC_DIR)/abpoa_graph.o $(SRC_DIR)/simd_abpoa_align.o $(SRC_DIR)/simd_check.o $(SRC_DIR)/utils.o $(SRC_DIR)/abpoa_graph_visual.o
 
 # SIMD label
@@ -51,7 +51,6 @@ else ifeq ($(simd_flag), $(SSE41))
 endif
 
 all:		    $(BIN) 
-#simd_check:     $(SIMD_CHECK)
 abPOA:     		$(BIN)
 gdb_abPOA: 		$(SOURCE) $(HEADER) $(GDB_DEBUG) 
 libabpoa:        $(BPOALIB)

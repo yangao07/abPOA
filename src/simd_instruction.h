@@ -1,5 +1,5 @@
 // A header file to get you set going with Intel SIMD instrinsic programming. 
-// All necessary header files are inlucded for SSE2, SSE41, AVX2 and AVX512F, AVX512BW
+// <immintrin.h> is inlucded for SSE2, SSE41, AVX2 and AVX512F, AVX512BW
 // SSE4.1: floor and blend is available)
 // AVX2: double speed
 // AVX512F: quardruple speed
@@ -27,23 +27,6 @@
 #include <stdint.h>
 #include <string.h>
 
-//#ifdef __AVX512F__
-//#include <zmmintrin.h> // AVX512f
-//#endif
-//
-//#ifndef __AVX2__
-//#include <xmmintrin.h> // SSE
-//#include <emmintrin.h> // SSE 2
-//#endif
-//
-//#ifdef __SSE4_1__
-//#include <smmintrin.h> // SSE4.1
-//#endif
-//
-//#ifdef __AVX2__
-//#include <immintrin.h> // AVX2
-//#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -59,7 +42,7 @@ static void *SIMDMalloc(size_t size, size_t align) {
 
 #define SIMDFree(x) _mm_free(x)
 
-//Shift, Blend, ... for 8/16 and 32/64
+// Shift, Blend, ... for 8/16 and 32/64
 #ifdef __AVX512BW__
 // start of AVX512BW
 
