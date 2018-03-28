@@ -142,7 +142,65 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
 }
 
 //TODO CHUNK_READ_N
-int abpoa_main(const char *read_fn, abpoa_para_t *abpt){
+int abpoa_main(const char *list_fn, abpoa_para_t *abpt){
+    FILE *list_fp = fopen(list_fn, "r"); char read_fn[1024];
+    while (fgets(read_fn, sizeof(read_fn), list_fp)) {
+        read_fn[strlen(read_fn)-1] = '\0';
+        int i, j, n_seqs=0, tot_seq_n=0;
+        abpoa_graph_t *graph = abpoa_init_graph(1);
+        gzFile readfp = xzopen(read_fn, "r"); kstream_t *fs = ks_init(readfp);
+        kseq_t *read_seq = (kseq_t*)calloc(CHUNK_READ_N, sizeof(kseq_t));
+        for (i = 0; i < CHUNK_READ_N; ++i) read_seq[i].f = fs;
+
+        int **seq_node_ids = (int**)_err_malloc(CHUNK_READ_N * sizeof(int*));
+        int *seq_node_ids_l = (int*)_err_malloc(CHUNK_READ_N * sizeof(int));
+        uint8_t *bseq = (uint8_t*)_err_malloc(100 * sizeof(uint8_t)); int bseq_m = 100;
+
+        // progressively partial order alignment
+        while ((n_seqs = abpoa_read_seq(read_seq, CHUNK_READ_N)) != 0) {
+            tot_seq_n += n_seqs;
+            for (i = 0; i < n_seqs; ++i) {
+                kseq_t *seq = read_seq + i;
+                int seq_l = seq->seq.l;
+                char *seq1 = seq->seq.s;
+#ifdef __DEBUG__
+                printf("seq(%d): %s\n", seq_l, seq1);
+#endif
+                if (seq_l > bseq_m) {
+                    bseq_m = seq_l;
+                    bseq = (uint8_t*)_err_realloc(bseq, bseq_m * sizeof(uint8_t));
+                }
+                seq_node_ids[i] = (int*)_err_malloc(seq_l * sizeof(int));
+                for (j = 0; j < seq_l; ++j) bseq[j] = nst_nt4_table[(int)(seq1[j])];
+                abpoa_cigar_t *abpoa_cigar=0; int n_cigar=0;
+                abpoa_align_sequence_with_graph(graph, bseq, seq_l, abpt, &n_cigar, &abpoa_cigar);
+                seq_node_ids_l[i] = 0;
+                abpoa_add_graph_alignment(graph, bseq, seq_l, n_cigar, abpoa_cigar, seq_node_ids[i], seq_node_ids_l+i);
+                //printf("%d %d %d\n", seq_l, graph->rank_n, seq_node_ids_l[i]);
+                char abpoa_dot_fn[100]; sprintf(abpoa_dot_fn, "./dot_plot/abpoa_%d.dot", i);
+                //abpoa_graph_visual(graph, abpoa_dot_fn);
+                if (n_cigar) free(abpoa_cigar);
+            }
+        }
+        // generate consensus from graph
+        abpoa_generate_consensus(graph);
+        printf("consensus:\n");
+        for (i = 0; i < graph->cons_l; ++i) {
+            printf("%c", "ACGTN"[graph->cons_seq[i]]);
+        } printf("\n");
+        // generate multiple sequence alignment
+        abpoa_generate_multiple_sequence_alingment(graph, seq_node_ids, seq_node_ids_l, tot_seq_n, 1, stdout);
+
+        abpoa_free_graph(graph, 1); free(bseq);
+        for (i = 0; i < tot_seq_n; ++i) free(seq_node_ids[i]); free(seq_node_ids); free(seq_node_ids_l);
+        for (i = 0; i < CHUNK_READ_N; ++i) {
+            free((read_seq+i)->name.s); free((read_seq+i)->comment.s); free((read_seq+i)->seq.s); free((read_seq+i)->qual.s);
+        } free(read_seq); ks_destroy(fs); gzclose(readfp); 
+    }
+    fclose(list_fp);
+    return 0;
+}
+/*int abpoa_main(const char *read_fn, abpoa_para_t *abpt){
     int i, j, n_seqs=0, tot_seq_n=0;
     abpoa_graph_t *graph = abpoa_init_graph(1);
     gzFile readfp = xzopen(read_fn, "r"); kstream_t *fs = ks_init(readfp);
@@ -152,6 +210,7 @@ int abpoa_main(const char *read_fn, abpoa_para_t *abpt){
     int **seq_node_ids = (int**)_err_malloc(CHUNK_READ_N * sizeof(int*));
     int *seq_node_ids_l = (int*)_err_malloc(CHUNK_READ_N * sizeof(int));
     uint8_t *bseq = (uint8_t*)_err_malloc(100 * sizeof(uint8_t)); int bseq_m = 100;
+
     // progressively partial order alignment
     while ((n_seqs = abpoa_read_seq(read_seq, CHUNK_READ_N)) != 0) {
         tot_seq_n += n_seqs;
@@ -186,7 +245,6 @@ int abpoa_main(const char *read_fn, abpoa_para_t *abpt){
     } printf("\n");
     // generate multiple sequence alignment
     abpoa_generate_multiple_sequence_alingment(graph, seq_node_ids, seq_node_ids_l, tot_seq_n, 1, stdout);
-    //cons_to_seq_score(graph->cons_l, graph->cons_seq, seq_n, seq, abpt);
 
     abpoa_free_graph(graph, 1); free(bseq);
     for (i = 0; i < tot_seq_n; ++i) free(seq_node_ids[i]); free(seq_node_ids); free(seq_node_ids_l);
@@ -195,8 +253,7 @@ int abpoa_main(const char *read_fn, abpoa_para_t *abpt){
     } free(read_seq); ks_destroy(fs); gzclose(readfp); 
 
     return 0;
-}
-
+}*/
 // TODO multi-thread
 int main(int argc, char **argv) {
     int c; abpoa_para_t *abpt = abpoa_init_para();

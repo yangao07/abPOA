@@ -4,9 +4,9 @@
 #include "abpoa.h"
 #include "abpoa_graph.h"
 
-#define CHUNK_READ_N 10
+#define CHUNK_READ_N 20
 
-// SABPOA
+// SPOA
 #define ABPOA_MATCH  5
 #define ABPOA_MISMATCH  4
 #define ABPOA_GAP_OPEN  0
