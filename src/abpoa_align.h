@@ -4,7 +4,7 @@
 #include "abpoa.h"
 #include "abpoa_graph.h"
 
-#define CHUNK_READ_N 20
+#define CHUNK_READ_N 1000
 
 // SPOA
 #define ABPOA_MATCH  5

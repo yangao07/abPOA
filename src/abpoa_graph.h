@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "abpoa.h"
 #include "utils.h"
+#include "simd_instruction.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,6 +22,9 @@ extern "C" {
 #define ABPOA_SRC_NODE_ID 0
 #define ABPOA_SINK_NODE_ID 1
 
+#define ABPOA_HB 0
+#define ABPOA_MF 1
+
 typedef struct {
     int node_id, index, rank;
     int in_edge_n, in_edge_m, *in_id;
@@ -31,17 +35,26 @@ typedef struct {
     // ID, pos ???
 } abpoa_node_t;
 
-// TODO remove index_to_min/max_rank, only keep node_id_to_min/max_rank
 // TODO imitate bwt index, use uint64 for all variables
 // XXX merge index_to_node_id and index_to_rank together uint64_t ???
 typedef struct {
-    abpoa_node_t *node; int node_n, node_m; 
+    abpoa_node_t *node; int node_n, node_m, index_rank_m; 
     int *index_to_node_id;
     int *node_id_to_index, *node_id_to_min_rank, *node_id_to_max_rank, *node_id_to_min_remain, *node_id_to_max_remain, *node_id_to_msa_rank;
-    int min_rank_n, max_rank_n;
     int cons_l, cons_m; uint8_t *cons_seq;
     uint8_t is_topological_sorted:1, is_called_cons:1; 
 } abpoa_graph_t;
+
+typedef struct {
+    SIMDi *s_mem; int s_msize; // qp, DP_HE, dp_f OR qp, DP_H, dp_f : based on (qlen, num_of_value, m, node_n)
+    int *dp_beg, *dp_end, *dp_beg_sn, *dp_end_sn; int rang_m; // if band : based on (node_m)
+    // int *pre_n, **pre_index; // pre_n, pre_index based on (node_n) TODO use in/out_id directly
+} abpoa_simd_matrix_t;
+
+typedef struct {
+    abpoa_graph_t *abg;
+    abpoa_simd_matrix_t *abm;
+} abpoa_t;
 
 // XXX max of in_edge is pow(2,30)
 // for MATCH/MISMATCH: node_id << 34  | query_id << 4 | op
@@ -49,21 +62,19 @@ typedef struct {
 // for DELETION:       node_id << 34  | op_len << 4   | op // op_len is always equal to 1
 // for CLIP            query_id << 34 | op_len << 4   | op 
 #define abpoa_cigar_t uint64_t 
-                       
-//typedef struct {
-//    uint8_t op; // 0:match, 1:insertion, 2:deletion, 3:mismatch
-//    int32_t len, m, *node_id, *query_id;
-//} abpoa_graph_cigar_t; // alignment result of mapping a sequence to a graph
-
-
+                  
 abpoa_node_t *abpoa_init_node(int n);
 void abpoa_free_node(abpoa_node_t *node, int n);
-abpoa_graph_t *abpoa_init_graph(int n);
-void abpoa_free_graph(abpoa_graph_t *graph, int n);
-int abpoa_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *query, int qlen, abpoa_para_t *abpt, int *n_cigar, abpoa_cigar_t **graph_cigar);
-int abpoa_add_graph_alignment(abpoa_graph_t *graph, uint8_t *query, int qlen, int n_cigar, abpoa_cigar_t *abpoa_cigar, int *seq_node_ids, int *seq_node_ids_l);
-int abpoa_generate_consensus(abpoa_graph_t *graph);
-int abpoa_generate_multiple_sequence_alingment(abpoa_graph_t *graph, int **seq_node_ids, int *seq_node_ids_l, int seq_n, int output_consensu, FILE *fp);
+void abpoa_set_graph_node(abpoa_graph_t *graph, int node_i);
+abpoa_graph_t *abpoa_init_graph(void);
+void abpoa_free_graph(abpoa_graph_t *graph);
+abpoa_t *abpoa_init(void);
+void abpoa_free(abpoa_t *ab);
+int abpoa_align_sequence_with_graph(abpoa_t *ab, uint8_t *query, int qlen, abpoa_para_t *abpt, int *n_cigar, abpoa_cigar_t **graph_cigar);
+int abpoa_add_graph_alignment(abpoa_graph_t *graph, abpoa_para_t *abpt, uint8_t *query, int qlen, int n_cigar, abpoa_cigar_t *abpoa_cigar, int *seq_node_ids, int *seq_node_ids_l);
+int abpoa_generate_consensus(abpoa_graph_t *graph, uint8_t cons_agrm, FILE *out_fp);
+int abpoa_generate_multiple_sequence_alingment(abpoa_graph_t *graph, int **seq_node_ids, int *seq_node_ids_l, int seq_n, int output_consensu, FILE *out_fp);
+void abpoa_reset_graph(abpoa_t *ab, int qlen, abpoa_para_t *abpt);
 
 static inline int abpoa_graph_node_id_to_index(abpoa_graph_t *graph, int node_id) {
     if (node_id < 0 || node_id >= graph->node_n) err_fatal(__func__, "Wrong node id: %d\n", node_id);
