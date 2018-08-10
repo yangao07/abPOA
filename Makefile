@@ -1,10 +1,8 @@
 CC      =	gcc
+#CC      =   clang
 CFLAGS  =	-Wall -O3 -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function
 DFLAGS  =	-g -Wall
-PYLIB   =   -lpython2.7
-LIB     =	-lm -lz -lpthread $(PYLIB)
-PY_DIR  =   /usr/include/python2.7
-INCLUDE =   -I $(PY_DIR)
+LIB     =	-lm -lz -lpthread
 BIN_DIR =	./bin
 SRC_DIR =   ./src
 
@@ -28,7 +26,7 @@ SIMD_FLAG       =
 .SUFFIXES:.c .o
 
 .c.o:
-		$(CC) -c $(CFLAGS) $(INCLUDE) $< -o $@
+		$(CC) -c $(CFLAGS) $< -o $@
 
 BIN     		= $(BIN_DIR)/abPOA
 BPOALIB         = $(SRC_DIR)/libabpoa.a
@@ -84,7 +82,7 @@ $(SRC_DIR)/simd_abpoa_align.o:$(SRC_DIR)/simd_abpoa_align.c $(SRC_DIR)/abpoa_gra
 
 $(GDB_DEBUG): $(SOURCE) $(HEADER)
 	if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi
-	$(CC) $(DFLAGS) $(SIMD_FLAG) $(SOURCE) $(DMARCRO) $(INCLUDE) -o $@ $(LIB)
+	$(CC) $(DFLAGS) $(SIMD_FLAG) $(SOURCE) $(DMARCRO) -o $@ $(LIB)
 
 clean:
 	rm -f $(SRC_DIR)/*.[oa] $(BIN) $(SIMD_CHECK)

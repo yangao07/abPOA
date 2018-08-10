@@ -74,7 +74,7 @@ int abpoa_graph_visual(abpoa_graph_t *graph, char *dot_fn)
         // out_edge
         for (j = 0; j < graph->node[id].out_edge_n; ++j) {
             out_id = graph->node[id].out_id[j];
-            fprintf(fp, "\t%s -> %s [label=\"%d\"]\n", node_label[id], node_label[out_id], graph->node[id].out_weight[j]);
+            fprintf(fp, "\t%s -> %s [label=\"%d\", penwidth=%d]\n", node_label[id], node_label[out_id], graph->node[id].out_weight[j], graph->node[id].out_weight[j]);
         }
         if (graph->node[id].aligned_node_n > 0) {
             fprintf(fp, "\t{rank=same; %s ", node_label[id]);

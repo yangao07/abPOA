@@ -26,6 +26,7 @@ abpoa_para_t *abpoa_init_para(void) {
     abpt->out_msa = 0;    // output msa
     abpt->out_cons = 0;   // output consensus sequence in msa
     abpt->cons_agrm = 0;   // consensus calling algorithm 
+    abpt->out_pog= 0; // generate partial order graph
 
     // number of residue types
     abpt->m = 5; // nucleotides
@@ -88,6 +89,7 @@ int abpoa_usage(void)
     err_printf("         -C --cons-agrm   [INT]    algorithm for consensus calling. [0]\n");
     err_printf("                                      0: heavest bundling\n");
     err_printf("                                      1: minimum flow\n\n");
+    err_printf("         -g --out-pog              generate visualized partial-order graph. [False]\n");
 
     err_printf("\n");
     return 1;
@@ -217,8 +219,10 @@ int abpoa_main(const char *list_fn, abpoa_para_t *abpt){
                     abpoa_add_graph_alignment(ab->abg, abpt, bseq, seq_l, n_cigar, abpoa_cigar, seq_node_ids[tot_n+i], seq_node_ids_l+tot_n+i);
                 } else abpoa_add_graph_alignment(ab->abg, abpt, bseq, seq_l, n_cigar, abpoa_cigar, NULL, NULL); 
                 if (n_cigar) free(abpoa_cigar);
-                // char abpoa_dot_fn[100]; sprintf(abpoa_dot_fn, "./dot_plot/abpoa_%d.dot", i);
-                // abpoa_graph_visual(ab->abg, abpoa_dot_fn);
+                if (abpt->out_pog) {
+                    char abpoa_dot_fn[100]; sprintf(abpoa_dot_fn, "./dot_plot/abpoa_%d.dot", i);
+                    abpoa_graph_visual(ab->abg, abpoa_dot_fn);
+                }
             }
             tot_n += n_seqs;
         }
@@ -295,7 +299,7 @@ int abpoa_main(const char *list_fn, abpoa_para_t *abpt){
 // TODO multi-thread
 int main(int argc, char **argv) {
     int c; abpoa_para_t *abpt = abpoa_init_para();
-    while ((c = getopt_long(argc, argv, "m:aw:z:b:M:x:o:e:csC:", abpoa_long_opt, NULL)) >= 0) {
+    while ((c = getopt_long(argc, argv, "m:aw:z:b:M:x:o:e:csC:g", abpoa_long_opt, NULL)) >= 0) {
         switch(c)
         {
             case 'm': abpt->align_mode=atoi(optarg); break;
@@ -310,6 +314,7 @@ int main(int argc, char **argv) {
             case 'c': abpt->out_cons = 1; break;
             case 's': abpt->out_msa = 1; break;
             case 'C': abpt->cons_agrm = atoi(optarg); break;
+            case 'g': abpt->out_pog= 1; break;
             default:
                       err_printf("Error: unknown option: %s.\n", optarg);
                       return abpoa_usage();
