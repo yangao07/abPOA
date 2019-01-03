@@ -9,6 +9,13 @@
 #ifndef SIMD_INSTRUCTION_H
 #define SIMD_INSTRUCTION_H
 
+#include <immintrin.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <cpuid.h>
+#include <stdint.h>
+#include <string.h>
+
 #define SIMD_SSE      0x1
 #define SIMD_SSE2     0x2
 #define SIMD_SSE3     0x4
@@ -19,26 +26,6 @@
 #define SIMD_AVX2     0x80
 #define SIMD_AVX512F  0x100
 #define SIMD_AVX512BW 0x200
-
-#include <immintrin.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <cpuid.h>
-#include <stdint.h>
-#include <string.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-static void *SIMDMalloc(size_t size, size_t align) {
-    void *ret = (void*)_mm_malloc(size, align);
-    if (ret == NULL) {
-        fprintf(stderr, "[%s] mm_Malloc fail!\nSize: %ld\n", __func__, size);
-        exit(1);
-    }
-    else return ret;
-}
 
 #define SIMDFree(x) _mm_free(x)
 
@@ -581,10 +568,23 @@ typedef __m128i SIMDi; //for integers
 #endif // AVX512F
 #endif // AVX512BW
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int simd_check(void);
 
 #ifdef __cplusplus
 }
 #endif
+
+static void *SIMDMalloc(size_t size, size_t align) {
+    void *ret = (void*)_mm_malloc(size, align);
+    if (ret == NULL) {
+        fprintf(stderr, "[%s] mm_Malloc fail!\nSize: %ld\n", __func__, size);
+        exit(1);
+    }
+    else return ret;
+}
 
 #endif // SIMD_INSTRUCTION_H
