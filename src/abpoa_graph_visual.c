@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "abpoa.h"
 #include "abpoa_graph.h"
 #include "utils.h"
 
@@ -27,8 +28,7 @@ graph test2 {
 
 // base (index, rank, node_id)
 // A (1, 1, 2) A: base 1: index 1: rank 2: node_id
-int abpoa_graph_visual(abpoa_graph_t *graph, char *dot_fn)
-{
+int abpoa_graph_visual(abpoa_graph_t *graph, char *dot_fn) {
     if (graph->is_topological_sorted == 0) err_fatal_simple("Graph is not topologically sorted!.\n");
 
     // all settings

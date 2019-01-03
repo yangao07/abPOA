@@ -43,6 +43,39 @@ void gen_simple_mat(int m, int *mat, int match, int mismatch) {
         mat[(m - 1) * m + j] = 0;
 }
 
+abpoa_para_t *abpoa_init_para(void) {
+    abpoa_para_t *abpt = (abpoa_para_t*)_err_malloc(sizeof(abpoa_para_t));
+    abpt->align_mode = ABPOA_GLOBAL_MODE;
+    abpt->zdrop = -1;     // disable zdrop
+    abpt->end_bonus = -1; // disable end bouns
+    abpt->bw = -1;        // disable bandwidth
+    abpt->use_ada = 0;    // use adaptive band
+    abpt->ret_cigar = 1;  // return cigar
+    abpt->out_msa = 0;    // output msa
+    abpt->out_cons = 0;   // output consensus sequence in msa
+    abpt->cons_agrm = 0;   // consensus calling algorithm 
+    abpt->out_pog= 0; // generate partial order graph
+
+    // number of residue types
+    abpt->m = 5; // nucleotides
+    abpt->mat = NULL; // TODO score matrix for aa
+
+    // score matrix
+    abpt->match = ABPOA_MATCH;
+    abpt->mismatch = ABPOA_MISMATCH;
+    abpt->gap_open = ABPOA_GAP_OPEN;
+    abpt->gap_ext = ABPOA_GAP_EXT;
+
+    abpt->simd_flag = simd_check();
+
+    return abpt;
+}
+
+void abpoa_free_para(abpoa_para_t *abpt) {
+    if (abpt->mat != NULL) free(abpt->mat);
+    free(abpt);
+}
+
 // 0. init score table
 // 1. traverse graph with topological order; banded width
 // 2. backtrack and generate graph_cigar

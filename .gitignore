@@ -15,6 +15,7 @@ dot_plot/*
 *.pch
 
 # Libraries
+lib/*
 *.lib
 *.a
 *.la
@@ -29,6 +30,7 @@ dot_plot/*
 
 # Executables
 bin/*
+example
 *.exe
 *.out
 *.app
@@ -42,6 +44,8 @@ bin/*
 
 #data
 data/*
+*.dot
+*.png
 
 #tags
 tags

@@ -4,10 +4,12 @@ CFLAGS  =	-Wall -O3 -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unuse
 DFLAGS  =	-g -Wall
 LIB     =	-lm -lz -lpthread
 BIN_DIR =	./bin
+LIB_DIR =   ./lib
+INC_DIR =   ./include
 SRC_DIR =   ./src
 
 SOURCE  =	$(SRC_DIR)/abpoa.c $(SRC_DIR)/abpoa_align.c $(SRC_DIR)/abpoa_graph.c $(SRC_DIR)/simd_abpoa_align.c $(SRC_DIR)/simd_check.c $(SRC_DIR)/utils.c $(SRC_DIR)/abpoa_graph_visual.c
-HEADER  =	$(SRC_DIR)/abpoa.h $(SRC_DIR)/abpoa_align.h $(SRC_DIR)/abpoa_graph.h $(SRC_DIR)/align.h $(SRC_DIR)/abpoa_graph_visual.h $(SRC_DIR)/kdq.h $(SRC_DIR)/kseq.h $(SRC_DIR)/ksort.h $(SRC_DIR)/simd_instruction.h $(SRC_DIR)/simd_abpoa_align.h $(SRC_DIR)/utils.h
+HEADER  =	$(SRC_DIR)/abpoa.h $(SRC_DIR)/abpoa_align.h $(SRC_DIR)/abpoa_graph.h $(SRC_DIR)/align.h $(SRC_DIR)/kdq.h $(SRC_DIR)/kseq.h $(SRC_DIR)/ksort.h $(SRC_DIR)/simd_instruction.h $(SRC_DIR)/simd_abpoa_align.h $(SRC_DIR)/utils.h
 OBJS    =	$(SRC_DIR)/abpoa_align.o $(SRC_DIR)/abpoa_graph.o $(SRC_DIR)/simd_abpoa_align.o $(SRC_DIR)/simd_check.o $(SRC_DIR)/utils.o $(SRC_DIR)/abpoa_graph_visual.o
 
 # SIMD label
@@ -29,7 +31,8 @@ SIMD_FLAG       =
 		$(CC) -c $(CFLAGS) $< -o $@
 
 BIN     		= $(BIN_DIR)/abPOA
-BPOALIB         = $(SRC_DIR)/libabpoa.a
+ABPOALIB        = $(LIB_DIR)/libabpoa.a
+EXAMPLE         = example
 
 SIMD_CHECK  	= $(BIN_DIR)/simd_check
 GDB_DEBUG   	= $(BIN_DIR)/gdb_abPOA
@@ -51,27 +54,29 @@ endif
 all:		    $(BIN) 
 abPOA:     		$(BIN)
 gdb_abPOA: 		$(SOURCE) $(HEADER) $(GDB_DEBUG) 
-libabpoa:        $(BPOALIB)
-
+libabpoa:       $(ABPOALIB)
+example:        $(EXAMPLE)
 
 simd_check:$(SIMD_CHECK)
 	$(shell ~/program/abPOA/bin/simd_check > /dev/null)
 
 $(SIMD_CHECK):$(SRC_DIR)/simd_check.c $(SRC_DIR)/simd_instruction.h
 	if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi
-	$(CC) $(SIMD_CHECK_D) $(SRC_DIR)/simd_check.c -o $@
+	$(CC) $(SIMD_CHECK_D) $< -o $@
 
-$(BIN):$(SRC_DIR)/abpoa.o $(BPOALIB)
+$(BIN):$(SRC_DIR)/abpoa.o $(ABPOALIB)
 	if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi
-	$(CC) $(CFLAGS) $(SRC_DIR)/abpoa.o -o $@ -L$(SRC_DIR) -labpoa $(LIB) 
+	$(CC) $(CFLAGS) $< -o $@ -L$(LIB_DIR) -labpoa $(LIB)
 
-#TODO example.c
+$(EXAMPLE):example.c $(ABPOALIB)
+	$(CC) $(CFLAGS) $< -o $@ -I $(INC_DIR) -L $(LIB_DIR) -labpoa $(LIB)
 
-$(BPOALIB):$(OBJS)
+$(ABPOALIB):$(OBJS)
+	if [ ! -d $(LIB_DIR) ]; then mkdir $(LIB_DIR); fi
 	$(AR) -csr $@ $(OBJS)
 
 $(SRC_DIR)/abpoa.o:$(SRC_DIR)/abpoa.c $(SRC_DIR)/abpoa.h $(SRC_DIR)/abpoa_graph.h $(SRC_DIR)/abpoa_align.h \
-				  $(SRC_DIR)/abpoa_graph_visual.h $(SRC_DIR)/align.h $(SRC_DIR)/utils.h $(SRC_DIR)/simd_instruction.h
+				   $(SRC_DIR)/align.h $(SRC_DIR)/utils.h $(SRC_DIR)/simd_instruction.h
 	$(CC) -c $(CFLAGS) $(SIMD_FLAG) $< -o $@
 
 $(SRC_DIR)/simd_check.o:$(SRC_DIR)/simd_check.c $(SRC_DIR)/simd_instruction.h
@@ -85,7 +90,7 @@ $(GDB_DEBUG): $(SOURCE) $(HEADER)
 	$(CC) $(DFLAGS) $(SIMD_FLAG) $(SOURCE) $(DMARCRO) -o $@ $(LIB)
 
 clean:
-	rm -f $(SRC_DIR)/*.[oa] $(BIN) $(SIMD_CHECK)
+	rm -f $(SRC_DIR)/*.[oa] $(LIB_DIR)/*.[oa] $(BIN) $(SIMD_CHECK)
 
 clean_debug:
 	rm -f $(GDB_DEBUG)

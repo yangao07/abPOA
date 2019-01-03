@@ -5,7 +5,6 @@
 #include "abpoa.h"
 #include "abpoa_graph.h"
 #include "abpoa_align.h"
-#include "abpoa_graph_visual.h"
 #include "align.h"
 #include "simd_instruction.h"
 #include "kseq.h"
@@ -14,39 +13,6 @@
 KSEQ_INIT(gzFile, gzread)
 
 char PROG[20] = "abPOA";
-
-abpoa_para_t *abpoa_init_para(void) {
-    abpoa_para_t *abpt = (abpoa_para_t*)_err_malloc(sizeof(abpoa_para_t));
-    abpt->align_mode = ABPOA_GLOBAL_MODE;
-    abpt->zdrop = -1;     // disable zdrop
-    abpt->end_bonus = -1; // disable end bouns
-    abpt->bw = -1;        // disable bandwidth
-    abpt->use_ada = 0;    // use adaptive band
-    abpt->ret_cigar = 1;  // return cigar
-    abpt->out_msa = 0;    // output msa
-    abpt->out_cons = 0;   // output consensus sequence in msa
-    abpt->cons_agrm = 0;   // consensus calling algorithm 
-    abpt->out_pog= 0; // generate partial order graph
-
-    // number of residue types
-    abpt->m = 5; // nucleotides
-    abpt->mat = NULL; // TODO score matrix for aa
-
-    // score matrix
-    abpt->match = ABPOA_MATCH;
-    abpt->mismatch = ABPOA_MISMATCH;
-    abpt->gap_open = ABPOA_GAP_OPEN;
-    abpt->gap_ext = ABPOA_GAP_EXT;
-
-    abpt->simd_flag = simd_check();
-
-    return abpt;
-}
-
-void abpoa_free_para(abpoa_para_t *abpt) {
-    if (abpt->mat != NULL) free(abpt->mat);
-    free(abpt);
-}
 
 const struct option abpoa_long_opt [] = {
     { "align-mode", 1, NULL, 'm' },
@@ -64,6 +30,7 @@ const struct option abpoa_long_opt [] = {
 
     { 0, 0, 0, 0}
 };
+
 int abpoa_usage(void)
 {
     err_printf("\n");
@@ -80,8 +47,8 @@ int abpoa_usage(void)
     err_printf("         -x --mismatch    [INT]    mismatch penalty. [%d]\n", ABPOA_MISMATCH);
     err_printf("         -o --gap-open    [INT]    gap open penalty. [%d]\n", ABPOA_GAP_OPEN);
     err_printf("         -e --gap-ext     [INT]    gap extension penalty [%d]\n", ABPOA_GAP_EXT);
-    err_printf("         -w --bandwidth   [INT]    bandwidth used in alignment. [-1]\n");
-    err_printf("         -a --ada-band             adaptively update band during alignment. [False]\n");
+    err_printf("         -w --bandwidth   [INT]    band width used in alignment. [-1]\n");
+    err_printf("         -a --ada-band             adaptively update band width during alignment. [False]\n");
     err_printf("         -z --zdrop       [INT]    Z-drop score. [-1]\n");
     err_printf("         -e --end-bonus   [INT]    end bonus score. [-1]\n\n");
 

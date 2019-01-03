@@ -4,13 +4,6 @@
 #include <stdint.h>
 #include "simd_instruction.h"
 
-// XXX max of in_edge is pow(2,30)
-// for MATCH/MISMATCH: node_id << 34  | query_id << 4 | op
-// for INSERTION:      query_id << 34 | op_len << 4   | op
-// for DELETION:       node_id << 34  | op_len << 4   | op // op_len is always equal to 1
-// for CLIP            query_id << 34 | op_len << 4   | op 
-#define abpoa_cigar_t uint64_t 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -53,10 +46,20 @@ typedef struct {
     // int *pre_n, **pre_index; // pre_n, pre_index based on (node_n) TODO use in/out_id directly
 } abpoa_simd_matrix_t;
 
+
 typedef struct {
     abpoa_graph_t *abg;
     abpoa_simd_matrix_t *abm;
 } abpoa_t;
+
+
+// XXX max of in_edge is pow(2,30)
+// for MATCH/MISMATCH: node_id << 34  | query_id << 4 | op
+// for INSERTION:      query_id << 34 | op_len << 4   | op
+// for DELETION:       node_id << 34  | op_len << 4   | op // op_len is always equal to 1
+// for CLIP            query_id << 34 | op_len << 4   | op 
+#define abpoa_cigar_t uint64_t 
+ 
 
 // init for abpoa parameters
 abpoa_para_t *abpoa_init_para(void);

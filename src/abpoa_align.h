@@ -51,13 +51,15 @@
 #define GET_DP_BEGIN(graph, w, i, qlen) MAX_OF_TWO(0, MIN_OF_TWO(abpoa_graph_node_id_to_min_rank(graph, i), qlen - abpoa_graph_node_id_to_max_remain(graph, i))-w)
 #define GET_DP_END(graph, w, i, qlen) MIN_OF_TWO(qlen, MAX_OF_TWO(abpoa_graph_node_id_to_max_rank(graph, i), qlen - abpoa_graph_node_id_to_min_remain(graph, i))+w)
 
+#define _set_max_score(best_score, best_i, best_j, score, i, j) { \
+    if (score > best_score) {                                     \
+        best_score = score; best_i = i; best_j = j;               \
+    }                                                             \
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-void gen_simple_mat(int m, int *mat, int match, int mismatch);
-//abpoa_graph_cigar_t *abpoa_init_graph_cigar(int n);
-//void abpoa_free_graph_cigar(abpoa_graph_cigar_t *abpoa_cigar, int n);
 
 // TODO splice mode
 /* banded global partial order graph alignment */
@@ -65,7 +67,6 @@ int abpoa_banded_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t 
 
 /* Adaptive banded global partial order graph alignment */
 int ada_abpoa_banded_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *query, int qlen, abpoa_para_t *abpt, int *n_cigar, abpoa_cigar_t **graph_cigar);
-
 
 /* Banded global partial order graph alignment */
 int abpoa_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *query, int qlen, abpoa_para_t *abpt, int *n_cigar, abpoa_cigar_t **graph_cigar);
@@ -188,12 +189,6 @@ static inline void abpoa_backtrack(int *DP_H, int *DP_E, int matrix_col_n, int8_
         abpoa_print_cigar(n_c, *graph_cigar, graph);
 #endif
     }
-}
-
-#define _set_max_score(best_score, best_i, best_j, score, i, j) { \
-    if (score > best_score) {                                     \
-        best_score = score; best_i = i; best_j = j;               \
-    }                                                             \
 }
 
 #ifdef __cplusplus
