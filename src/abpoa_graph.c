@@ -320,7 +320,7 @@ int abpoa_generate_consensus(abpoa_graph_t *graph, uint8_t cons_agrm, FILE *out_
     free(out_degree);
     // backtrack to generate consensu sequence
     abpoa_generate_consensus_core(graph, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID);
-    fprintf(out_fp, "Consensus sequence:\n");
+    fprintf(out_fp, ">Consensus_sequence\n");
     for (i = 0; i < graph->cons_l; ++i) {
         fprintf(out_fp, "%c", "ACGTN"[graph->cons_seq[i]]);
     } fprintf(out_fp, "\n");
@@ -397,7 +397,7 @@ int abpoa_generate_multiple_sequence_alingment(abpoa_graph_t *graph, int **seq_n
         msa_seq[i][j] = '\0';
     }
 
-    fprintf(out_fp, "Multiple sequence alignment:\n");
+    fprintf(out_fp, ">Multiple_sequence_alignment\n");
     for (i = 0; i < seq_n; ++i) {
         for (j = 0; j < seq_node_ids_l[i]; ++j) {
             cur_id = seq_node_ids[i][j];
