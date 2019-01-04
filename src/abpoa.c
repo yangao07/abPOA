@@ -174,8 +174,13 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
         tot_n += n_seqs;    \
     }   \
     /* generate consensus from graph */ \
-    if (abpt->out_cons && ab->abg->node_n > 2)     \
-        abpoa_generate_consensus(ab->abg, abpt->cons_agrm, stdout); \
+    if (abpt->out_cons && ab->abg->node_n > 2) {   \
+        abpoa_generate_consensus(ab->abg, abpt->cons_agrm); \
+        fprintf(stdout, ">Consensus_sequence\n");   \
+        for (i = 0; i < ab->abg->cons_l; ++i) {   \
+            fprintf(stdout, "%c", "ACGTN"[ab->abg->cons_seq[i]]); \
+        } fprintf(stdout, "\n");\
+    }   \
     /* generate multiple sequence alignment */  \
     if (abpt->out_msa &&  ab->abg->node_n > 2)  \
         abpoa_generate_multiple_sequence_alingment(ab->abg, seq_node_ids, seq_node_ids_l, tot_n, abpt->out_cons, stdout);   \

@@ -77,7 +77,7 @@ int abpoa_align_sequence_with_graph(abpoa_t *ab, uint8_t *query, int qlen, abpoa
 int abpoa_add_graph_alignment(abpoa_graph_t *graph, abpoa_para_t *abpt, uint8_t *query, int qlen, int n_cigar, abpoa_cigar_t *abpoa_cigar, int *seq_node_ids, int *seq_node_ids_l);
 
 // generate consensus sequence from graph
-int abpoa_generate_consensus(abpoa_graph_t *graph, uint8_t cons_agrm, FILE *out_fp);
+int abpoa_generate_consensus(abpoa_graph_t *graph, uint8_t cons_agrm);
 // generate column multiple sequence alignment from graph
 int abpoa_generate_multiple_sequence_alingment(abpoa_graph_t *graph, int **seq_node_ids, int *seq_node_ids_l, int seq_n, int output_consensu, FILE *out_fp);
 

@@ -233,9 +233,9 @@ int main(void) {
     char msg[100], i;
     fprintf(stderr, "\n");
     sprintf(msg, "==== %s will be used. ====", simd_label[t]);
-    for (i = 0; i < strlen(msg); ++i) fprintf(stderr, "="); fprintf(stderr, "\n");
+    for (i = 0; msg[i]; ++i) fprintf(stderr, "="); fprintf(stderr, "\n");
     fprintf(stderr, "%s\n",msg);
-    for (i = 0; i < strlen(msg); ++i) fprintf(stderr, "="); fprintf(stderr, "\n");
+    for (i = 0; msg[i]; ++i) fprintf(stderr, "="); fprintf(stderr, "\n");
     fprintf(stderr, "\n");
     return simd_flag;
 }

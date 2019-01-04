@@ -308,7 +308,7 @@ void abpoa_generate_consensus_core(abpoa_graph_t *graph, int src_id, int sink_id
 }
 
 // should always topological sort first, then generate consensus
-int abpoa_generate_consensus(abpoa_graph_t *graph, uint8_t cons_agrm, FILE *out_fp) {
+int abpoa_generate_consensus(abpoa_graph_t *graph, uint8_t cons_agrm) {
     int i, *out_degree = (int*)_err_malloc(graph->node_n * sizeof(int));
     for (i = 0; i < graph->node_n; ++i) {
         out_degree[i] = graph->node[i].out_edge_n;
@@ -320,10 +320,12 @@ int abpoa_generate_consensus(abpoa_graph_t *graph, uint8_t cons_agrm, FILE *out_
     free(out_degree);
     // backtrack to generate consensu sequence
     abpoa_generate_consensus_core(graph, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID);
+    /* 
     fprintf(out_fp, ">Consensus_sequence\n");
     for (i = 0; i < graph->cons_l; ++i) {
         fprintf(out_fp, "%c", "ACGTN"[graph->cons_seq[i]]);
     } fprintf(out_fp, "\n");
+    */
     graph->is_called_cons = 1;
     return graph->cons_l;
 }

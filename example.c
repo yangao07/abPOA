@@ -58,7 +58,7 @@ int main(void) {
 
     for (i = 0; i < seq_n; ++i) {
         char *seq1 = seqs[i]; int seq_len = strlen(seq1);
-        uint8_t *bseq = (uint8_t*)malloc(strlen(seq1) * sizeof(uint8_t));
+        uint8_t *bseq = (uint8_t*)malloc(seq_len * sizeof(uint8_t));
         for (j = 0; j < seq_len; ++j) bseq[j] = nst_nt4_table[(int)seq1[j]];
 
         seq_node_ids[i] = (int*)malloc(seq_len * sizeof(int));
@@ -73,8 +73,13 @@ int main(void) {
         if (n_cigar) free(abpoa_cigar);
     }
     /* generate consensus sequence from graph */
-    if (abpt->out_cons && ab->abg->node_n > 2)
-        abpoa_generate_consensus(ab->abg, abpt->cons_agrm, stdout);
+    if (abpt->out_cons && ab->abg->node_n > 2) {
+        abpoa_generate_consensus(ab->abg, abpt->cons_agrm);
+        fprintf(stdout, ">Consensus_sequence\n");
+        for (i = 0; i < ab->abg->cons_l; ++i) {
+            fprintf(stdout, "%c", "ACGTN"[ab->abg->cons_seq[i]]);
+        } fprintf(stdout, "\n");
+    }
 
     /* generate multiple sequence alignment */
     if (abpt->out_msa &&  ab->abg->node_n > 2)
