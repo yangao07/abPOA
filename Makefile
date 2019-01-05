@@ -58,7 +58,7 @@ libabpoa:       $(ABPOALIB)
 example:        $(EXAMPLE)
 
 simd_check:$(SIMD_CHECK)
-	$(shell ~/program/abPOA/bin/simd_check > /dev/null)
+	$(shell ./bin/simd_check > /dev/null)
 
 $(SIMD_CHECK):$(SRC_DIR)/simd_check.c $(SRC_DIR)/simd_instruction.h
 	if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi
