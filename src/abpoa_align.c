@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include "abpoa_align.h"
 #include "abpoa.h"
 #include "utils.h"
@@ -89,7 +90,7 @@ int abpoa_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *query,
     //                                 h<<62|h_id<<33|e<<31|e_i<<2|f
     //                                 h_id/e_i: 29 bit XXX cause error when in_edge_n >= pow(2,29)
     //                                 MATCH:0, DELETION:1, INSERTION:2, MISMATCH:3
-    int best_score = INF_32_MIN, best_i=0, best_j=0;
+    int best_score = INT32_MIN, best_i=0, best_j=0;
 
     // allocate memory 
     matrix_row_n = target_node_n + 1, matrix_col_n = qlen + 1;
@@ -105,14 +106,14 @@ int abpoa_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *query,
         for (j = 0; j < qlen; ++j) qp[i++] = p[query[j]];
     }
     // fill the first row
-    dp_matrix[0].h = 0; dp_matrix[0].e = INF_32_MIN; // f is useless
+    dp_matrix[0].h = 0; dp_matrix[0].e = INT32_MIN; // f is useless
     for (j = 1; j < matrix_col_n && j <= w; ++j) 
-        dp_matrix[j].h = dp_matrix[j].f = -(gap_o + gap_e * j), dp_matrix[j].e = INF_32_MIN;
-    for (; j < matrix_col_n; ++j) dp_matrix[j].h = dp_matrix[j].e = INF_32_MIN; // everything outside the band is -INF
+        dp_matrix[j].h = dp_matrix[j].f = -(gap_o + gap_e * j), dp_matrix[j].e = INT32_MIN;
+    for (; j < matrix_col_n; ++j) dp_matrix[j].h = dp_matrix[j].e = INT32_MIN; // everything outside the band is -INF
     // DP loop
     for (i = 1; i <= target_node_n; ++i) { // target graph is in the outer loop
         node_id = abpoa_graph_index_to_node_id(graph, i); // i: node index, node_i: node id
-        int32_t f = INF_32_MIN, beg, beg_, end;
+        int32_t f = INT32_MIN, beg, beg_, end;
         int *q = &qp[graph->node[node_id].base * qlen];
         beg = i > w ? i - w : 0; // set band boundary FIXME for multi-in node
         end = i + w + 1 < qlen + 1 ? i + w + 1: qlen + 1; // only loop through [beg,end) of the query sequence 
@@ -133,7 +134,7 @@ int abpoa_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *query,
                 int min_rank = abpoa_graph_node_id_to_min_rank(graph, node_id);
                 cur_matrix[beg].h = -(gap_o + gap_e * min_rank);
                 cur_matrix[beg].e = -(gap_o + gap_e * min_rank);
-                cur_matrix[beg].f = INF_32_MIN;
+                cur_matrix[beg].f = INT32_MIN;
                 beg_ = 1;
             } else beg_ = beg;
             for (j = beg_; j < end; ++j) {
@@ -203,7 +204,7 @@ int abpoa_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *query,
             }
             // fill the last column for next row
             if (end <= qlen) {
-                cur_matrix[end].e = INF_32_MIN;
+                cur_matrix[end].e = INT32_MIN;
                 cur_matrix[end].h = cur_matrix[end].f = MAX_OF_TWO(cur_matrix[end-1].e, cur_matrix[end-1].h) - gap_e;
             }
         } else { // only compute score
@@ -212,7 +213,7 @@ int abpoa_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *query,
             if (beg == 0) {
                 cur_matrix[beg].h = -(gap_o + gap_e * i);
                 cur_matrix[beg].e = -(gap_o + gap_e * i);
-                cur_matrix[beg].f = INF_32_MIN;
+                cur_matrix[beg].f = INT32_MIN;
                 beg_ = 1;
             } else beg_ = beg;
             for (j = beg_; j < end; ++j) {
@@ -237,7 +238,7 @@ int abpoa_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *query,
             }
             // fill the last column for next row
             if (end <= qlen) {
-                cur_matrix[end].e = INF_32_MIN;
+                cur_matrix[end].e = INT32_MIN;
                 cur_matrix[end].h = cur_matrix[end].f = MAX_OF_TWO(cur_matrix[end-1].e, cur_matrix[end-1].h) - gap_e;
             }
         }
@@ -316,7 +317,7 @@ int abpoa_ada_extend_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *qu
     //                                 h<<62|h_id<<33|e<<31|e_i<<2|f
     //                                 h_id/e_i: 29 bit XXX cause error when in_edge_n >= pow(2,29)
     //                                 MATCH:0, DELETION:1, INSERTION:2, MISMATCH:3
-    int best_score = INF_32_MIN, best_i=0, best_j=0;
+    int best_score = INT32_MIN, best_i=0, best_j=0;
 
     // allocate memory 
     dp_matrix = (dp_matrix_t*)_err_calloc(matrix_row_n * matrix_col_n, sizeof(dp_matrix_t)); // make sure no invalid write 
@@ -365,7 +366,7 @@ int abpoa_ada_extend_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *qu
     cur_line->todo_map = HAS_MX; 
     for (i = 1; i <= w; ++i) {
         cur_dp = cur_line + i;
-        cur_dp->e = INF_32_MIN; cur_dp->h = -gap_o - gap_e * i; cur_dp->f = cur_dp->h - gap_e;
+        cur_dp->e = INT32_MIN; cur_dp->h = -gap_o - gap_e * i; cur_dp->f = cur_dp->h - gap_e;
         cur_dp->fl = i+1; cur_dp->el = cur_dp->xl = 0; 
         cur_dp->todo_map = HAS_MX; 
     }
@@ -397,13 +398,13 @@ int abpoa_ada_extend_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *qu
         if (beg == 0) {
             cur_line[0].h = -(gap_o + gap_e * min_rank);
             cur_line[0].e = -(gap_o + gap_e * (min_rank+1));
-            cur_line[0].f = INF_32_MIN;
+            cur_line[0].f = INT32_MIN;
             _beg = 1;
         } else _beg = beg;
         for (q_i = _beg; q_i <= end; ++q_i) {
             if (!cur_line[q_i].todo_map) continue;
             cur_dp = cur_line + q_i;
-            m = e = f = INF_32_MIN;
+            m = e = f = INT32_MIN;
             m_i = e_i = -1;
             z = &backtrack_z[(index_i-1) * qlen];
 
@@ -584,7 +585,7 @@ int abpoa_ada_extend_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *qu
     //                                 h<<62|h_id<<33|e<<31|e_i<<2|f
     //                                 h_id/e_i: 29 bit XXX cause error when in_edge_n >= pow(2,29)
     //                                 MATCH:0, DELETION:1, INSERTION:2, MISMATCH:3
-    int best_score = INF_32_MIN, best_i=0, best_j=0;
+    int best_score = INT32_MIN, best_i=0, best_j=0;
 
     // allocate memory 
     DP_H = (int*)_err_malloc(matrix_row_n * matrix_col_n * sizeof(int));
@@ -643,7 +644,7 @@ int abpoa_ada_extend_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *qu
     dp_h = DP_H; dp_e = DP_E;
     dp_h[0] = 0; dp_e[0] = -gap_oe;
     for (i = 1; i <= dp_end[0]; ++i) {
-        dp_e[i] = INF_32_MIN; dp_h[i] = -gap_o - gap_e * i;
+        dp_e[i] = INT32_MIN; dp_h[i] = -gap_o - gap_e * i;
     }
 
     // DP loop
@@ -666,7 +667,7 @@ int abpoa_ada_extend_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *qu
         beg = dp_beg[index_i]; end = dp_end[index_i];
         // init h, e
         for (q_i = beg; q_i <= end; ++q_i) {
-            dp_h[q_i] = dp_e[q_i] = INF_32_MIN;
+            dp_h[q_i] = dp_e[q_i] = INT32_MIN;
         } 
         
         for (i = 0; i < pre_n[index_i]; ++i) {
@@ -698,7 +699,7 @@ int abpoa_ada_extend_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *qu
         }
 
         // set F from (index_i, q_i-1)
-        dp_f[beg] = INF_32_MIN;
+        dp_f[beg] = INT32_MIN;
         for (q_i = beg+1; q_i <= end; ++q_i) { // XXX no SIMD parallelization
             dp_f[q_i] = MAX_OF_TWO(dp_h[q_i-1] - gap_oe, dp_f[q_i-1] - gap_e);
             // fd = h - oe > f - e ? 0 : f2
@@ -1140,7 +1141,7 @@ int ada_abpoa_banded_global_align_sequence_with_graph(abpoa_graph_t *graph, uint
             // XXX need hd here
             { // set current rank, set min/max rank for next nodes
                 // select max dp_h
-                int max = INF_32_MIN, max_i = -1;
+                int max = INT32_MIN, max_i = -1;
                 for (q_i = beg; q_i <= end; ++q_i) { // beg >= 1
                     if (dp_h[q_i] > max) {
                         max_i = q_i;

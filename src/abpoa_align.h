@@ -34,15 +34,6 @@
 #define EOP_OFF_SET   2
 #define FOP_OFF_SET   4
 
-#define INF_8_MIN  -0x80
-#define INF_8_MAX  0x7f
-#define INF_16_MIN -0x8000
-#define INF_16_MAX 0x7fff
-#define INF_32_MIN -0x80000000
-#define INF_32_MAX 0x7fffffff
-#define INF_64_MIN -0x8000000000000000
-#define INF_64_MAX 0x7fffffffffffffff
-
 // calculate band range for each row:
 // have: min_rank, max_rank, min_remain, max_remain
 // then: min_len = min_rank + min_remain, max_len = min_rank + max_remain

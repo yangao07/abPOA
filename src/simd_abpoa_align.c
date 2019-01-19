@@ -1129,15 +1129,15 @@ int simd_abpoa_align_sequence_with_graph(abpoa_t *ab, uint8_t *query, int qlen, 
     }
     int bits = 0;
     if (max_score <= 127 - abpt->mismatch - abpt->gap_open - abpt->gap_ext) { // DP_H/E/F: 8  bits
-        _simd_p8.inf_min = MAX_OF_TWO(INF_8_MIN + abpt->mismatch, INF_8_MIN + abpt->gap_open + abpt->gap_ext);
+        _simd_p8.inf_min = MAX_OF_TWO(INT8_MIN + abpt->mismatch, INT8_MIN + abpt->gap_open + abpt->gap_ext);
         simd_abpoa_realloc(ab, qlen, abpt, _simd_p8);
         bits = 8;
     } else if (max_score <= 32767 - abpt->mismatch - abpt->gap_open - abpt->gap_ext) { // DP_H/E/F: 16 bits
-        _simd_p16.inf_min = MAX_OF_TWO(INF_16_MIN + abpt->mismatch, INF_16_MIN + abpt->gap_open + abpt->gap_ext);
+        _simd_p16.inf_min = MAX_OF_TWO(INT16_MIN + abpt->mismatch, INT16_MIN + abpt->gap_open + abpt->gap_ext);
         simd_abpoa_realloc(ab, qlen, abpt, _simd_p16);
         bits = 16;
     } else { 
-        _simd_p32.inf_min = MAX_OF_TWO(INF_32_MIN + abpt->mismatch, INF_32_MIN + abpt->gap_open + abpt->gap_ext);
+        _simd_p32.inf_min = MAX_OF_TWO(INT32_MIN + abpt->mismatch, INT32_MIN + abpt->gap_open + abpt->gap_ext);
         simd_abpoa_realloc(ab, qlen, abpt, _simd_p32);
         bits = 32;
     }

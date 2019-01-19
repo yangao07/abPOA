@@ -215,9 +215,9 @@ void abpoa_traverse_min_flow(abpoa_graph_t *graph,  int src_id, int sink_id, int
         cur_id = *id;
         if (cur_id == sink_id) {
             graph->node[sink_id].heavest_out_id = -1;
-            graph->node[sink_id].heavest_weight = INF_32_MAX;
+            graph->node[sink_id].heavest_weight = INT32_MAX;
         } else {
-            max_w = INF_32_MIN, max_id = -1, max_out_i = -1, min_w = INF_32_MAX;
+            max_w = INT32_MIN, max_id = -1, max_out_i = -1, min_w = INT32_MAX;
             for (i = 0; i < graph->node[cur_id].out_edge_n; ++i) {
                 out_id = graph->node[cur_id].out_id[i];
                 min_w = MIN_OF_TWO(graph->node[out_id].heavest_weight, graph->node[cur_id].out_weight[i]);
@@ -259,9 +259,9 @@ void abpoa_heaviest_bundling(abpoa_graph_t *graph,  int src_id, int sink_id, int
         cur_id = *id;
         if (cur_id == sink_id) {
             graph->node[sink_id].heavest_out_id = -1;
-            graph->node[sink_id].heavest_weight = INF_32_MAX;
+            graph->node[sink_id].heavest_weight = INT32_MAX;
         } else {
-            max_w = INF_32_MIN, max_id = -1, max_out_i = -1, min_w = INF_32_MAX;
+            max_w = INT32_MIN, max_id = -1, max_out_i = -1, min_w = INT32_MAX;
             for (i = 0; i < graph->node[cur_id].out_edge_n; ++i) {
                 out_id = graph->node[cur_id].out_id[i];
                 min_w = MIN_OF_TWO(graph->node[out_id].heavest_weight, graph->node[cur_id].out_weight[i]);

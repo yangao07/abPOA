@@ -574,7 +574,7 @@ int simd16_abpoa_ag_global_align_sequence_with_graph_core(abpoa_graph_t *graph, 
             if (abpt->bw >= 0 && abpt->use_ada) { // set current rank, set min/max rank for next nodes
                 // select max dp_h
                 _dp_h = (int16_t*)dp_h;
-                int max = INF_16_MIN, max_i = -1;
+                int max = INT16_MIN, max_i = -1;
                 for (i = beg; i <= end; ++i) {
                     if (_dp_h[i] > max) {
                         max = _dp_h[i];
@@ -821,7 +821,7 @@ int simd16_abpoa_ag_global_align_sequence_with_graph_core(abpoa_graph_t *graph, 
             if (abpt->use_ada) { // set current rank, set min/max rank for next nodes
                 // select max dp_h
                 _dp_h = (int16_t*)dp_h;
-                int max = INF_16_MIN, max_i = -1;
+                int max = INT16_MIN, max_i = -1;
                 for (i = beg; i <= end; ++i) {
                     if (_dp_h[i] > max) {
                         max = _dp_h[i];
@@ -1016,7 +1016,7 @@ void simd_rank(abpoa_graph_t *graph, int node_id) {
 
 void simd_max(SIMDi *dp_h, SIMDi *qi, int qlen, int pn, int beg, int beg_sn, int end, int end_sn, int *max_i, int *max, SIMDi zero, SIMDi min_inf) {
     int i; int16_t *_dp_h, *_qi;
-    SIMDi a,b; *max = INF_16_MIN, *max_i = -1;
+    SIMDi a,b; *max = INT16_MIN, *max_i = -1;
     /*int _beg = (beg_sn+1) * pn, _end = (end_sn-1) * pn;
     if (end_sn > beg_sn + 1) {
         a = dp_h[beg_sn+1];
@@ -1044,7 +1044,7 @@ void simd_max(SIMDi *dp_h, SIMDi *qi, int qlen, int pn, int beg, int beg_sn, int
             *max_i = i;
         }
     }
-    *max = INF_16_MIN;
+    *max = INT16_MIN;
     _dp_h = (int16_t*)dp_h;
     for (i = beg; i <= end; ++i) {
         if (_dp_h[i] > *max) {
@@ -1452,7 +1452,7 @@ int simd16_abpoa_ag_extend_align_sequence_with_graph_core(abpoa_graph_t *graph, 
             }
             _dp_h = (int16_t*)dp_h;
             // select max dp_h
-            int max = INF_16_MIN, max_i = -1;
+            int max = INT16_MIN, max_i = -1;
             for (i = beg; i <= end; ++i) {
                 if (_dp_h[i] > max) {
                     max = _dp_h[i];
@@ -1675,7 +1675,7 @@ int simd16_abpoa_lg_extend_align_sequence_with_graph_core(abpoa_graph_t *graph, 
             }
             // select max dp_h
             _dp_h = (int16_t*)dp_h;
-            int max = INF_16_MIN, max_i = -1;
+            int max = INT16_MIN, max_i = -1;
             for (i = beg; i <= end; ++i) {
                 if (_dp_h[i] > max) {
                     max = _dp_h[i];
@@ -2196,7 +2196,7 @@ int simd16_abpoa_lg_local_align_sequence_with_graph_core(abpoa_graph_t *graph, u
             }
             // select max dp_h
             _dp_h = (int16_t*)dp_h;
-            int max = INF_16_MIN, max_i = -1;
+            int max = INT16_MIN, max_i = -1;
             for (i = beg; i <= end; ++i) {
                 if (_dp_h[i] > max) {
                     max = _dp_h[i];
@@ -2293,12 +2293,12 @@ int simd_abpoa_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *query, i
     }
     int _best_score=0;
     if (max_score <= 127 - abpt->mismatch - abpt->gap_open - abpt->gap_ext) { // DP_H/E/F: 8  bits
-        _simd_p8.inf_min = MAX_OF_TWO(INF_8_MIN + abpt->mismatch, INF_8_MIN + abpt->gap_open + abpt->gap_ext);
+        _simd_p8.inf_min = MAX_OF_TWO(INT8_MIN + abpt->mismatch, INT8_MIN + abpt->gap_open + abpt->gap_ext);
         //simd_abpoa_banded_global_align_sequence_with_graph_core(graph, query, qlen, abpt, n_cigar, graph_cigar, _simd_p8, int8_t, SIMDSetOnei8, SIMDMaxi8, SIMDAddi8, SIMDSubi8, SIMDShiftOneNi8, SIMDSetIfGreateri8, SIMDGetIfGreateri8, SIMDSetIfEquali8, _best_score);
         return _best_score;
         //return simd8_abpoa_banded_global_align_sequence_with_graph_core(graph, query, qlen, abpt, n_cigar, graph_cigar, _simd_p8);
     } else if (max_score <= 32767 - abpt->mismatch - abpt->gap_open - abpt->gap_ext) { // DP_H/E/F: 16 bits
-        _simd_p16.inf_min = MAX_OF_TWO(INF_16_MIN + abpt->mismatch, INF_16_MIN + abpt->gap_open + abpt->gap_ext);
+        _simd_p16.inf_min = MAX_OF_TWO(INT16_MIN + abpt->mismatch, INT16_MIN + abpt->gap_open + abpt->gap_ext);
         //simd_abpoa_banded_global_align_sequence_with_graph_core(graph, query, qlen, abpt, n_cigar, graph_cigar, _simd_p16, int16_t, SIMDSetOnei16, SIMDMaxi16, SIMDAddi16, SIMDSubi16, SIMDShiftOneNi16, SIMDSetIfGreateri16, SIMDGetIfGreateri16, SIMDSetIfEquali16, _best_score);
         //return _best_score;
         if (abpt->gap_open > 0) return simd16_abpoa_ag_global_align_sequence_with_graph_core(graph, query, qlen, abpt, n_cigar, graph_cigar, _simd_p16);
@@ -2307,7 +2307,7 @@ int simd_abpoa_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *query, i
         //return simd16_abpoa_local_align_sequence_with_graph_core(graph, query, qlen, abpt, n_cigar, graph_cigar, _simd_p16);
         //return simd16_abpoa_semi_align_sequence_with_graph_core(graph, query, qlen, abpt, n_cigar, graph_cigar, _simd_p16);
     } else { // 2147483647, DP_H/E/F: 32 bits
-        _simd_p32.inf_min = MAX_OF_TWO(INF_32_MIN + abpt->mismatch, INF_32_MIN + abpt->gap_open + abpt->gap_ext);
+        _simd_p32.inf_min = MAX_OF_TWO(INT32_MIN + abpt->mismatch, INT32_MIN + abpt->gap_open + abpt->gap_ext);
         //simd_abpoa_banded_global_align_sequence_with_graph_core(graph, query, qlen, abpt, n_cigar, graph_cigar, _simd_p32, int32_t, SIMDSetOnei32, SIMDMaxi32, SIMDAddi32, SIMDSubi32, SIMDShiftOneNi32, SIMDSetIfGreateri32, SIMDGetIfGreateri32, SIMDSetIfEquali32, _best_score);
         return _best_score;
         //return simd32_abpoa_banded_global_align_sequence_with_graph_core(graph, query, qlen, abpt, n_cigar, graph_cigar, _simd_p32);
