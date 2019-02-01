@@ -190,7 +190,7 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
 int abpoa_main(const char *list_fn, int in_list, abpoa_para_t *abpt){
     kseq_t *read_seq = (kseq_t*)calloc(CHUNK_READ_N, sizeof(kseq_t));
     int bseq_m = 1000; uint8_t *bseq = (uint8_t*)_err_malloc(bseq_m * sizeof(uint8_t));
-    int nseqs_m, *seq_m, *seq_node_ids_l, **seq_node_ids; // for msa
+    int nseqs_m, *seq_m=NULL, *seq_node_ids_l=NULL, **seq_node_ids=NULL; // for msa
     int i, j, n_seqs, tot_n;
     if (abpt->out_msa) {
         nseqs_m = CHUNK_READ_N;

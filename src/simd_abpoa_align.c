@@ -87,11 +87,11 @@ SIMD_para_t _simd_p64 = {128, 64,  2, 16, -1};
  * (3.3) if max > 0 && use_ada, update min/max_rank
  */
 
-#define simd_abpoa_ag_backtrack(score_t, DP_HE, dp_sn, match, mis, gap_e, pre_index, pre_n, backtrack_z, d_sn,                 \
+#define simd_abpoa_ag_backtrack(score_t, DP_HE, dp_sn, m, mat, gap_e, pre_index, pre_n, backtrack_z, d_sn,                 \
         start_i, start_j, best_i, best_j, qlen, graph, query, n_cigar, graph_cigar) {                                       \
     int i, j, k, pre_i;                                                                                                     \
     SIMDi *dp_h, *pre_dp_h, *dp_e, *pre_dp_e, *bz;                                                                          \
-    score_t *_dp_h, *_pre_dp_h, *_dp_e, *_pre_dp_e;                                                                         \
+    score_t *_dp_h=NULL, *_pre_dp_h, *_dp_e, *_pre_dp_e;                                                                         \
     int n_c = 0, s, m_c = 0, id, which, last_which;                                                                         \
     int op_shift[3] = {HOP_OFF_SET, EOP_OFF_SET, FOP_OFF_SET};                                                              \
     score_t d, *_bz; abpoa_cigar_t *cigar = 0;                                                                              \
@@ -105,7 +105,7 @@ SIMD_para_t _simd_p64 = {128, 64,  2, 16, -1};
         which = (d >> op_shift[last_which]) & 3;                                                                            \
         if (which == 0) { /* match */                                                                                       \
             cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CMATCH, 1, id, j-1);                                            \
-            s = graph->node[id].base == query[j-1] ? match : -mis;                                                          \
+            s = mat[m * graph->node[id].base + query[j-1]];                                                          \
                                                                                                                             \
             for (k = 0; k < pre_n[i]; ++k) {                                                                                \
                 pre_i = pre_index[i][k];                                                                                    \
@@ -158,10 +158,10 @@ SIMD_para_t _simd_p64 = {128, 64,  2, 16, -1};
     /*abpoa_print_cigar(n_c, *graph_cigar, graph);*/                                                                        \
 }
 
-#define simd_abpoa_lg_backtrack(score_t, DP_H, dp_sn, match, mis, gap_e, pre_index, pre_n,                                  \
+#define simd_abpoa_lg_backtrack(score_t, DP_H, dp_sn, m, mat, gap_e, pre_index, pre_n,                                  \
         start_i, start_j, best_i, best_j, qlen, graph, query, n_cigar, graph_cigar) {                                       \
     int i, j, k, pre_i;                                                                                                     \
-    SIMDi *dp_h, *pre_dp_h; score_t *_dp_h, *_pre_dp_h;                                                                     \
+    SIMDi *dp_h, *pre_dp_h; score_t *_dp_h=NULL, *_pre_dp_h;                                                                     \
     int n_c = 0, s, m_c = 0, hit, id;                                                                                       \
     abpoa_cigar_t *cigar = 0;                                                                                               \
                                                                                                                             \
@@ -169,7 +169,7 @@ SIMD_para_t _simd_p64 = {128, 64,  2, 16, -1};
     if (best_j < qlen) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CSOFT_CLIP, qlen-j, -1, qlen-1);                     \
     while (i > start_i && j > start_j) {                                                                                    \
         hit = 0;                                                                                                            \
-        s = graph->node[id].base == query[j-1] ? match : -mis;                                                              \
+        s = mat[m * graph->node[id].base + query[j-1]];                                                          \
         for (k = 0; k < pre_n[i]; ++k) {                                                                                    \
             pre_i = pre_index[i][k];                                                                                        \
             dp_h = DP_H + i * dp_sn; pre_dp_h = DP_H + pre_i * dp_sn;                                                       \
@@ -203,11 +203,11 @@ SIMD_para_t _simd_p64 = {128, 64,  2, 16, -1};
     /*abpoa_print_cigar(n_c, *graph_cigar, graph);*/                                                                        \
 }
 
-#define simd_abpoa_ag_local_backtrack(score_t, DP_HE, dp_sn, match, mis, gap_e, pre_index, pre_n, backtrack_z, d_sn,        \
+#define simd_abpoa_ag_local_backtrack(score_t, DP_HE, dp_sn, m, mat, gap_e, pre_index, pre_n, backtrack_z, d_sn,        \
         start_i, start_j, best_i, best_j, qlen, graph, query, n_cigar, graph_cigar) {                                       \
     int i, j, k, pre_i;                                                                                                     \
     SIMDi *dp_h, *pre_dp_h, *dp_e, *pre_dp_e, *bz;                                                                          \
-    score_t *_dp_h, *_pre_dp_h, *_dp_e, *_pre_dp_e;                                                                         \
+    score_t *_dp_h=NULL, *_pre_dp_h, *_dp_e, *_pre_dp_e;                                                                         \
     int n_c = 0, s, m_c = 0, id, which, last_which;                                                                         \
     int op_shift[3] = {HOP_OFF_SET, EOP_OFF_SET, FOP_OFF_SET};                                                              \
     score_t d, *_bz; abpoa_cigar_t *cigar = 0;                                                                              \
@@ -223,8 +223,7 @@ SIMD_para_t _simd_p64 = {128, 64,  2, 16, -1};
         which = (d >> op_shift[last_which]) & 3;                                                                            \
         if (which == 0) { /* match */                                                                                       \
             cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CMATCH, 1, id, j-1);                                            \
-            s = graph->node[id].base == query[j-1] ? match : -mis;                                                          \
-                                                                                                                            \
+            s = mat[m * graph->node[id].base + query[j-1]];                                                          \
             for (k = 0; k < pre_n[i]; ++k) {                                                                                \
                 pre_i = pre_index[i][k];                                                                                    \
                 pre_dp_h = DP_HE + pre_i * 2 * dp_sn;                                                                       \
@@ -276,10 +275,10 @@ SIMD_para_t _simd_p64 = {128, 64,  2, 16, -1};
     abpoa_print_cigar(n_c, *graph_cigar, graph);                                                                            \
 }
 
-#define simd_abpoa_lg_local_backtrack(score_t, DP_H, dp_sn, match, mis, gap_e, pre_index, pre_n,                            \
+#define simd_abpoa_lg_local_backtrack(score_t, DP_H, dp_sn, m, mat, gap_e, pre_index, pre_n,                            \
         start_i, start_j, best_i, best_j, qlen, graph, query, n_cigar, graph_cigar) {                                       \
     int i, j, k, pre_i;                                                                                                     \
-    SIMDi *dp_h, *pre_dp_h; score_t *_dp_h, *_pre_dp_h;                                                                     \
+    SIMDi *dp_h, *pre_dp_h; score_t *_dp_h=NULL, *_pre_dp_h;                                                                     \
     int n_c = 0, s, m_c = 0, hit, id;                                                                                       \
     abpoa_cigar_t *cigar = 0;                                                                                               \
                                                                                                                             \
@@ -288,7 +287,7 @@ SIMD_para_t _simd_p64 = {128, 64,  2, 16, -1};
     while (1) {                                                                                                             \
         dp_h = DP_H + i * dp_sn; _dp_h = (score_t*)dp_h;                                                                    \
         if (_dp_h[j] == 0) break;                                                                                           \
-        s = graph->node[id].base == query[j-1] ? match : -mis;                                                              \
+        s = mat[m * graph->node[id].base + query[j-1]];                                                          \
         hit = 0;                                                                                                            \
         for (k = 0; k < pre_n[i]; ++k) {                                                                                    \
             pre_i = pre_index[i][k];                                                                                        \
@@ -331,12 +330,12 @@ SIMD_para_t _simd_p64 = {128, 64,  2, 16, -1};
     int pn , qp_sn,d_sn, dp_sn, size; /* pn: value per SIMDi, qp_sn/dp_sn/d_sn: segmented length*/  \
     int beg, end, beg_sn, end_sn, _beg_sn, _end_sn, pre_beg_sn, pre_beg, pre_end, pre_end_sn, sn_i; \
     \
-    SIMDi *qp, *qi;                                                        \
+    SIMDi *qp, *qi=NULL;                                                        \
     SIMDi *DP_HE, *dp_h, *pre_dp_h, *dp_e, *pre_dp_e, *dp_f, tmp_e;                                 \
-    SIMDi *backtrack_z, *z; /* backtrack cell: f<<4|e<<2|h, MATCH:0, DELETION:1, INSERTION:2 */     \
-    SIMDi *hd, fd, ed, hm, he, hf, ee, em, ff, fm; uint8_t m0=0x0, e1=0x1, f2=0x2;                  \
+    SIMDi *backtrack_z=NULL, *z; /* backtrack cell: f<<4|e<<2|h, MATCH:0, DELETION:1, INSERTION:2 */     \
+    SIMDi *hd=NULL, fd, ed, hm, he, hf, ee, em, ff, fm; uint8_t m0=0x0, e1=0x1, f2=0x2;                  \
     \
-    score_t *_dp_h, *_qi, *_dp_e, *_dp_f, best_score = sp.inf_min, inf_min = sp.inf_min;                  \
+    score_t *_dp_h=NULL, *_qi, *_dp_e, *_dp_f, best_score = sp.inf_min, inf_min = sp.inf_min;                  \
     int *mat = abpt->mat, best_i = 0, best_j = 0, max, max_i;                                       \
     score_t gap_open = abpt->gap_open, gap_ext = abpt->gap_ext, gap_OE = abpt->gap_open + abpt->gap_ext;    \
     \
@@ -647,7 +646,7 @@ SIMD_para_t _simd_p64 = {128, 64,  2, 16, -1};
     score_t *_hd = (score_t*)hd, *_pre_dp_h, *_pre_dp_e;    \
     which = (_hd[max_i] >> HOP_OFF_SET) & 3;    \
     if (which == 0) { /* match */   \
-        s = graph->node[node_id].base == query[max_i-1] ? abpt->match : -abpt->mismatch;    \
+        s = abpt->mat[abpt->m * graph->node[node_id].base + query[max_i-1]];    \
         for (k = 0; k < pre_n[index_i]; ++k) {  \
             pre_i = pre_index[index_i][k];  \
             dp_h = DP_HE + index_i * 2 * dp_sn; pre_dp_h = DP_HE + pre_i * 2 * dp_sn;   \
@@ -677,13 +676,13 @@ SIMD_para_t _simd_p64 = {128, 64,  2, 16, -1};
 
 #define simd_abpoa_ag_get_cigar(score_t) {  \
     if (abpt->ret_cigar) {   \
-        simd_abpoa_ag_backtrack(score_t, DP_HE, dp_sn, (score_t)abpt->match, (score_t)abpt->mismatch, (score_t)abpt->gap_ext, pre_index, pre_n, backtrack_z, d_sn, 0, 0, best_i, best_j, qlen, graph, query, n_cigar, graph_cigar); \
+        simd_abpoa_ag_backtrack(score_t, DP_HE, dp_sn, (score_t)abpt->m, (score_t)abpt->mat, (score_t)abpt->gap_ext, pre_index, pre_n, backtrack_z, d_sn, 0, 0, best_i, best_j, qlen, graph, query, n_cigar, graph_cigar); \
     }   \
 }
 
 #define simd_abpoa_ag_local_get_cigar(score_t) {    \
     if (abpt->ret_cigar) {   \
-        simd_abpoa_ag_local_backtrack(score_t, DP_HE, dp_sn, (score_t)abpt->match, (score_t)abpt->mismatch, (score_t)abpt->gap_ext, pre_index, pre_n, backtrack_z, d_sn, 0, 0, best_i, best_j, qlen, graph, query, n_cigar, graph_cigar);   \
+        simd_abpoa_ag_local_backtrack(score_t, DP_HE, dp_sn, (score_t)abpt->m, (score_t)abpt->mat, (score_t)abpt->gap_ext, pre_index, pre_n, backtrack_z, d_sn, 0, 0, best_i, best_j, qlen, graph, query, n_cigar, graph_cigar);   \
     }   \
 }
 
@@ -780,7 +779,7 @@ SIMD_para_t _simd_p64 = {128, 64,  2, 16, -1};
     int i, j, k, *dp_beg, *dp_beg_sn, *dp_end, *dp_end_sn, node_id, index_i, q_i;	\
     int beg, end, beg_sn, end_sn, _beg_sn, _end_sn, pre_beg_sn, pre_beg, pre_end, pre_end_sn, sn_i; \
     int pn , qp_sn, dp_sn, size; /* pn: value per SIMDi, qp_sn/dp_sn/d_sn: segmented length	*/  \
-    SIMDi *DP_H, *dp_h, *pre_dp_h, *dp_f, *qp, *qi; \
+    SIMDi *DP_H, *dp_h, *pre_dp_h, *dp_f, *qp, *qi=NULL; \
     score_t *_dp_h, *_dp_f, *_qi, best_score = sp.inf_min, inf_min = sp.inf_min;	\
     int *mat = abpt->mat, best_i = 0, best_j = 0, max, max_i; score_t gap_ext = abpt->gap_ext;	\
     int w = abpt->bw < 0 ? qlen : abpt->bw;	\
@@ -946,7 +945,7 @@ SIMD_para_t _simd_p64 = {128, 64,  2, 16, -1};
     /* determine max pre_i, then determin current rank */	\
     int s, max_pre_i=-1, max_pre_id;	\
     score_t *_pre_dp_h;	\
-    s = graph->node[node_id].base == query[max_i-1] ? abpt->match : -abpt->mismatch;	\
+    s = abpt->mat[abpt->m * graph->node[node_id].base + query[max_i-1]];	\
     for (k = 0; k < pre_n[index_i]; ++k) {	\
         pre_i = pre_index[index_i][k];	\
         dp_h = DP_H + index_i * dp_sn; pre_dp_h = DP_H + pre_i * dp_sn;	\
@@ -973,13 +972,13 @@ SIMD_para_t _simd_p64 = {128, 64,  2, 16, -1};
 
 #define simd_abpoa_lg_get_cigar(score_t) {	\
     if (abpt->ret_cigar) {	\
-        simd_abpoa_lg_backtrack(score_t, DP_H, dp_sn, (score_t)abpt->match, (score_t)abpt->mismatch, (score_t)abpt->gap_ext, pre_index, pre_n, 0, 0, best_i, best_j, qlen, graph, query, n_cigar, graph_cigar);	\
+        simd_abpoa_lg_backtrack(score_t, DP_H, dp_sn, (score_t)abpt->m, (score_t)abpt->mat, (score_t)abpt->gap_ext, pre_index, pre_n, 0, 0, best_i, best_j, qlen, graph, query, n_cigar, graph_cigar);	\
     }	\
 }
 
 #define simd_abpoa_lg_local_get_cigar(score_t) {	\
     if (abpt->ret_cigar) {   \
-        simd_abpoa_lg_local_backtrack(score_t, DP_H, dp_sn, (score_t)abpt->match, (score_t)abpt->mismatch, (score_t)abpt->gap_ext, pre_index, pre_n, 0, 0, best_i, best_j, qlen, graph, query, n_cigar, graph_cigar);   \
+        simd_abpoa_lg_local_backtrack(score_t, DP_H, dp_sn, (score_t)abpt->m, (score_t)abpt->mat, (score_t)abpt->gap_ext, pre_index, pre_n, 0, 0, best_i, best_j, qlen, graph, query, n_cigar, graph_cigar);   \
     }   \
 }
 

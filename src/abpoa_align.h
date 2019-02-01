@@ -120,7 +120,7 @@ static inline void abpoa_print_cigar(int n_cigar, abpoa_cigar_t *cigar, abpoa_gr
 }
 
 // type of score matrix (DP_H, DP_E): 8/16/32
-static inline void abpoa_backtrack(int *DP_H, int *DP_E, int matrix_col_n, int8_t match, int8_t mis, int8_t gap_e, int **pre_index, int *pre_n, uint8_t *backtrack_z, int best_i, int best_j, int z_col_n, abpoa_graph_t *graph, uint8_t *query, int *n_cigar, abpoa_cigar_t **graph_cigar) {
+static inline void abpoa_backtrack(int *DP_H, int *DP_E, int matrix_col_n, int m,  int *mat, int8_t gap_e, int **pre_index, int *pre_n, uint8_t *backtrack_z, int best_i, int best_j, int z_col_n, abpoa_graph_t *graph, uint8_t *query, int *n_cigar, abpoa_cigar_t **graph_cigar) {
     int i, j, k, pre_i;
     if (n_cigar && graph_cigar) {
         int n_c = 0, s, m_c = 0, id, which, last_which;
@@ -133,7 +133,8 @@ static inline void abpoa_backtrack(int *DP_H, int *DP_E, int matrix_col_n, int8_
             which = (d >> op_shift[last_which]) & 3;
             if (which == 0) { // match
                 cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CMATCH, 1, id, j-1);
-                s = graph->node[id].base == query[j-1] ? match : -mis;
+                s = mat[graph->node[id].base * m + query[j-1]];
+                //s = graph->node[id].base == query[j-1] ? match : -mis;
 
                 for (k = 0; k < pre_n[i]; ++k) {
                     pre_i = pre_index[i][k];

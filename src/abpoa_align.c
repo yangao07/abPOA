@@ -769,8 +769,8 @@ int abpoa_banded_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t 
     int i, j, k, w, *dp_beg, *dp_end, node_id, index_i, q_i;
     int *DP_H, *DP_E, *dp_h, *pre_dp_h, *dp_e, *pre_dp_e, *dp_f, tmp; // score type: 8/16/32
 
-    uint8_t *backtrack_z, *z; // backtrack cell: f<<4|e<<2|h, MATCH:0, DELETION:1, INSERTION:2
-    uint8_t *hd, fd, ed, m0=0x0, e1=0x1, f2=0x2, he, hf, hm, ee, em, ff, fm; 
+    uint8_t *backtrack_z=NULL, *z; // backtrack cell: f<<4|e<<2|h, MATCH:0, DELETION:1, INSERTION:2
+    uint8_t *hd=NULL, fd=-1, ed=-1, m0=0x0, e1=0x1, f2=0x2, he, hf, hm, ee, em, ff, fm; 
     int best_score = abpt->inf_min, inf_min = abpt->inf_min, best_i=0, best_j=0;
     int *qp, *mat = abpt->mat, gap_o = abpt->gap_open, gap_e = abpt->gap_ext, gap_oe = abpt->gap_open + abpt->gap_ext;
 
@@ -951,7 +951,7 @@ int abpoa_banded_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t 
     printf("best_score: (%d, %d) -> %d\n", best_i, best_j, best_score);
 #endif
     { // backtrack from best score
-        if (n_cigar && graph_cigar) abpoa_backtrack(DP_H, DP_E, matrix_col_n, abpt->match, abpt->mismatch, abpt->gap_ext, pre_index, pre_n, backtrack_z, best_i, best_j, z_col_n, graph, query, n_cigar, graph_cigar);
+        if (n_cigar && graph_cigar) abpoa_backtrack(DP_H, DP_E, matrix_col_n, abpt->m, abpt->mat, abpt->gap_ext, pre_index, pre_n, backtrack_z, best_i, best_j, z_col_n, graph, query, n_cigar, graph_cigar);
     }
 
     { // free variables
@@ -969,8 +969,8 @@ int ada_abpoa_banded_global_align_sequence_with_graph(abpoa_graph_t *graph, uint
     int i, j, k, w, *dp_beg, *dp_end, node_id, index_i, q_i;
     int *DP_H, *DP_E, *dp_h, *pre_dp_h, *dp_e, *pre_dp_e, *dp_f, tmp; // score type: 8/16/32
 
-    uint8_t *backtrack_z, *z; // backtrack cell: f<<4|e<<2|h, MATCH:0, DELETION:1, INSERTION:2
-    uint8_t *hd, fd, ed, m0=0x0, e1=0x1, f2=0x2, he, hf, hm, ee, em, ff, fm; 
+    uint8_t *backtrack_z=NULL, *z; // backtrack cell: f<<4|e<<2|h, MATCH:0, DELETION:1, INSERTION:2
+    uint8_t *hd=NULL, fd=-1, ed=-1, m0=0x0, e1=0x1, f2=0x2, he, hf, hm, ee, em, ff, fm; 
     int best_score = abpt->inf_min, inf_min = abpt->inf_min, best_i=0, best_j=0;
     int *qp, *mat = abpt->mat, gap_o = abpt->gap_open, gap_e = abpt->gap_ext, gap_oe = abpt->gap_open + abpt->gap_ext;
 
@@ -1207,7 +1207,7 @@ int ada_abpoa_banded_global_align_sequence_with_graph(abpoa_graph_t *graph, uint
     printf("best_score: (%d, %d) -> %d\n", best_i, best_j, best_score);
 #endif
     { // backtrack from best score
-        if (n_cigar && graph_cigar) abpoa_backtrack(DP_H, DP_E, matrix_col_n, abpt->match, abpt->mismatch, abpt->gap_ext, pre_index, pre_n, backtrack_z, best_i, best_j, z_col_n, graph, query, n_cigar, graph_cigar);
+        if (n_cigar && graph_cigar) abpoa_backtrack(DP_H, DP_E, matrix_col_n, abpt->m, abpt->mat, abpt->gap_ext, pre_index, pre_n, backtrack_z, best_i, best_j, z_col_n, graph, query, n_cigar, graph_cigar);
     }
 
     { // free variables
