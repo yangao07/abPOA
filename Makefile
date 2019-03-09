@@ -8,6 +8,7 @@ endif
 # for gprof
 ifneq ($(pg),)
 	PG_FLAG  =   -pg
+	CFLAGS  +=   -pg
 endif
 
 LIB     =	-lm -lz -lpthread
