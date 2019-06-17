@@ -141,7 +141,7 @@ SIMD_para_t _simd_p64 = {128, 64,  2, 16, -1};
                     }                                                                                                       \
                 }                                                                                                           \
             } else {                                                                                                        \
-                _err_fatal_simple(__func__, "\nunexpected cigar op.\n");                                                    \
+                _err_fatal_simple(__func__, "\nunexpected cigar op.");                                                      \
             }                                                                                                               \
             id = abpoa_graph_index_to_node_id(graph, i);                                                                    \
             last_which = which;                                                                                             \
@@ -258,7 +258,7 @@ SIMD_para_t _simd_p64 = {128, 64,  2, 16, -1};
                     }                                                                                                       \
                 }                                                                                                           \
             } else {                                                                                                        \
-                _err_fatal_simple(__func__, "\nunexpected cigar op.\n");                                                    \
+                _err_fatal_simple(__func__, "\nunexpected cigar op.");                                                      \
             }                                                                                                               \
             id = abpoa_graph_index_to_node_id(graph, i);                                                                    \
             last_which = which;                                                                                             \
@@ -669,7 +669,7 @@ SIMD_para_t _simd_p64 = {128, 64,  2, 16, -1};
         }\
         max_pre_id = abpoa_graph_index_to_node_id(graph, max_pre_i);\
     } else { /* insertion */ \
-        err_fatal_simple("Unexpected cigar op.\n");\
+        err_fatal_simple("Unexpected cigar op.");\
     }  \
     simd_abpoa_ada_rank_from_maxpre;    \
 }
@@ -773,7 +773,7 @@ SIMD_para_t _simd_p64 = {128, 64,  2, 16, -1};
 
 #define simd_abpoa_lg_var(score_t, sp, SIMDSetOne) \
     abpoa_graph_t *graph = ab->abg; abpoa_simd_matrix_t *abm = ab->abm; \
-    if (abpt->gap_open != 0) err_fatal_simple("Gap open != 0 !\n");	\
+    if (abpt->gap_open != 0) err_fatal_simple("Gap open != 0 !");	\
     int matrix_row_n = graph->node_n, matrix_col_n = qlen + 1;	\
     int **pre_index, *pre_n, pre_i;	\
     int i, j, k, *dp_beg, *dp_beg_sn, *dp_end, *dp_end_sn, node_id, index_i, q_i;	\
@@ -1342,7 +1342,7 @@ void simd_abpoa_32_ag_global_align_sequence_with_graph_core(abpoa_t *ab, uint8_t
                         }
                         max_pre_id = abpoa_graph_index_to_node_id(graph, max_pre_i);
                     } else { /* insertion */ 
-                        err_fatal_simple("Unexpected cigar op.\n");
+                        err_fatal_simple("Unexpected cigar op.");
                     }  
                     /*simd_abpoa_ada_rank_from_maxpre*/
                     { 
@@ -1436,7 +1436,7 @@ void simd_abpoa_32_ag_global_align_sequence_with_graph_core(abpoa_t *ab, uint8_t
                                 }                                                                                                       
                             }                                                                                                           
                         } else {                                                                                                        
-                            _err_fatal_simple(__func__, "\nunexpected cigar op.\n");                                                    
+                            _err_fatal_simple(__func__, "\nunexpected cigar op.");
                         }                                                                                                               
                         id = abpoa_graph_index_to_node_id(graph, i);                                                                    
                         last_which = which;                                                                                             
@@ -1578,7 +1578,7 @@ int simd_abpoa_align_sequence_with_graph(abpoa_t *ab, uint8_t *query, int qlen, 
             }
         }
     } else if (abpt->align_mode == ABPOA_SEMI_MODE) { // TODO semi-global
-    } else err_fatal_core(__func__, "Unknown align mode. (%d)\n", abpt->align_mode);
+    } else err_fatal_core(__func__, "Unknown align mode. (%d).", abpt->align_mode);
     return _best_score;
 }
 #endif

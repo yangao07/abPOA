@@ -112,7 +112,7 @@ int abpoa_BFS_set_node_index_rank(abpoa_graph_t *graph, int src_id, int sink_id,
     kdq_push_int(q, src_id); q_size = 1; new_q_size = 0; // node[q.id].in_degree equals 0
 
     while (q_size > 0) {
-        if ((id = kdq_shift_int(q)) == 0) err_fatal_simple("Error in queue.\n");
+        if ((id = kdq_shift_int(q)) == 0) err_fatal_simple("Error in queue.");
         cur_id = *id;
         graph->index_to_node_id[index] = cur_id;
         graph->node_id_to_index[cur_id] = index++;
@@ -200,7 +200,7 @@ int abpoa_topological_sort(abpoa_graph_t *graph, abpoa_para_t *abpt) {
 
     // start from ABPOA_SRC_NODE_ID to ABPOA_SINK_NODE_ID
     if (abpoa_BFS_set_node_index_rank(graph, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, in_degree, abpt->bw>=0) < 0)
-        err_fatal_simple("Failed to topological sort graph.\n");
+        err_fatal_simple("Failed to topological sort graph.");
     graph->is_topological_sorted = 1;
     free(in_degree);
     return 0;
@@ -316,7 +316,7 @@ int abpoa_generate_consensus(abpoa_graph_t *graph, uint8_t cons_agrm) {
 
     if (cons_agrm == ABPOA_HB) abpoa_heaviest_bundling(graph, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, out_degree);
     else if (cons_agrm == ABPOA_MF) abpoa_traverse_min_flow(graph, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, out_degree);
-    else err_fatal(__func__, "Unknown consensus calling algorithm: %d.\n", cons_agrm);
+    else err_fatal(__func__, "Unknown consensus calling algorithm: %d.", cons_agrm);
     free(out_degree);
     // backtrack to generate consensu sequence
     abpoa_generate_consensus_core(graph, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID);
@@ -473,7 +473,7 @@ int abpoa_add_graph_node(abpoa_graph_t *graph, uint8_t base) {
 }
 
 int abpoa_add_graph_edge(abpoa_graph_t *graph, int from_id, int to_id, int check_edge, int *seq_node_ids, int *seq_node_ids_l) {
-    if (from_id < 0 || from_id >= graph->node_n || to_id < 0 || to_id >= graph->node_n) err_fatal(__func__, "node_n: %d\tfrom_id: %d\tto_id: %d\n", graph->node_n, from_id, to_id);
+    if (from_id < 0 || from_id >= graph->node_n || to_id < 0 || to_id >= graph->node_n) err_fatal(__func__, "node_n: %d\tfrom_id: %d\tto_id: %d.", graph->node_n, from_id, to_id);
     // add to_id to seq_node_ids
     if (seq_node_ids && seq_node_ids_l) seq_node_ids[(*seq_node_ids_l)++] = to_id;
 
@@ -499,7 +499,7 @@ int abpoa_add_graph_edge(abpoa_graph_t *graph, int from_id, int to_id, int check
 }
 
 int abpoa_add_graph_sequence(abpoa_graph_t *graph, abpoa_para_t *abpt, uint8_t *seq, int seq_l, int start, int end, int *seq_node_ids, int *seq_node_ids_l) {
-    if (seq_l <= 0 || start >= seq_l || end <= start) err_fatal(__func__, "seq_l: %d\tstart: %d\tend: %d\n", seq_l, start, end);
+    if (seq_l <= 0 || start >= seq_l || end <= start) err_fatal(__func__, "seq_l: %d\tstart: %d\tend: %d.", seq_l, start, end);
     if (start < 0) start = 0; if (end > seq_l) end = seq_l;
     int node_id = abpoa_add_graph_node(graph, seq[start]);
     abpoa_add_graph_edge(graph, ABPOA_SRC_NODE_ID, node_id, 0, seq_node_ids, seq_node_ids_l);
@@ -530,9 +530,9 @@ int abpoa_add_graph_alignment(abpoa_graph_t *graph, abpoa_para_t *abpt, uint8_t 
         return 0;
     } else {
         if (graph->node_n < 2) {
-            err_fatal(__func__, "Graph node: %d.\n", graph->node_n);
+            err_fatal(__func__, "Graph node: %d.", graph->node_n);
         } else if (n_cigar == 0) {
-            err_fatal(__func__, "Empty graph cigar.\n");
+            err_fatal(__func__, "Empty graph cigar.");
         }
     }
     // normal graph, normal graph_cigar

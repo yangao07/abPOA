@@ -1171,7 +1171,7 @@ int ada_abpoa_banded_global_align_sequence_with_graph(abpoa_graph_t *graph, uint
                     }
                     max_pre_id = abpoa_graph_index_to_node_id(graph, max_pre_i);
                 } else { // insertion
-                    err_fatal_simple("Unexpected cigar op.\n");
+                    err_fatal_simple("Unexpected cigar op.");
                 }  
                 // set min/max_rank for next nodes
                 graph->node_id_to_max_rank[node_id] = graph->node_id_to_max_rank[max_pre_id] + 1;

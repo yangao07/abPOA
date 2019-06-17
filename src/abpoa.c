@@ -148,6 +148,7 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
         for (i = 0; i < n_seqs; ++i) {  \
             kseq_t *seq = read_seq + i; \
             int seq_l = seq->seq.l; \
+            if (seq_l <= 0) err_fatal("read_seq", "Unexpected read length: %d (%s)", seq_l, seq->name.s);   \
             char *seq1 = seq->seq.s;    \
             /* printf("seq(%d): %s\n", seq_l, seq1); */   \
             if (seq_l > bseq_m) {   \

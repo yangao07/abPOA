@@ -29,7 +29,7 @@ graph test2 {
 // base (index, rank, node_id)
 // A (1, 1, 2) A: base 1: index 1: rank 2: node_id
 int abpoa_graph_visual(abpoa_graph_t *graph, char *dot_fn) {
-    if (graph->is_topological_sorted == 0) err_fatal_simple("Graph is not topologically sorted!.\n");
+    if (graph->is_topological_sorted == 0) err_fatal_simple("Graph is not topologically sorted!.");
 
     // all settings
     char node_color[5][10] = {"purple3", "red3", "seagreen4", "gold2", "gray"}; // ACGTN
@@ -103,6 +103,6 @@ int abpoa_graph_visual(abpoa_graph_t *graph, char *dot_fn) {
 
     char cmd[1024];
     sprintf(cmd, "dot %s -Tpng > %s.png", dot_fn, dot_fn);
-    if (system(cmd) != 0) err_fatal_simple("Fail to plot ABPOA dag.\n");
+    if (system(cmd) != 0) err_fatal_simple("Fail to plot ABPOA dag.");
     return 0;
 }
