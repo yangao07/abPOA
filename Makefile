@@ -1,5 +1,5 @@
 CC      =	gcc
-CFLAGS  =	-Wall -O3 -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function
+CFLAGS  =	-Wall -O3 #-Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function
 
 # for debug
 ifneq ($(gdb),)
@@ -31,7 +31,7 @@ AVX512BW 		= __AVX512BW__
 
 FLAG_SSE2  		= -msse2
 FLAG_SSE41      = -msse4.1
-FLAG_AVX2       = -mavx2
+FLAG_AVX2       = -mavx2 #TODO -march=native
 FLAG_AVX512F    = -mavx512f
 FLAG_AVX512BW   = -mavx512bw
 SIMD_FLAG       = -msse2

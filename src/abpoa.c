@@ -37,7 +37,7 @@ int abpoa_usage(void)
     err_printf("Usage:   %s [option] <in.fa/fq> > msa.out\n\n", PROG);
     err_printf("Options:\n\n");
     err_printf("         -m --align-mode  [INT]    align mode. [0]\n");
-    err_printf("                                     0: glogal\n");
+    err_printf("                                     0: global\n");
     err_printf("                                     1: local\n");
     err_printf("                                     2: extension\n");
     err_printf("                                     3: semi-global\n\n");

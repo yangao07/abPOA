@@ -37,17 +37,17 @@ int abpoa_graph_visual(abpoa_graph_t *graph, char *dot_fn) {
     char rankdir[5] = "LR", node_style[10]="filled", node_fixedsize[10]="true", node_shape[10]="circle";
     int show_aligned_mismatch = 1;
 
-    int i, j, id, index, rank, out_id; char base;
+    int i, j, id, index, out_id; char base;
     char **node_label = (char**)_err_malloc(graph->node_n * sizeof(char*));
     for (i = 0; i < graph->node_n; ++i) node_label[i] = (char*)_err_malloc(sizeof(char) * 100);
  
     FILE *fp = xopen(dot_fn, "w");
-    fprintf(fp, "// ABPOA graph dot file.\n // %d nodes.\n", graph->node_n);
+    fprintf(fp, "// ABPOA graph dot file.\n// %d nodes.\n", graph->node_n);
     fprintf(fp, "digraph ABPOA_graph {\n\tgraph [dpi=%f]; size=\"%f,%f\";\n\trankdir=\"%s\";\n\tnode [width=%f, style=%s, fixedsize=%s, shape=%s];\n", dpi_size, graph_width, graph_height, rankdir, node_width, node_style, node_fixedsize, node_shape);
 
     for (i = 0; i < graph->node_n; ++i) {
         id = abpoa_graph_index_to_node_id(graph, i);
-        index = i; rank = abpoa_graph_node_id_to_max_rank(graph, id);
+        index = i; // int rank = abpoa_graph_node_id_to_max_rank(graph, id);
         if (id == ABPOA_SRC_NODE_ID) {
             base = 'S';
             //sprintf(node_label[id], "\"%c\n(%d,%d,%d)\"", base, index, rank, id);
@@ -103,6 +103,6 @@ int abpoa_graph_visual(abpoa_graph_t *graph, char *dot_fn) {
 
     char cmd[1024];
     sprintf(cmd, "dot %s -Tpng > %s.png", dot_fn, dot_fn);
-    if (system(cmd) != 0) err_fatal_simple("Fail to plot ABPOA dag.");
+    if (system(cmd) != 0) err_fatal_simple("Fail to plot ABPOA DAG.");
     return 0;
 }
