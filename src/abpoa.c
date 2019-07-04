@@ -17,7 +17,7 @@ char PROG[20] = "abPOA";
 const struct option abpoa_long_opt [] = {
     { "align-mode", 1, NULL, 'm' },
     { "ada-band", 0, NULL, 'a' },
-    { "bandwidth", 1, NULL, 'w' },
+    { "band-width", 1, NULL, 'w' },
     { "zdrop", 1, NULL, 'z' },
     { "end-bouns", 1, NULL, 'b' },
     { "match", 1, NULL, 'M' },
@@ -36,28 +36,38 @@ int abpoa_usage(void)
     err_printf("\n");
     err_printf("Usage:   %s [option] <in.fa/fq> > msa.out\n\n", PROG);
     err_printf("Options:\n\n");
-    err_printf("         -m --align-mode  [INT]    align mode. [0]\n");
-    err_printf("                                     0: global\n");
-    err_printf("                                     1: local\n");
-    err_printf("                                     2: extension\n");
-    err_printf("                                     3: semi-global\n\n");
+    err_printf("         -l --in-list                use list of filename as input. [False]\n\n");
 
-    err_printf("         -l --in-list              use list of filename as input. [False]\n");
-    err_printf("         -M --match       [INT]    match score. [%d]\n", ABPOA_MATCH);
-    err_printf("         -x --mismatch    [INT]    mismatch penalty. [%d]\n", ABPOA_MISMATCH);
-    err_printf("         -o --gap-open    [INT]    gap open penalty. [%d]\n", ABPOA_GAP_OPEN);
-    err_printf("         -e --gap-ext     [INT]    gap extension penalty [%d]\n", ABPOA_GAP_EXT);
-    err_printf("         -w --bandwidth   [INT]    band width used in alignment. [-1]\n");
-    err_printf("         -a --ada-band             adaptively update band width during alignment. [False]\n");
-    err_printf("         -z --zdrop       [INT]    Z-drop score. [-1]\n");
-    err_printf("         -e --end-bonus   [INT]    end bonus score. [-1]\n\n");
+    err_printf("         -m --aln-mode   [INT]       align mode. [%d]\n", ABPOA_GLOBAL_MODE);
+    err_printf("                                       %d: global\n", ABPOA_GLOBAL_MODE);
+    err_printf("                                       %d: extension\n", ABPOA_EXTEND_MODE);
+    err_printf("                                       %d: local\n", ABPOA_LOCAL_MODE);
+    //err_printf("                                       %d: semi-global\n\n", ABPOA_SEMI_MODE);
 
-    err_printf("         -c --out-cons             output consensus sequence. [False]\n");
-    err_printf("         -s --out-msa              output multiple sequence alignment in pir format. [False]\n");
-    err_printf("         -C --cons-agrm   [INT]    algorithm for consensus calling. [0]\n");
-    err_printf("                                      0: heavest bundling\n");
-    err_printf("                                      1: minimum flow\n\n");
-    err_printf("         -g --out-pog              generate visualized partial-order graph. [False]\n");
+    err_printf("         -M --match      [INT]       match score. [%d]\n", ABPOA_MATCH);
+    err_printf("         -x --mismatch   [INT]       mismatch penalty. [%d]\n", ABPOA_MISMATCH);
+    err_printf("         -o --gap-open   [INT(,INT)] gap open penalty. [%d,%d]\n", ABPOA_GAP_OPEN1, ABPOA_GAP_OPEN2);
+    err_printf("         -e --gap-ext    [INT(,INT)] gap extension penalty [%d,%d]\n", ABPOA_GAP_EXT1, ABPOA_GAP_EXT2);
+    err_printf("                                     1. abPOA uses 2-piece affine gap penalty by default, i.e.,\n");
+    err_printf("                                        2-piece penalty of a g-long gap: min{o1+g*e1, o2+g*e2}\n");
+    err_printf("                                     2. Set o2 as 0 to apply affine gap penalty and only o1,e1 will be used, i.e.,\n");
+    err_printf("                                        affine penalty of a g-long gap: o1+g*e1\n");
+    err_printf("                                     3. Set o1 as 0 to apply linear gap penalty and only e1 will be used, i.e.,\n");
+    err_printf("                                        linear penalty of a g-long gap: g*e1\n\n");
+
+    err_printf("         -w --band-width [INT]       band width used in alignment. [-1]\n");
+    err_printf("                                     Effective for global and extension alignment. Set negative to disable.\n");
+    err_printf("         -a --ada-band               adaptively update band width during alignment. [False]\n");
+    err_printf("                                     Effective for global and extension alignment.\n");
+    err_printf("         -z --zdrop      [INT]       Z-drop score. Effective for extension alignment. Set negative to disable. [-1]\n");
+    err_printf("         -e --end-bonus  [INT]       end bonus score. Effective for extension alignment. Set negative to disable. [-1]\n\n");
+
+    err_printf("         -c --out-cons               output consensus sequence. [False]\n");
+    err_printf("         -s --out-msa                output multiple sequence alignment in pir format. [False]\n");
+    err_printf("         -C --cons-agrm  [INT]       algorithm for consensus calling. [0]\n");
+    err_printf("                                       0: heaviest bundling\n");
+    err_printf("                                       1: minimum flow\n\n");
+    err_printf("         -g --out-pog                generate visualized partial-order graph. [False]\n");
 
     err_printf("\n");
     return 1;
@@ -167,10 +177,10 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
                 abpoa_add_graph_alignment(ab->abg, abpt, bseq, seq_l, n_cigar, abpoa_cigar, seq_node_ids[tot_n+i], seq_node_ids_l+tot_n+i); \
             } else abpoa_add_graph_alignment(ab->abg, abpt, bseq, seq_l, n_cigar, abpoa_cigar, NULL, NULL);     \
             if (n_cigar) free(abpoa_cigar); \
-            if (abpt->out_pog) {    \
-                char abpoa_dot_fn[100]; sprintf(abpoa_dot_fn, "./dot_plot/abpoa_%d.dot", i);    \
+            /*if (abpt->out_pog) {    \
+                char abpoa_dot_fn[100]; sprintf(abpoa_dot_fn, "./abpoa_%d.dot", i);    \
                 abpoa_graph_visual(ab->abg, abpoa_dot_fn);  \
-            }   \
+            }*/   \
         }   \
         tot_n += n_seqs;    \
     }   \
@@ -185,6 +195,11 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
     /* generate multiple sequence alignment */  \
     if (abpt->out_msa &&  ab->abg->node_n > 2)  \
         abpoa_generate_multiple_sequence_alingment(ab->abg, seq_node_ids, seq_node_ids_l, tot_n, abpt->out_cons, stdout);   \
+    /* generate dot plot */     \
+    if (abpt->out_pog) {    \
+        char abpoa_dot_fn[100] = "./abpoa.dot";    \
+        abpoa_graph_visual(ab->abg, abpoa_dot_fn);  \
+    }   \
     ks_destroy(fs); gzclose(readfp);    \
 }
 
@@ -227,7 +242,7 @@ int abpoa_main(const char *list_fn, int in_list, abpoa_para_t *abpt){
 
 // TODO multi-thread
 int main(int argc, char **argv) {
-    int c, in_list=0; abpoa_para_t *abpt = abpoa_init_para();
+    int c, in_list=0; char *s; abpoa_para_t *abpt = abpoa_init_para();
     while ((c = getopt_long(argc, argv, "m:law:z:b:M:x:o:e:csC:g", abpoa_long_opt, NULL)) >= 0) {
         switch(c)
         {
@@ -239,8 +254,8 @@ int main(int argc, char **argv) {
             case 'b': abpt->end_bonus= atoi(optarg); break;
             case 'M': abpt->match = atoi(optarg); break;
             case 'x': abpt->mismatch = atoi(optarg); break;
-            case 'o': abpt->gap_open = atoi(optarg); break;
-            case 'e': abpt->gap_ext = atoi(optarg); break;
+            case 'o': abpt->gap_open1 = strtol(optarg, &s, 10); if (*s == ',') abpt->gap_open2 = strtol(s+1, &s, 10); break;
+            case 'e': abpt->gap_ext1 = strtol(optarg, &s, 10); if (*s == ',') abpt->gap_ext2 = strtol(s+1, &s, 10); break;
             case 'c': abpt->out_cons = 1; break;
             case 's': abpt->out_msa = 1; break;
             case 'C': abpt->cons_agrm = atoi(optarg); break;

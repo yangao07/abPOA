@@ -7,10 +7,12 @@
 #define CHUNK_READ_N 1000
 
 // SPOA
-#define ABPOA_MATCH  5
+#define ABPOA_MATCH  2
 #define ABPOA_MISMATCH  4
-#define ABPOA_GAP_OPEN  0
-#define ABPOA_GAP_EXT  8
+#define ABPOA_GAP_OPEN1  4
+#define ABPOA_GAP_OPEN2  24
+#define ABPOA_GAP_EXT1  2
+#define ABPOA_GAP_EXT2  1
 
 //#define ABPOA_MATCH  1
 //#define ABPOA_MISMATCH  3
@@ -18,9 +20,14 @@
 //#define ABPOA_GAP_EXT  2
 
 #define ABPOA_GLOBAL_MODE 0
-#define ABPOA_LOCAL_MODE 1
-#define ABPOA_EXTEND_MODE 2
+#define ABPOA_EXTEND_MODE 1
+#define ABPOA_LOCAL_MODE 2
 #define ABPOA_SEMI_MODE 3
+
+// gap mode
+#define ABPOA_LINEAR_GAP 0
+#define ABPOA_AFFINE_GAP 1
+#define ABPOA_CONVEX_GAP 2
 
 #define ABPOA_CIGAR_STR "MIDXSH"
 #define ABPOA_CMATCH     0

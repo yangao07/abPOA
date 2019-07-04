@@ -18,7 +18,7 @@ extern "C" {
 typedef struct {
     // score matrix
     int m; int *mat;
-    int match, mismatch, gap_open, gap_ext; int inf_min;
+    int match, mismatch, gap_open1, gap_open2, gap_ext1, gap_ext2; int inf_min;
     int bw; // band width
     int zdrop, end_bonus; // from minimap2
     // available SIMD instruction

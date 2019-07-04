@@ -1,5 +1,5 @@
 CC      =	gcc
-CFLAGS  =	-Wall -O3 #-Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function
+CFLAGS  =	-Wall -O3 -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function
 
 # for debug
 ifneq ($(gdb),)

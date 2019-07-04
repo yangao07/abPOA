@@ -64,8 +64,10 @@ abpoa_para_t *abpoa_init_para(void) {
     // score matrix
     abpt->match = ABPOA_MATCH;
     abpt->mismatch = ABPOA_MISMATCH;
-    abpt->gap_open = ABPOA_GAP_OPEN;
-    abpt->gap_ext = ABPOA_GAP_EXT;
+    abpt->gap_open1 = ABPOA_GAP_OPEN1;
+    abpt->gap_open2 = ABPOA_GAP_OPEN2;
+    abpt->gap_ext1 = ABPOA_GAP_EXT1;
+    abpt->gap_ext2 = ABPOA_GAP_EXT2;
 
     abpt->simd_flag = simd_check();
 
@@ -84,7 +86,7 @@ void abpoa_free_para(abpoa_para_t *abpt) {
 int abpoa_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *query, int qlen, abpoa_para_t *abpt, int *n_cigar, abpoa_cigar_t **graph_cigar) {
     dp_matrix_t *dp_matrix; // Full: (tlen + 1) * (qlen + 1); Banded: (tlen+1) * (2 * w + 1)
     int *qp, *mat = abpt->mat; // query profile
-    int i, j, k, gap_o = abpt->gap_open, gap_e = abpt->gap_ext, gap_oe = abpt->gap_open + abpt->gap_ext, w, matrix_row_n, matrix_col_n, z_col_n;
+    int i, j, k, gap_o = abpt->gap_open1, gap_e = abpt->gap_ext1, gap_oe = abpt->gap_open1 + abpt->gap_ext1, w, matrix_row_n, matrix_col_n, z_col_n;
     int node_id, target_node_n = graph->node_n - 2; // exclude start and end nodes
     uint64_t *z; // backtrack matrix; in each cell: hd << 33 | ed << 2 | fd
     //                                 h<<62|h_id<<33|e<<31|e_i<<2|f
@@ -307,7 +309,7 @@ int abpoa_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *query,
 // TODO extend
 int abpoa_ada_extend_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *query, int qlen, abpoa_para_t *abpt, int *n_cigar, abpoa_cigar_t **graph_cigar) {
     dp_matrix_t *dp_matrix, *cur_line, *pre_line, *next_line, *cur_dp; // Full: (tlen + 1) * (qlen + 1); Banded: (tlen+1) * (2 * w + 1)
-    int *qp, *mat = abpt->mat, gap_o = abpt->gap_open, gap_e = abpt->gap_ext, gap_oe = abpt->gap_open + abpt->gap_ext; // query profile
+    int *qp, *mat = abpt->mat, gap_o = abpt->gap_open1, gap_e = abpt->gap_ext1, gap_oe = abpt->gap_open1 + abpt->gap_ext1; // query profile
     int **pre_index, *pre_n, pre_i, **next_index, *next_n, next_i;
     int node_id, index_i, min_rank, q_i;
     int i, j, k, w, *dp_beg_cen, *dp_end_cen;
@@ -572,7 +574,7 @@ int abpoa_ada_extend_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *qu
 }
 
 /*int abpoa_banded_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *query, int qlen, abpoa_para_t *abpt, int *n_cigar, abpoa_cigar_t **graph_cigar) {
-    int8_t *qp, *mat = abpt->mat, gap_o = abpt->gap_open, gap_e = abpt->gap_ext, gap_oe = abpt->gap_open + abpt->gap_ext; // query profile
+    int8_t *qp, *mat = abpt->mat, gap_o = abpt->gap_open1, gap_e = abpt->gap_ext1, gap_oe = abpt->gap_open1 + abpt->gap_ext1; // query profile
     int **pre_index, *pre_n, pre_i, **next_index, *next_n;
     int node_id, index_i, q_i;
     int i, j, k, w, *dp_beg, *dp_end;
@@ -762,7 +764,7 @@ int abpoa_ada_extend_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *qu
     return 0;
 }*/
 
-// gap_open == 0: ed/fd = hd
+// gap_open1 == 0: ed/fd = hd
 int abpoa_banded_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *query, int qlen, abpoa_para_t *abpt, int *n_cigar, abpoa_cigar_t **graph_cigar) {
     int **pre_index, *pre_n, pre_i;
     int target_node_n = graph->node_n - 2, matrix_row_n = graph->node_n, matrix_col_n = qlen + 1, z_col_n = qlen;
@@ -772,7 +774,7 @@ int abpoa_banded_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t 
     uint8_t *backtrack_z=NULL, *z; // backtrack cell: f<<4|e<<2|h, MATCH:0, DELETION:1, INSERTION:2
     uint8_t *hd=NULL, fd=-1, ed=-1, m0=0x0, e1=0x1, f2=0x2, he, hf, hm, ee, em, ff, fm; 
     int best_score = abpt->inf_min, inf_min = abpt->inf_min, best_i=0, best_j=0;
-    int *qp, *mat = abpt->mat, gap_o = abpt->gap_open, gap_e = abpt->gap_ext, gap_oe = abpt->gap_open + abpt->gap_ext;
+    int *qp, *mat = abpt->mat, gap_o = abpt->gap_open1, gap_e = abpt->gap_ext1, gap_oe = abpt->gap_open1 + abpt->gap_ext1;
 
     {   // allocate memory 
         qp = (int*)_err_malloc(qlen * abpt->m * sizeof(int)); // qp should has the same type to H/E/F
@@ -951,7 +953,7 @@ int abpoa_banded_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t 
     printf("best_score: (%d, %d) -> %d\n", best_i, best_j, best_score);
 #endif
     { // backtrack from best score
-        if (n_cigar && graph_cigar) abpoa_backtrack(DP_H, DP_E, matrix_col_n, abpt->m, abpt->mat, abpt->gap_ext, pre_index, pre_n, backtrack_z, best_i, best_j, z_col_n, graph, query, n_cigar, graph_cigar);
+        if (n_cigar && graph_cigar) abpoa_backtrack(DP_H, DP_E, matrix_col_n, abpt->m, abpt->mat, abpt->gap_ext1, pre_index, pre_n, backtrack_z, best_i, best_j, z_col_n, graph, query, n_cigar, graph_cigar);
     }
 
     { // free variables
@@ -972,7 +974,7 @@ int ada_abpoa_banded_global_align_sequence_with_graph(abpoa_graph_t *graph, uint
     uint8_t *backtrack_z=NULL, *z; // backtrack cell: f<<4|e<<2|h, MATCH:0, DELETION:1, INSERTION:2
     uint8_t *hd=NULL, fd=-1, ed=-1, m0=0x0, e1=0x1, f2=0x2, he, hf, hm, ee, em, ff, fm; 
     int best_score = abpt->inf_min, inf_min = abpt->inf_min, best_i=0, best_j=0;
-    int *qp, *mat = abpt->mat, gap_o = abpt->gap_open, gap_e = abpt->gap_ext, gap_oe = abpt->gap_open + abpt->gap_ext;
+    int *qp, *mat = abpt->mat, gap_o = abpt->gap_open1, gap_e = abpt->gap_ext1, gap_oe = abpt->gap_open1 + abpt->gap_ext1;
 
     {   // allocate memory 
         qp = (int*)_err_malloc(qlen * abpt->m * sizeof(int)); // qp should has the same type to H/E/F
@@ -1207,7 +1209,7 @@ int ada_abpoa_banded_global_align_sequence_with_graph(abpoa_graph_t *graph, uint
     printf("best_score: (%d, %d) -> %d\n", best_i, best_j, best_score);
 #endif
     { // backtrack from best score
-        if (n_cigar && graph_cigar) abpoa_backtrack(DP_H, DP_E, matrix_col_n, abpt->m, abpt->mat, abpt->gap_ext, pre_index, pre_n, backtrack_z, best_i, best_j, z_col_n, graph, query, n_cigar, graph_cigar);
+        if (n_cigar && graph_cigar) abpoa_backtrack(DP_H, DP_E, matrix_col_n, abpt->m, abpt->mat, abpt->gap_ext1, pre_index, pre_n, backtrack_z, best_i, best_j, z_col_n, graph, query, n_cigar, graph_cigar);
     }
 
     { // free variables
