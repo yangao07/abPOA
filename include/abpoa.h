@@ -18,13 +18,13 @@ extern "C" {
 typedef struct {
     // score matrix
     int m; int *mat;
-    int match, mismatch, gap_open, gap_ext; int inf_min;
+    int match, mismatch, gap_open1, gap_open2, gap_ext1, gap_ext2; int inf_min;
     int bw; // band width
     int zdrop, end_bonus; // from minimap2
-    // alignment mode
-    uint8_t align_mode:2, use_ada:1, ret_cigar:1, out_msa:1, out_cons:1, cons_agrm:1, out_pog; // mode: 0: global, 1: local, 2: extend
     // available SIMD instruction
     int simd_flag;
+    // alignment mode
+    uint8_t align_mode:2, use_ada:1, ret_cigar:1, out_msa:1, out_cons:1, cons_agrm:1, out_pog:1; // mode: 0: global, 1: local, 2: extend
 } abpoa_para_t;
 
 typedef struct {

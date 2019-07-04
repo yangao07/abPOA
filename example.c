@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 #include "abpoa.h"
 
 // AaCcGgTtNn ==> 0,1,2,3,4
@@ -41,15 +42,18 @@ int main(void) {
     abpoa_para_t *abpt = abpoa_init_para();
 
     // score parameters
-    abpt->m = 5;
-    abpt->match = 5;    // match score
-    abpt->mismatch = 4; // mismatch penalty
-    abpt->gap_open = 0; // gap open penalty
-    abpt->gap_ext = 8;  // gap extension penalty 
-                        // gap_penalty = gap_open + gap_len * gap_ext
+    //abpt->m = 5;
+    //abpt->match = 2;    // match score
+    //abpt->mismatch = 4; // mismatch penalty
+    //abpt->gap_open1 = 4; // gap open penalty #1
+    //abpt->gap_ext1 = 2;  // gap extension penalty #1
+    //abpt->gap_open2 = 24; // gap open penalty #2
+    //abpt->gap_ext2 = 1;  // gap extension penalty #2
+                        // gap_penalty = min{gap_open1 + gap_len * gap_ext1, gap_open2 + gap_len * gap_ext2}
     abpt->mat = (int*)malloc(abpt->m * abpt->m * sizeof(int));
     gen_simple_mat(abpt->m, abpt->mat, abpt->match, abpt->mismatch);
     // output options
+    abpt->align_mode = 0; // 0:global, 1:extension, 2: local
     abpt->out_msa = 1; // generate Row-Column multiple sequence alignment(RC-MSA), set 0 to disable
     abpt->out_cons = 1; // generate consensus sequence, set 0 to disable
     abpt->out_pog = 1; // generate parital order graph using DOT, set 0 to disable
