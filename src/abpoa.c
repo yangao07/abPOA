@@ -57,7 +57,7 @@ int abpoa_usage(void)
 
     err_printf("         -w --band-width [INT]       band width used in alignment. [-1]\n");
     err_printf("                                     Effective for global and extension alignment. Set negative to disable.\n");
-    err_printf("         -a --ada-band               adaptively update band width during alignment. [False]\n");
+    //err_printf("         -a --ada-band               adaptively update band width during alignment. [False]\n");
     err_printf("                                     Effective for global and extension alignment.\n");
     err_printf("         -z --zdrop      [INT]       Z-drop score. Effective for extension alignment. Set negative to disable. [-1]\n");
     err_printf("         -e --end-bonus  [INT]       end bonus score. Effective for extension alignment. Set negative to disable. [-1]\n\n");
@@ -243,12 +243,12 @@ int abpoa_main(const char *list_fn, int in_list, abpoa_para_t *abpt){
 // TODO multi-thread
 int main(int argc, char **argv) {
     int c, in_list=0; char *s; abpoa_para_t *abpt = abpoa_init_para();
-    while ((c = getopt_long(argc, argv, "m:law:z:b:M:x:o:e:csC:g", abpoa_long_opt, NULL)) >= 0) {
+    while ((c = getopt_long(argc, argv, "m:lw:z:b:M:x:o:e:csC:g", abpoa_long_opt, NULL)) >= 0) {
         switch(c)
         {
             case 'm': abpt->align_mode=atoi(optarg); break;
             case 'l': in_list = 1; break;
-            case 'a': abpt->use_ada = 1; break;
+            //case 'a': abpt->use_ada = 1; break;
             case 'w': abpt->bw = atoi(optarg); break;
             case 'z': abpt->zdrop = atoi(optarg); break;
             case 'b': abpt->end_bonus= atoi(optarg); break;
