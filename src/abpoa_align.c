@@ -54,7 +54,8 @@ abpoa_para_t *abpoa_init_para(void) {
     abpt->ret_cigar = 1;  // return cigar
     abpt->out_msa = 0;    // output msa
     abpt->out_cons = 0;   // output consensus sequence in msa
-    abpt->cons_agrm = 0;   // consensus calling algorithm 
+    abpt->multip = ABPOA_MULTIP; // muliple consensus for multiploid data
+    abpt->cons_agrm = ABPOA_HB;   // consensus calling algorithm 
     abpt->out_pog= 0; // generate partial order graph
 
     // number of residue types

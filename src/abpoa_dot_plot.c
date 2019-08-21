@@ -25,6 +25,7 @@ graph test2 {
 }
 */
 
+int font_size=24;
 
 // base (index, rank, node_id)
 // A (1, 1, 2) A: base 1: index 1: rank 2: node_id
@@ -33,7 +34,7 @@ int abpoa_graph_visual(abpoa_graph_t *graph, char *dot_fn) {
 
     // all settings
     char node_color[5][10] = {"purple3", "red3", "seagreen4", "gold2", "gray"}; // ACGTN
-    float dpi_size = 1000, graph_width = 100, graph_height = 6, node_width=1;
+    float dpi_size = 3000, graph_width = 100, graph_height = 6, node_width=1;
     char rankdir[5] = "LR", node_style[10]="filled", node_fixedsize[10]="true", node_shape[10]="circle";
     int show_aligned_mismatch = 1;
 
@@ -53,19 +54,19 @@ int abpoa_graph_visual(abpoa_graph_t *graph, char *dot_fn) {
             //sprintf(node_label[id], "\"%c\n(%d,%d,%d)\"", base, index, rank, id);
             // only show seq
             sprintf(node_label[id], "\"%c\n%d\"", base,index);
-            fprintf(fp, "%s [color=%s]\n", node_label[id], node_color[4]);
+            fprintf(fp, "%s [color=%s, fontsize=%d]\n", node_label[id], node_color[4], font_size);
         } else if (id == ABPOA_SINK_NODE_ID) {
             base = 'E';
             //sprintf(node_label[id], "\"%c\n(%d,%d,%d)\"", base, index, rank, id);
             // only show seq
             sprintf(node_label[id], "\"%c\n%d\"", base,index);
-            fprintf(fp, "%s [color=%s]\n", node_label[id], node_color[4]);
+            fprintf(fp, "%s [color=%s, fontsize=%d]\n", node_label[id], node_color[4], font_size);
         } else {
             base = "ACGTN"[graph->node[id].base];
             //sprintf(node_label[id], "\"%c\n(%d,%d,%d)\"", base, index, rank, id);
             // only show seq
             sprintf(node_label[id], "\"%c\n%d\"", base,index);
-            fprintf(fp, "%s [color=%s]\n", node_label[id], node_color[graph->node[id].base]);
+            fprintf(fp, "%s [color=%s, fontsize=%d]\n", node_label[id], node_color[graph->node[id].base], font_size);
         }
     }
     int x_index = -1;
@@ -102,7 +103,7 @@ int abpoa_graph_visual(abpoa_graph_t *graph, char *dot_fn) {
     err_fclose(fp);
 
     char cmd[1024];
-    sprintf(cmd, "dot %s -Tpng > %s.png", dot_fn, dot_fn);
+    sprintf(cmd, "dot %s -Tpdf > %s.pdf", dot_fn, dot_fn);
     if (system(cmd) != 0) err_fatal_simple("Fail to plot ABPOA DAG.");
     return 0;
 }

@@ -29,6 +29,8 @@
 #define ABPOA_AFFINE_GAP 1
 #define ABPOA_CONVEX_GAP 2
 
+#define ABPOA_MULTIP     1
+
 #define ABPOA_CIGAR_STR "MIDXSH"
 #define ABPOA_CMATCH     0
 #define ABPOA_CINS       1

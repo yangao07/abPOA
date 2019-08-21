@@ -3,7 +3,7 @@ CFLAGS  =	-Wall -O3 -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unuse
 
 # for debug
 ifneq ($(gdb),)
-	CFLAGS   =	 -g -Wall -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -D __DEBUG__ 
+	CFLAGS   =	 -g -Wall -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function #-D __DEBUG__ 
 endif
 # for gprof
 ifneq ($(pg),)
@@ -17,9 +17,9 @@ LIB_DIR =   ./lib
 INC_DIR =   ./include
 SRC_DIR =   ./src
 
-SOURCE  =	$(SRC_DIR)/abpoa.c $(SRC_DIR)/abpoa_align.c $(SRC_DIR)/abpoa_graph.c $(SRC_DIR)/simd_abpoa_align.c $(SRC_DIR)/simd_check.c $(SRC_DIR)/utils.c $(SRC_DIR)/abpoa_graph_visual.c
+SOURCE  =	$(SRC_DIR)/abpoa.c $(SRC_DIR)/abpoa_align.c $(SRC_DIR)/abpoa_graph.c $(SRC_DIR)/simd_abpoa_align.c $(SRC_DIR)/simd_check.c $(SRC_DIR)/utils.c $(SRC_DIR)/abpoa_dot_plot.c $(SRC_DIR)/agglo_hier_clu.c
 HEADER  =	$(SRC_DIR)/abpoa.h $(SRC_DIR)/abpoa_align.h $(SRC_DIR)/abpoa_graph.h $(SRC_DIR)/align.h $(SRC_DIR)/kdq.h $(SRC_DIR)/kseq.h $(SRC_DIR)/ksort.h $(SRC_DIR)/simd_instruction.h $(SRC_DIR)/simd_abpoa_align.h $(SRC_DIR)/utils.h
-OBJS    =	$(SRC_DIR)/abpoa_align.o $(SRC_DIR)/abpoa_graph.o $(SRC_DIR)/simd_abpoa_align.o $(SRC_DIR)/simd_check.o $(SRC_DIR)/utils.o $(SRC_DIR)/abpoa_graph_visual.o
+OBJS    =	$(SRC_DIR)/abpoa_align.o $(SRC_DIR)/abpoa_graph.o $(SRC_DIR)/simd_abpoa_align.o $(SRC_DIR)/simd_check.o $(SRC_DIR)/utils.o $(SRC_DIR)/abpoa_dot_plot.o $(SRC_DIR)/agglo_hier_clu.o
 
 # SIMD label
 SIMD_CHECK_D	= -D __CHECK_SIMD_MAIN__
@@ -97,7 +97,7 @@ $(ABPOALIB):$(OBJS)
 	if [ ! -d $(LIB_DIR) ]; then mkdir $(LIB_DIR); fi
 	$(AR) -csr $@ $(OBJS)
 
-$(SRC_DIR)/abpoa.o:$(SRC_DIR)/abpoa.c $(SRC_DIR)/abpoa.h $(SRC_DIR)/abpoa_graph.h $(SRC_DIR)/abpoa_align.h \
+$(SRC_DIR)/abpoa.o:$(SRC_DIR)/abpoa.c $(SRC_DIR)/abpoa.h $(SRC_DIR)/abpoa_graph.h $(SRC_DIR)/agglo_hier_clu.h $(SRC_DIR)/abpoa_align.h \
 				   $(SRC_DIR)/align.h $(SRC_DIR)/utils.h $(SRC_DIR)/simd_instruction.h
 	$(CC) -c $(CFLAGS) $(SIMD_FLAG) $< -o $@
 
@@ -108,4 +108,4 @@ $(SRC_DIR)/simd_abpoa_align.o:$(SRC_DIR)/simd_abpoa_align.c $(SRC_DIR)/abpoa_gra
 	$(CC) -c $(CFLAGS) $(SIMD_FLAG) $< -o $@
 
 clean:
-	rm -f $(SRC_DIR)/*.[oa] $(LIB_DIR)/*.[oa] $(BIN) $(SIMD_CHECK)
+	rm -f $(SRC_DIR)/*.[oa] $(LIB_DIR)/*.[oa] $(BIN) #$(SIMD_CHECK)

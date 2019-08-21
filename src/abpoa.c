@@ -14,9 +14,39 @@ KSEQ_INIT(gzFile, gzread)
 
 char PROG[20] = "abPOA";
 
+char LogTable65536[65536];
+char bit_table16[65536];
+
+static const char LogTable256[256] = {
+#define LT(n) n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n
+    -1, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
+    LT(4), LT(5), LT(5), LT(6), LT(6), LT(6), LT(6),
+    LT(7), LT(7), LT(7), LT(7), LT(7), LT(7), LT(7), LT(7)
+};
+
+static inline int ilog2_32(uint32_t v)
+{
+    uint32_t t, tt;
+    if ((tt = v>>16)) return (t = tt>>8) ? 24 + LogTable256[t] : 16 + LogTable256[tt];
+    return (t = v>>8) ? 8 + LogTable256[t] : LogTable256[v];
+}
+
+void set_65536_table(void) {
+    int i;
+    for (i = 0; i < 65536; ++i) {
+        LogTable65536[i] = ilog2_32(i);
+    }
+}
+
+void set_bit_table16(void)
+{
+    int i; bit_table16[0] = 0;
+    for (i = 0; i != 65536; ++i) bit_table16[i] = (i&1) + bit_table16[i>>1];
+}
+
 const struct option abpoa_long_opt [] = {
-    { "align-mode", 1, NULL, 'm' },
-    { "ada-band", 0, NULL, 'a' },
+    { "align-mode", 1, NULL, 'a' },
+    // { "ada-band", 0, NULL, 'a' },
     { "band-width", 1, NULL, 'w' },
     { "zdrop", 1, NULL, 'z' },
     { "end-bouns", 1, NULL, 'b' },
@@ -25,6 +55,7 @@ const struct option abpoa_long_opt [] = {
     { "gap-open", 1, NULL, 'o' },
     { "gap-ext", 1, NULL, 'e' },
     { "out-cons", 0, NULL, 'c' },
+    { "multiploid", 1, NULL, 'm', },
     { "out-msa", 0, NULL, 's' },
     { "cons-agrm", 1, NULL, 'C' },
 
@@ -38,7 +69,7 @@ int abpoa_usage(void)
     err_printf("Options:\n\n");
     err_printf("         -l --in-list                use list of filename as input. [False]\n\n");
 
-    err_printf("         -m --aln-mode   [INT]       align mode. [%d]\n", ABPOA_GLOBAL_MODE);
+    err_printf("         -a --aln-mode   [INT]       align mode. [%d]\n", ABPOA_GLOBAL_MODE);
     err_printf("                                       %d: global\n", ABPOA_GLOBAL_MODE);
     err_printf("                                       %d: extension\n", ABPOA_EXTEND_MODE);
     err_printf("                                       %d: local\n", ABPOA_LOCAL_MODE);
@@ -63,64 +94,16 @@ int abpoa_usage(void)
     err_printf("         -e --end-bonus  [INT]       end bonus score. Effective for extension alignment. Set negative to disable. [-1]\n\n");
 
     err_printf("         -c --out-cons               output consensus sequence. [False]\n");
+    err_printf("         -m --multiploid             maximum number of output consensus sequences (for multiploid data). [%d]\n", ABPOA_MULTIP);
     err_printf("         -s --out-msa                output multiple sequence alignment in pir format. [False]\n");
     err_printf("         -C --cons-agrm  [INT]       algorithm for consensus calling. [0]\n");
     err_printf("                                       0: heaviest bundling\n");
     err_printf("                                       1: minimum flow\n\n");
+    err_printf("                                       2: row-column MSA\n\n");
     err_printf("         -g --out-pog                generate visualized partial-order graph. [False]\n");
 
     err_printf("\n");
     return 1;
-}
-void cons_to_seq_score(int cons_l, uint8_t *cons_seq, int seq_n, char (*seq)[100], abpoa_para_t *abpt) {
-    int i, j;
-    abpt->bw = -1; // disable band width
-    printf("cons_to_seq:\n");
-    uint8_t *bseq = (uint8_t*)_err_malloc(100 * sizeof(uint8_t)); int bseq_m = 100;
-    // progressively partial order alignment
-    abpoa_t *ab = abpoa_init();
-    for (i = 0; i < seq_n; ++i) {
-        abpoa_reset_graph(ab, 100, abpt);
-        int seq_l = strlen(seq[i]);
-        if (seq_l > bseq_m) {
-            bseq_m = seq_l;
-            bseq = (uint8_t*)_err_realloc(bseq, bseq_m * sizeof(uint8_t));
-        }
-        abpoa_cigar_t *abpoa_cigar=0; int n_cigar=0;
-        abpoa_align_sequence_with_graph(ab, cons_seq, cons_l, abpt, &n_cigar, &abpoa_cigar); 
-        abpoa_add_graph_alignment(ab->abg, abpt, cons_seq, cons_l, n_cigar, abpoa_cigar, NULL, NULL); if (n_cigar) free(abpoa_cigar);
-
-        for (j = 0; j < seq_l; ++j) bseq[j] = nst_nt4_table[(int)(seq[i][j])];
-        abpoa_align_sequence_with_graph(ab, bseq, seq_l, abpt, &n_cigar, &abpoa_cigar); if (n_cigar) free(abpoa_cigar);
-    }
-
-    int rest_n = 0, rest_l, rest_i;
-    char rest[100][100] = { 
-        "GTCGTAAAGAACGTAGGTCGCCCGTCCGTAATCTGTCGGATCACCGGAAAGATGACGACCCGTAAAGTGATAATGATCAT",
-        "CATAAAGAACGTAGGTCGCCGTGAGTCCGTAATCCGTACGGATTCACCGGAATGGCGTAGTTACCCGATAAAGTGATAATACAT",
-    };
-    uint8_t rest_seq[100];
-    for (rest_i = 0; rest_i < rest_n; ++rest_i) {
-        printf("REST# %d: cons_to_seq:\n", rest_i);
-        rest_l = strlen(rest[rest_i]);
-        for (i = 0; i < rest_l; ++i) rest_seq[i] = nst_nt4_table[(int)(rest[rest_i][i])];
-        // progressively partial order alignment
-        for (i = 0; i < seq_n; ++i) {
-            abpoa_reset_graph(ab, 100, abpt);
-            int seq_l = strlen(seq[i]);
-            if (seq_l > bseq_m) {
-                bseq_m = seq_l;
-                bseq = (uint8_t*)_err_realloc(bseq, bseq_m * sizeof(uint8_t));
-            }
-            abpoa_cigar_t *abpoa_cigar=0; int n_cigar=0;
-            abpoa_align_sequence_with_graph(ab, rest_seq, rest_l, abpt, &n_cigar, &abpoa_cigar); 
-            abpoa_add_graph_alignment(ab->abg, abpt, rest_seq, rest_l, n_cigar, abpoa_cigar, NULL, NULL); if (n_cigar) free(abpoa_cigar);
-
-            for (j = 0; j < seq_l; ++j) bseq[j] = nst_nt4_table[(int)(seq[i][j])];
-            abpoa_align_sequence_with_graph(ab, bseq, seq_l, abpt, &n_cigar, &abpoa_cigar); if (n_cigar) free(abpoa_cigar);
-        }
-    }
-    abpoa_free(ab); free(bseq);
 }
 
 int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
@@ -138,23 +121,12 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
     gzFile readfp = xzopen(read_fn, "r"); kstream_t *fs = ks_init(readfp);  \
     for (i = 0; i < CHUNK_READ_N; ++i) read_seq[i].f = fs;  \
     /* progressively partial order alignment */     \
-    n_seqs = 0,  tot_n = 0; \
+    n_seqs = 0,  tot_n = 0, read_id = 0; \
     /* reset graph for a new input file */  \
     abpoa_reset_graph(ab, bseq_m, abpt);    \
     while ((n_seqs = abpoa_read_seq(read_seq, CHUNK_READ_N)) != 0) {    \
-        if (abpt->out_msa) {    \
-            if (tot_n + n_seqs > nseqs_m) { \
-                int m = MAX_OF_TWO(tot_n + n_seqs, nseqs_m << 1);  \
-                seq_node_ids_l = (int*)_err_realloc(seq_node_ids_l, m * sizeof(int));   \
-                seq_node_ids = (int**)_err_realloc(seq_node_ids, m * sizeof(int*)); \
-                seq_m = (int*)_err_realloc(seq_m, m * sizeof(int)); \
-                for (i = nseqs_m; i < m; ++i) { \
-                    seq_m[i] = bseq_m;  \
-                    seq_node_ids[i] = (int*)_err_malloc(bseq_m * sizeof(int));  \
-                }   \
-                nseqs_m = m;    \
-            }   \
-        }   \
+        tot_n += n_seqs;    \
+        if (add_read_id) read_ids_n = (tot_n-1) / 64 + 1;   \
         for (i = 0; i < n_seqs; ++i) {  \
             kseq_t *seq = read_seq + i; \
             int seq_l = seq->seq.l; \
@@ -168,33 +140,27 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
             for (j = 0; j < seq_l; ++j) bseq[j] = nst_nt4_table[(int)(seq1[j])];    \
             abpoa_cigar_t *abpoa_cigar=0; int n_cigar=0;    \
             abpoa_align_sequence_with_graph(ab, bseq, seq_l, abpt, &n_cigar, &abpoa_cigar); \
-            if (abpt->out_msa) {    \
-                if (seq_l > seq_m[tot_n+i]) {   \
-                    seq_m[tot_n+i] = MAX_OF_TWO(seq_l, seq_m[tot_n+i] * 2); \
-                    seq_node_ids[tot_n+i] = (int*)_err_realloc(seq_node_ids[tot_n+i], seq_m[tot_n+i] * sizeof(int));    \
-                }   \
-                seq_node_ids_l[tot_n+i] = 0;    \
-                abpoa_add_graph_alignment(ab->abg, abpt, bseq, seq_l, n_cigar, abpoa_cigar, seq_node_ids[tot_n+i], seq_node_ids_l+tot_n+i); \
-            } else abpoa_add_graph_alignment(ab->abg, abpt, bseq, seq_l, n_cigar, abpoa_cigar, NULL, NULL);     \
+            abpoa_add_graph_alignment(ab->abg, abpt, bseq, seq_l, n_cigar, abpoa_cigar, add_read_id, read_id++, read_ids_n);     \
             if (n_cigar) free(abpoa_cigar); \
             /*if (abpt->out_pog) {    \
                 char abpoa_dot_fn[100]; sprintf(abpoa_dot_fn, "./abpoa_%d.dot", i);    \
                 abpoa_graph_visual(ab->abg, abpoa_dot_fn);  \
             }*/   \
         }   \
-        tot_n += n_seqs;    \
     }   \
     /* generate consensus from graph */ \
     if (abpt->out_cons && ab->abg->node_n > 2) {   \
-        abpoa_generate_consensus(ab->abg, abpt->cons_agrm); \
-        fprintf(stdout, ">Consensus_sequence\n");   \
-        for (i = 0; i < ab->abg->cons_l; ++i) {   \
-            fprintf(stdout, "%c", "ACGTN"[ab->abg->cons_seq[i]]); \
-        } fprintf(stdout, "\n");\
+        abpoa_generate_consensus(ab->abg, abpt->cons_agrm, abpt->multip, tot_n); \
+        if (abpt->multip == 1) { \
+            fprintf(stdout, ">Consensus_sequence\n");   \
+            for (i = 0; i < ab->abg->cons_l; ++i) {   \
+                fprintf(stdout, "%c", "ACGTN"[ab->abg->cons_seq[i]]); \
+            } fprintf(stdout, "\n");\
+        }   \
     }   \
     /* generate multiple sequence alignment */  \
     if (abpt->out_msa &&  ab->abg->node_n > 2)  \
-        abpoa_generate_multiple_sequence_alingment(ab->abg, seq_node_ids, seq_node_ids_l, tot_n, abpt->out_cons, stdout);   \
+        abpoa_generate_multiple_sequence_alingment(ab->abg, tot_n, stdout);   \
     /* generate dot plot */     \
     if (abpt->out_pog) {    \
         char abpoa_dot_fn[100] = "./abpoa.dot";    \
@@ -206,18 +172,15 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
 int abpoa_main(const char *list_fn, int in_list, abpoa_para_t *abpt){
     kseq_t *read_seq = (kseq_t*)calloc(CHUNK_READ_N, sizeof(kseq_t));
     int bseq_m = 1000; uint8_t *bseq = (uint8_t*)_err_malloc(bseq_m * sizeof(uint8_t));
-    int nseqs_m, *seq_m=NULL, *seq_node_ids_l=NULL, **seq_node_ids=NULL; // for msa
-    int i, j, n_seqs, tot_n;
-    if (abpt->out_msa) {
-        nseqs_m = CHUNK_READ_N;
-        seq_node_ids_l = (int*)_err_malloc(nseqs_m * sizeof(int));
-        seq_node_ids = (int**)_err_malloc(nseqs_m * sizeof(int*));
-        seq_m = (int*)_err_calloc(nseqs_m, sizeof(int));
-        for (i = 0; i < nseqs_m; ++i) {
-            seq_m[i] = bseq_m;
-            seq_node_ids[i] = (int*)_err_malloc(bseq_m * sizeof(int));
-        }
+    // int nseqs_m, *seq_m=NULL, *seq_node_ids_l=NULL, **seq_node_ids=NULL; // for msa
+    int i, j, n_seqs, tot_n, read_id;
+    int add_read_id = 0, read_ids_n;
+    if (abpt->cons_agrm == ABPOA_RC || abpt->out_msa || abpt->multip > 1) {
+        add_read_id = 1; 
+        set_65536_table();
+        if (abpt->cons_agrm == ABPOA_RC || abpt->multip > 1) set_bit_table16();
     }
+
     // TODO abpoa_init for each input file ???
     abpoa_t *ab = abpoa_init();
     if (in_list) { // input file list
@@ -231,22 +194,18 @@ int abpoa_main(const char *list_fn, int in_list, abpoa_para_t *abpt){
         abpoa_core(list_fn);
     }
 
-    if (abpt->out_msa) { 
-        for (i = 0; i < nseqs_m; ++i) free(seq_node_ids[i]); 
-        free(seq_node_ids); free(seq_node_ids_l); free(seq_m);
-    } free(bseq);
+    free(bseq);
     for (i = 0; i < CHUNK_READ_N; ++i) { free((read_seq+i)->name.s); free((read_seq+i)->comment.s); free((read_seq+i)->seq.s); free((read_seq+i)->qual.s); } free(read_seq); 
-    abpoa_free(ab);
+    abpoa_free(ab, abpt);
     return 0;
 }
 
-// TODO multi-thread
 int main(int argc, char **argv) {
     int c, in_list=0; char *s; abpoa_para_t *abpt = abpoa_init_para();
-    while ((c = getopt_long(argc, argv, "m:lw:z:b:M:x:o:e:csC:g", abpoa_long_opt, NULL)) >= 0) {
+    while ((c = getopt_long(argc, argv, "a:lw:z:b:M:x:o:e:m:csC:g", abpoa_long_opt, NULL)) >= 0) {
         switch(c)
         {
-            case 'm': abpt->align_mode=atoi(optarg); break;
+            case 'a': abpt->align_mode=atoi(optarg); break;
             case 'l': in_list = 1; break;
             //case 'a': abpt->use_ada = 1; break;
             case 'w': abpt->bw = atoi(optarg); break;
@@ -256,6 +215,7 @@ int main(int argc, char **argv) {
             case 'x': abpt->mismatch = atoi(optarg); break;
             case 'o': abpt->gap_open1 = strtol(optarg, &s, 10); if (*s == ',') abpt->gap_open2 = strtol(s+1, &s, 10); break;
             case 'e': abpt->gap_ext1 = strtol(optarg, &s, 10); if (*s == ',') abpt->gap_ext2 = strtol(s+1, &s, 10); break;
+            case 'm': abpt->multip = atoi(optarg); break;
             case 'c': abpt->out_cons = 1; break;
             case 's': abpt->out_msa = 1; break;
             case 'C': abpt->cons_agrm = atoi(optarg); break;
