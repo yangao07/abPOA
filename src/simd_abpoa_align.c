@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "abpoa_graph.h"
 #include "abpoa_align.h"
 #include "simd_instruction.h"
 #include "utils.h"

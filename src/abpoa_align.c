@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include "abpoa_align.h"
-#include "abpoa.h"
 #include "utils.h"
 
 #define TODO_M   0x1
@@ -56,6 +55,7 @@ abpoa_para_t *abpoa_init_para(void) {
     abpt->out_cons = 0;   // output consensus sequence in msa
     abpt->multip = ABPOA_MULTIP; // muliple consensus for multiploid data
     abpt->cons_agrm = ABPOA_HB;   // consensus calling algorithm 
+    abpt->use_read_ids = 0;
     abpt->out_pog= 0; // generate partial order graph
 
     // number of residue types

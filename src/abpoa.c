@@ -6,43 +6,12 @@
 #include "abpoa_graph.h"
 #include "abpoa_align.h"
 #include "align.h"
-#include "simd_instruction.h"
 #include "kseq.h"
 #include "utils.h"
 
 KSEQ_INIT(gzFile, gzread)
 
 char PROG[20] = "abPOA";
-
-char LogTable65536[65536];
-char bit_table16[65536];
-
-static const char LogTable256[256] = {
-#define LT(n) n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n
-    -1, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
-    LT(4), LT(5), LT(5), LT(6), LT(6), LT(6), LT(6),
-    LT(7), LT(7), LT(7), LT(7), LT(7), LT(7), LT(7), LT(7)
-};
-
-static inline int ilog2_32(uint32_t v)
-{
-    uint32_t t, tt;
-    if ((tt = v>>16)) return (t = tt>>8) ? 24 + LogTable256[t] : 16 + LogTable256[tt];
-    return (t = v>>8) ? 8 + LogTable256[t] : LogTable256[v];
-}
-
-void set_65536_table(void) {
-    int i;
-    for (i = 0; i < 65536; ++i) {
-        LogTable65536[i] = ilog2_32(i);
-    }
-}
-
-void set_bit_table16(void)
-{
-    int i; bit_table16[0] = 0;
-    for (i = 0; i != 65536; ++i) bit_table16[i] = (i&1) + bit_table16[i>>1];
-}
 
 const struct option abpoa_long_opt [] = {
     { "align-mode", 1, NULL, 'a' },
@@ -94,12 +63,13 @@ int abpoa_usage(void)
     err_printf("         -e --end-bonus  [INT]       end bonus score. Effective for extension alignment. Set negative to disable. [-1]\n\n");
 
     err_printf("         -c --out-cons               output consensus sequence. [False]\n");
-    err_printf("         -m --multiploid             maximum number of output consensus sequences (for multiploid data). [%d]\n", ABPOA_MULTIP);
-    err_printf("         -s --out-msa                output multiple sequence alignment in pir format. [False]\n");
     err_printf("         -C --cons-agrm  [INT]       algorithm for consensus calling. [0]\n");
     err_printf("                                       0: heaviest bundling\n");
-    err_printf("                                       1: minimum flow\n\n");
+    err_printf("                                       1: minimum flow\n");
     err_printf("                                       2: row-column MSA\n\n");
+    err_printf("         -m --multiploid             maximum number of output consensus sequences (for multiploid data). [%d]\n", ABPOA_MULTIP);
+    err_printf("                                     When 2 or more consensus are needed, --cons-agrm is set to \'row-column MSA\'\n");
+    err_printf("         -s --out-msa                output multiple sequence alignment in pir format. [False]\n");
     err_printf("         -g --out-pog                generate visualized partial-order graph. [False]\n");
 
     err_printf("\n");
@@ -126,7 +96,7 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
     abpoa_reset_graph(ab, bseq_m, abpt);    \
     while ((n_seqs = abpoa_read_seq(read_seq, CHUNK_READ_N)) != 0) {    \
         tot_n += n_seqs;    \
-        if (add_read_id) read_ids_n = (tot_n-1) / 64 + 1;   \
+        if (abpt->use_read_ids) read_ids_n = (tot_n-1) / 64 + 1;   \
         for (i = 0; i < n_seqs; ++i) {  \
             kseq_t *seq = read_seq + i; \
             int seq_l = seq->seq.l; \
@@ -140,7 +110,7 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
             for (j = 0; j < seq_l; ++j) bseq[j] = nst_nt4_table[(int)(seq1[j])];    \
             abpoa_cigar_t *abpoa_cigar=0; int n_cigar=0;    \
             abpoa_align_sequence_with_graph(ab, bseq, seq_l, abpt, &n_cigar, &abpoa_cigar); \
-            abpoa_add_graph_alignment(ab->abg, abpt, bseq, seq_l, n_cigar, abpoa_cigar, add_read_id, read_id++, read_ids_n);     \
+            abpoa_add_graph_alignment(ab->abg, abpt, bseq, seq_l, n_cigar, abpoa_cigar, read_id++, read_ids_n);     \
             if (n_cigar) free(abpoa_cigar); \
             /*if (abpt->out_pog) {    \
                 char abpoa_dot_fn[100]; sprintf(abpoa_dot_fn, "./abpoa_%d.dot", i);    \
@@ -150,13 +120,7 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
     }   \
     /* generate consensus from graph */ \
     if (abpt->out_cons && ab->abg->node_n > 2) {   \
-        abpoa_generate_consensus(ab->abg, abpt->cons_agrm, abpt->multip, tot_n); \
-        if (abpt->multip == 1) { \
-            fprintf(stdout, ">Consensus_sequence\n");   \
-            for (i = 0; i < ab->abg->cons_l; ++i) {   \
-                fprintf(stdout, "%c", "ACGTN"[ab->abg->cons_seq[i]]); \
-            } fprintf(stdout, "\n");\
-        }   \
+        abpoa_generate_consensus(ab->abg, abpt->cons_agrm, abpt->multip, tot_n, stdout); \
     }   \
     /* generate multiple sequence alignment */  \
     if (abpt->out_msa &&  ab->abg->node_n > 2)  \
@@ -174,9 +138,9 @@ int abpoa_main(const char *list_fn, int in_list, abpoa_para_t *abpt){
     int bseq_m = 1000; uint8_t *bseq = (uint8_t*)_err_malloc(bseq_m * sizeof(uint8_t));
     // int nseqs_m, *seq_m=NULL, *seq_node_ids_l=NULL, **seq_node_ids=NULL; // for msa
     int i, j, n_seqs, tot_n, read_id;
-    int add_read_id = 0, read_ids_n;
+    int read_ids_n = 0;
     if (abpt->cons_agrm == ABPOA_RC || abpt->out_msa || abpt->multip > 1) {
-        add_read_id = 1; 
+        abpt->use_read_ids = 1;
         set_65536_table();
         if (abpt->cons_agrm == ABPOA_RC || abpt->multip > 1) set_bit_table16();
     }
@@ -207,7 +171,6 @@ int main(int argc, char **argv) {
         {
             case 'a': abpt->align_mode=atoi(optarg); break;
             case 'l': in_list = 1; break;
-            //case 'a': abpt->use_ada = 1; break;
             case 'w': abpt->bw = atoi(optarg); break;
             case 'z': abpt->zdrop = atoi(optarg); break;
             case 'b': abpt->end_bonus= atoi(optarg); break;

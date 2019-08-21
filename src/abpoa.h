@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include "simd_instruction.h"
 
+char LogTable65536[65536];
+char bit_table16[65536];
 // XXX max of in_edge is pow(2,30)
 // for MATCH/MISMATCH: node_id << 34  | query_id << 4 | op
 // for INSERTION:      query_id << 34 | op_len << 4   | op
@@ -22,8 +24,8 @@ typedef struct {
     int zdrop, end_bonus; // from minimap2
     int simd_flag; // available SIMD instruction
     // alignment mode
-    uint8_t align_mode:2, use_ada:1, ret_cigar:1, out_msa:1, out_cons:1, out_pog:1; // mode: 0: global, 1: local, 2: extend
-    int cons_agrm, multip;
+    uint8_t use_ada:1, ret_cigar:1, out_msa:1, out_cons:1, out_pog:1, use_read_ids:1; // mode: 0: global, 1: local, 2: extend
+    int align_mode, cons_agrm, multip;
 } abpoa_para_t;
 
 typedef struct {
@@ -64,9 +66,13 @@ abpoa_para_t *abpoa_init_para(void);
 void abpoa_free_para(abpoa_para_t *abpt);
 void gen_simple_mat(int m, int *mat, int match, int mismatch);
 
+
 // init for alignment
 abpoa_t *abpoa_init(void);
 void abpoa_free(abpoa_t *ab, abpoa_para_t *abpt);
+
+void set_65536_table(void);
+void set_bit_table16(void);
 
 // clean alignment graph
 void abpoa_reset_graph(abpoa_t *ab, int qlen, abpoa_para_t *abpt);
@@ -75,10 +81,10 @@ void abpoa_reset_graph(abpoa_t *ab, int qlen, abpoa_para_t *abpt);
 int abpoa_align_sequence_with_graph(abpoa_t *ab, uint8_t *query, int qlen, abpoa_para_t *abpt, int *n_cigar, abpoa_cigar_t **graph_cigar);
 
 // add an alignment to a graph
-int abpoa_add_graph_alignment(abpoa_graph_t *graph, abpoa_para_t *abpt, uint8_t *query, int qlen, int n_cigar, abpoa_cigar_t *abpoa_cigar, int add_read_id, int read_id, int read_ids_n);
+int abpoa_add_graph_alignment(abpoa_graph_t *graph, abpoa_para_t *abpt, uint8_t *query, int qlen, int n_cigar, abpoa_cigar_t *abpoa_cigar, int read_id, int read_ids_n);
 
 // generate consensus sequence from graph
-int abpoa_generate_consensus(abpoa_graph_t *graph, uint8_t cons_agrm, int multip, int seq_n);
+int abpoa_generate_consensus(abpoa_graph_t *graph, uint8_t cons_agrm, int multip, int seq_n, FILE *out_fp);
 // generate column multiple sequence alignment from graph
 int abpoa_generate_multiple_sequence_alingment(abpoa_graph_t *graph, int seq_n, FILE *out_fp);
 
