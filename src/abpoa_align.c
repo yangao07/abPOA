@@ -54,6 +54,7 @@ abpoa_para_t *abpoa_init_para(void) {
     abpt->out_msa = 0;    // output msa
     abpt->out_cons = 0;   // output consensus sequence in msa
     abpt->multip = ABPOA_MULTIP; // muliple consensus for multiploid data
+    abpt->min_fre = 0.3;
     abpt->cons_agrm = ABPOA_HB;   // consensus calling algorithm 
     abpt->use_read_ids = 0;
     abpt->out_pog= 0; // generate partial order graph

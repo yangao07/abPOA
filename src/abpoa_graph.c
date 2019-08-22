@@ -635,7 +635,7 @@ void abpoa_set_row_column_ids(abpoa_graph_t *graph, uint64_t ***read_ids, int se
     }
 }
 
-void abpoa_multip_cluster_row_column(abpoa_graph_t *graph, int src_id, int sink_id, int seq_n, int multip, FILE *out_fp) {
+void abpoa_multip_cluster_row_column(abpoa_graph_t *graph, int src_id, int sink_id, int seq_n, int multip, double min_fre, FILE *out_fp) {
     abpoa_set_msa_rank(graph, src_id, sink_id);
     int i, j, msa_l = graph->node_id_to_msa_rank[sink_id]-1;
     int read_ids_n = (seq_n-1)/64+1;
@@ -650,7 +650,7 @@ void abpoa_multip_cluster_row_column(abpoa_graph_t *graph, int src_id, int sink_
         for (j = 0; j < 5; ++j) read_ids[i][j] = (uint64_t*)_err_calloc(read_ids_n, sizeof(uint64_t));
     }
     abpoa_set_weight_matrix(graph, weight_matrix, seq_n);
-    agglo_hier_clu(weight_matrix, seq_n, multip, cluster_ids, cluster_ids_n);
+    agglo_hier_clu(weight_matrix, seq_n, multip, min_fre, cluster_ids, cluster_ids_n);
     abpoa_set_row_column_ids(graph, read_ids, seq_n, read_ids_n);
     abpoa_multip_consensus(read_ids, cluster_ids, cluster_ids_n, multip, read_ids_n, msa_l, out_fp);
     for (i = 0; i < seq_n; ++i) {
@@ -881,14 +881,14 @@ int set_clu_read_ids(int **clu_read_ids, int *clu_read_ids_n, int seq_n, uint64_
     return clu_n;
 }
 
-int abpoa_diploid_ids(uint64_t ***read_ids, int **rc_weight, int msa_l, int seq_n, int read_ids_n, int **clu_read_ids, int *clu_read_ids_n) {
+int abpoa_diploid_ids(uint64_t ***read_ids, int **rc_weight, int msa_l, int seq_n, double min_fre, int read_ids_n, int **clu_read_ids, int *clu_read_ids_n) {
     int i, j;
     uint64_t **het_read_ids = (uint64_t**)_err_malloc(sizeof(uint64_t*) * 2 );
     for (i = 0; i < 2; ++i) het_read_ids[i] = (uint64_t*)_err_calloc(read_ids_n, sizeof(uint64_t));
     int *het_pos = (int*)_err_malloc(sizeof(int) * msa_l), het_n = 0;
     uint8_t **het_cons_base = (uint8_t**)_err_malloc(sizeof(uint8_t*) * msa_l);
     for (i = 0; i < msa_l; ++i) het_cons_base[i] = (uint8_t*)_err_malloc(sizeof(uint8_t) * 2);
-    int min_w = MAX_OF_TWO(1, seq_n / 3);
+    int min_w = MAX_OF_TWO(1, seq_n * min_fre);
     int init = 1, tmp, multip_i[2], multip_n, w;
     // collect het nodes
     for (i = 0; i < msa_l; ++i) {
@@ -928,7 +928,7 @@ int abpoa_diploid_ids(uint64_t ***read_ids, int **rc_weight, int msa_l, int seq_
     return clu_n;
 }
 
-void abpoa_diploid_row_column(abpoa_graph_t *graph, int src_id, int sink_id, int seq_n, FILE *out_fp) {
+void abpoa_diploid_row_column(abpoa_graph_t *graph, int src_id, int sink_id, int seq_n, double min_fre, FILE *out_fp) {
     abpoa_set_msa_rank(graph, src_id, sink_id);
     int i, j, msa_l = graph->node_id_to_msa_rank[sink_id] - 1;
     int read_ids_n = (seq_n-1)/64+1;
@@ -947,7 +947,7 @@ void abpoa_diploid_row_column(abpoa_graph_t *graph, int src_id, int sink_id, int
     int **clu_read_ids = (int**)_err_malloc(sizeof(int*) * 2), *clu_read_ids_n;
     for (i = 0; i < 2; ++i) clu_read_ids[i] = (int*)_err_malloc(sizeof(int) * seq_n);
     clu_read_ids_n = (int*)_err_calloc(2, sizeof(int));
-    int clu_n = abpoa_diploid_ids(read_ids, rc_weight, msa_l, seq_n, read_ids_n, clu_read_ids, clu_read_ids_n);
+    int clu_n = abpoa_diploid_ids(read_ids, rc_weight, msa_l, seq_n, min_fre, read_ids_n, clu_read_ids, clu_read_ids_n);
     if (clu_n == 1) {
         abpoa_row_column_consensus(graph, rc_weight, msa_l, seq_n);
         output_consensus(graph, out_fp);
@@ -962,7 +962,7 @@ void abpoa_diploid_row_column(abpoa_graph_t *graph, int src_id, int sink_id, int
 }
 
 // should always topological sort first, then generate consensus
-int abpoa_generate_consensus(abpoa_graph_t *graph, uint8_t cons_agrm, int multip, int seq_n, FILE *out_fp) {
+int abpoa_generate_consensus(abpoa_graph_t *graph, uint8_t cons_agrm, int multip, double min_fre, int seq_n, FILE *out_fp) {
     int i, *out_degree = (int*)_err_malloc(graph->node_n * sizeof(int));
     for (i = 0; i < graph->node_n; ++i) {
         out_degree[i] = graph->node[i].out_edge_n;
@@ -975,9 +975,9 @@ int abpoa_generate_consensus(abpoa_graph_t *graph, uint8_t cons_agrm, int multip
         else err_fatal(__func__, "Unknown consensus calling algorithm: %d.", cons_agrm);
         output_consensus(graph, out_fp);
     } else if (multip == 2) {
-        abpoa_diploid_row_column(graph, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, seq_n, out_fp);
+        abpoa_diploid_row_column(graph, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, seq_n, min_fre, out_fp);
     } else if (multip > 2) {
-        abpoa_multip_cluster_row_column(graph, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, seq_n, multip, out_fp);
+        abpoa_multip_cluster_row_column(graph, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, seq_n, multip, min_fre, out_fp);
     }
     graph->is_called_cons = 1; free(out_degree);
     return graph->cons_l;

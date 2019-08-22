@@ -25,6 +25,7 @@ const struct option abpoa_long_opt [] = {
     { "gap-ext", 1, NULL, 'e' },
     { "out-cons", 0, NULL, 'c' },
     { "multiploid", 1, NULL, 'm', },
+    { "min-frequency", 1, NULL, 'f', },
     { "out-msa", 0, NULL, 's' },
     { "cons-agrm", 1, NULL, 'C' },
 
@@ -69,6 +70,7 @@ int abpoa_usage(void)
     err_printf("                                       2: row-column MSA\n\n");
     err_printf("         -m --multiploid             maximum number of output consensus sequences (for multiploid data). [%d]\n", ABPOA_MULTIP);
     err_printf("                                     When 2 or more consensus are needed, --cons-agrm is set to \'row-column MSA\'\n");
+    err_printf("         -f --min-frequency [DOU]    minimum frequency of each haploid (for multiploid data). [%.2f]\n", ABPOA_MIN_FRE);
     err_printf("         -s --out-msa                output multiple sequence alignment in pir format. [False]\n");
     err_printf("         -g --out-pog                generate visualized partial-order graph. [False]\n");
 
@@ -120,7 +122,7 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
     }   \
     /* generate consensus from graph */ \
     if (abpt->out_cons && ab->abg->node_n > 2) {   \
-        abpoa_generate_consensus(ab->abg, abpt->cons_agrm, abpt->multip, tot_n, stdout); \
+        abpoa_generate_consensus(ab->abg, abpt->cons_agrm, abpt->multip, abpt->min_fre, tot_n, stdout); \
     }   \
     /* generate multiple sequence alignment */  \
     if (abpt->out_msa &&  ab->abg->node_n > 2)  \
@@ -166,7 +168,7 @@ int abpoa_main(const char *list_fn, int in_list, abpoa_para_t *abpt){
 
 int main(int argc, char **argv) {
     int c, in_list=0; char *s; abpoa_para_t *abpt = abpoa_init_para();
-    while ((c = getopt_long(argc, argv, "a:lw:z:b:M:x:o:e:m:csC:g", abpoa_long_opt, NULL)) >= 0) {
+    while ((c = getopt_long(argc, argv, "a:lw:z:b:M:x:o:e:m:f:csC:g", abpoa_long_opt, NULL)) >= 0) {
         switch(c)
         {
             case 'a': abpt->align_mode=atoi(optarg); break;
@@ -179,6 +181,7 @@ int main(int argc, char **argv) {
             case 'o': abpt->gap_open1 = strtol(optarg, &s, 10); if (*s == ',') abpt->gap_open2 = strtol(s+1, &s, 10); break;
             case 'e': abpt->gap_ext1 = strtol(optarg, &s, 10); if (*s == ',') abpt->gap_ext2 = strtol(s+1, &s, 10); break;
             case 'm': abpt->multip = atoi(optarg); break;
+            case 'f': abpt->min_fre = atof(optarg); break;
             case 'c': abpt->out_cons = 1; break;
             case 's': abpt->out_msa = 1; break;
             case 'C': abpt->cons_agrm = atoi(optarg); break;

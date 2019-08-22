@@ -25,7 +25,8 @@ typedef struct {
     int simd_flag; // available SIMD instruction
     // alignment mode
     uint8_t use_ada:1, ret_cigar:1, out_msa:1, out_cons:1, out_pog:1, use_read_ids:1; // mode: 0: global, 1: local, 2: extend
-    int align_mode, cons_agrm, multip;
+    int align_mode, cons_agrm;
+    int multip; double min_fre; // for multiploid data
 } abpoa_para_t;
 
 typedef struct {
@@ -84,7 +85,7 @@ int abpoa_align_sequence_with_graph(abpoa_t *ab, uint8_t *query, int qlen, abpoa
 int abpoa_add_graph_alignment(abpoa_graph_t *graph, abpoa_para_t *abpt, uint8_t *query, int qlen, int n_cigar, abpoa_cigar_t *abpoa_cigar, int read_id, int read_ids_n);
 
 // generate consensus sequence from graph
-int abpoa_generate_consensus(abpoa_graph_t *graph, uint8_t cons_agrm, int multip, int seq_n, FILE *out_fp);
+int abpoa_generate_consensus(abpoa_graph_t *graph, uint8_t cons_agrm, int multip, double min_fre, int seq_n, FILE *out_fp);
 // generate column multiple sequence alignment from graph
 int abpoa_generate_multiple_sequence_alingment(abpoa_graph_t *graph, int seq_n, FILE *out_fp);
 

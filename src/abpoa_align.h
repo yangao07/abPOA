@@ -30,6 +30,7 @@
 #define ABPOA_CONVEX_GAP 2
 
 #define ABPOA_MULTIP     1
+#define ABPOA_MIN_FRE    0.3
 
 #define ABPOA_CIGAR_STR "MIDXSH"
 #define ABPOA_CMATCH     0
