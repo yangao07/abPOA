@@ -25,7 +25,7 @@ typedef struct {
     int simd_flag; // available SIMD instruction
     // alignment mode
     uint8_t use_ada:1, ret_cigar:1, out_msa:1, out_cons:1, out_pog:1, use_read_ids:1; // mode: 0: global, 1: local, 2: extend
-    int align_mode, cons_agrm;
+    int align_mode, gap_mode, cons_agrm;
     int multip; double min_fre; // for multiploid data
 } abpoa_para_t;
 
@@ -66,6 +66,7 @@ typedef struct {
 abpoa_para_t *abpoa_init_para(void);
 void abpoa_free_para(abpoa_para_t *abpt);
 void gen_simple_mat(int m, int *mat, int match, int mismatch);
+void abpoa_set_gap_mode(abpoa_para_t *abpt);
 
 
 // init for alignment

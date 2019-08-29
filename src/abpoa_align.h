@@ -22,7 +22,7 @@
 #define ABPOA_GLOBAL_MODE 0
 #define ABPOA_EXTEND_MODE 1
 #define ABPOA_LOCAL_MODE 2
-#define ABPOA_SEMI_MODE 3
+//#define ABPOA_SEMI_MODE 3
 
 // gap mode
 #define ABPOA_LINEAR_GAP 0

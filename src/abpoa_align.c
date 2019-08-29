@@ -43,9 +43,16 @@ void gen_simple_mat(int m, int *mat, int match, int mismatch) {
         mat[(m - 1) * m + j] = 0;
 }
 
+void abpoa_set_gap_mode(abpoa_para_t *abpt) {
+    if (abpt->gap_open1 == 0) abpt->gap_mode = ABPOA_LINEAR_GAP;
+    else if (abpt->gap_open1 > 0 && abpt->gap_open2 == 0) abpt->gap_mode = ABPOA_AFFINE_GAP;
+    else abpt->gap_mode = ABPOA_CONVEX_GAP;
+}
+
 abpoa_para_t *abpoa_init_para(void) {
     abpoa_para_t *abpt = (abpoa_para_t*)_err_malloc(sizeof(abpoa_para_t));
     abpt->align_mode = ABPOA_GLOBAL_MODE;
+    abpt->gap_mode = ABPOA_CONVEX_GAP;
     abpt->zdrop = -1;     // disable zdrop
     abpt->end_bonus = -1; // disable end bouns
     abpt->bw = -1;        // disable bandwidth

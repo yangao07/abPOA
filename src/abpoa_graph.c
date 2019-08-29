@@ -220,7 +220,7 @@ int abpoa_topological_sort(abpoa_graph_t *graph, abpoa_para_t *abpt) {
         graph->index_rank_m = MAX_OF_TWO(node_n, graph->index_rank_m << 1);
         graph->index_to_node_id = (int*)_err_realloc(graph->index_to_node_id, graph->index_rank_m * sizeof(int));
         graph->node_id_to_index = (int*)_err_realloc(graph->node_id_to_index, graph->index_rank_m * sizeof(int));
-        if (abpt->out_msa) graph->node_id_to_msa_rank = (int*)_err_realloc(graph->node_id_to_msa_rank, graph->index_rank_m * sizeof(int));
+        if (abpt->out_msa || abpt->cons_agrm == ABPOA_RC) graph->node_id_to_msa_rank = (int*)_err_realloc(graph->node_id_to_msa_rank, graph->index_rank_m * sizeof(int));
         if (abpt->bw >= 0) {
             graph->node_id_to_min_rank = (int*)_err_realloc(graph->node_id_to_min_rank, graph->index_rank_m * sizeof(int));
             graph->node_id_to_max_rank = (int*)_err_realloc(graph->node_id_to_max_rank, graph->index_rank_m * sizeof(int));
@@ -425,6 +425,7 @@ int abpoa_DFS_set_msa_rank(abpoa_graph_t *graph, int src_id, int sink_id, int *i
     // Depth-First-Search
     kdq_push_int(q, src_id); // node[q.id].in_degree equals 0
     graph->node_id_to_msa_rank[src_id] = -1;
+    // printf("tot_node_n: %d, node_m: %d\n", graph->node_n, graph->node_m);
 
     while((id = kdq_pop_int(q)) != 0) {
         cur_id = *id;
@@ -439,12 +440,6 @@ int abpoa_DFS_set_msa_rank(abpoa_graph_t *graph, int src_id, int sink_id, int *i
 
         if (cur_id == sink_id) {
             kdq_destroy_int(q);
-#ifdef __DEBUG__
-            for (i = 0; i < graph->node_n; ++i) {
-                int id = abpoa_graph_index_to_node_id(graph, i);
-                printf("%d, %d ==> %d\n", i, id, graph->node_id_to_msa_rank[id]);
-            }
-#endif
             graph->is_set_msa_rank = 1;
             return 0;
         }
@@ -460,6 +455,7 @@ int abpoa_DFS_set_msa_rank(abpoa_graph_t *graph, int src_id, int sink_id, int *i
                 for (j = 0; j < graph->node[out_id].aligned_node_n; ++j) {
                     aligned_id = graph->node[out_id].aligned_node_id[j];
                     kdq_push_int(q, aligned_id);
+                    // printf("aln_id: %d\n", aligned_id);
                     graph->node_id_to_msa_rank[aligned_id] = -1;
                 }
             }
