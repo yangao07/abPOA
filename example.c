@@ -78,11 +78,7 @@ int main(void) {
     }
     /* generate consensus sequence from graph */
     if (abpt->out_cons && ab->abg->node_n > 2) {
-        abpoa_generate_consensus(ab->abg, abpt->cons_agrm, 1, seq_n);
-        fprintf(stdout, ">Consensus_sequence\n");
-        for (i = 0; i < ab->abg->cons_l; ++i) {
-            fprintf(stdout, "%c", "ACGTN"[ab->abg->cons_seq[i]]);
-        } fprintf(stdout, "\n");
+        abpoa_generate_consensus(ab->abg, abpt->cons_agrm, 1, 0.0, seq_n, stdout, NULL, NULL, NULL);
     }
 
     /* generate multiple sequence alignment */

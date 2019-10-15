@@ -135,7 +135,7 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
     }   \
     /* generate consensus from graph */ \
     if (abpt->out_cons && ab->abg->node_n > 2) {   \
-        abpoa_generate_consensus(ab->abg, abpt->cons_agrm, abpt->multip, abpt->min_fre, tot_n, stdout); \
+        abpoa_generate_consensus(ab->abg, abpt->cons_agrm, abpt->multip, abpt->min_fre, tot_n, stdout, NULL, NULL, NULL); \
     }   \
     /* generate multiple sequence alignment */  \
     if (abpt->out_msa &&  ab->abg->node_n > 2)  \

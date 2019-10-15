@@ -25,7 +25,7 @@ typedef struct {
     int simd_flag; // available SIMD instruction
     // alignment mode
     uint8_t use_ada:1, ret_cigar:1, out_msa:1, out_cons:1, out_pog:1, use_read_ids:1; // mode: 0: global, 1: local, 2: extend
-    int align_mode, cons_agrm;
+    int align_mode, gap_mode, cons_agrm;
     int multip; double min_fre; // for multiploid data
 } abpoa_para_t;
 
@@ -66,6 +66,7 @@ typedef struct {
 abpoa_para_t *abpoa_init_para(void);
 void abpoa_free_para(abpoa_para_t *abpt);
 void gen_simple_mat(int m, int *mat, int match, int mismatch);
+void abpoa_set_gap_mode(abpoa_para_t *abpt);
 
 
 // init for alignment
@@ -85,8 +86,16 @@ int abpoa_align_sequence_with_graph(abpoa_t *ab, uint8_t *query, int qlen, abpoa
 int abpoa_add_graph_alignment(abpoa_graph_t *graph, abpoa_para_t *abpt, uint8_t *query, int qlen, int n_cigar, abpoa_cigar_t *abpoa_cigar, int read_id, int read_ids_n);
 
 // generate consensus sequence from graph
-int abpoa_generate_consensus(abpoa_graph_t *graph, uint8_t cons_agrm, int multip, double min_fre, int seq_n, FILE *out_fp);
+// para:
+//   out_fp: consensus sequence output in FASTA format, set as NULL to disable
+//   cons_seq, cons_l, cons_n: store consensus sequences in variables, set cons_n as NULL to disable. 
+//     cons_seq: store consensus sequences
+//     cons_l: store consensus sequences length
+//     cons_n: store number of consensus sequences
+//     Note: cons_seq and cons_l need to be freed by user.
+int abpoa_generate_consensus(abpoa_graph_t *graph, uint8_t cons_agrm, int multip, double min_fre, int seq_n, FILE *out_fp, uint8_t **cons_seq, int *cons_l, int *cons_n);
 // generate column multiple sequence alignment from graph
+// store msa into msa[] // TODO
 int abpoa_generate_multiple_sequence_alingment(abpoa_graph_t *graph, int seq_n, FILE *out_fp);
 
 // generate DOT graph plot 
