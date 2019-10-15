@@ -1386,9 +1386,9 @@ void abpoa_free_simd_matrix(abpoa_simd_matrix_t *abm) {
 // * qp, DP_HE/H (if ag/lg), dp_f, qi (if ada/extend/local)
 // * dp_beg/end, dp_beg/end_sn if band
 // * pre_n, pre_index
-void simd_abpoa_realloc(abpoa_t *ab, int qlen, abpoa_para_t *abpt, SIMD_para_t sp) {
-    int pn = sp.num_of_value, size = sp.size, sn = (qlen + sp.num_of_value) / pn, node_n = ab->abg->node_n;
-    int s_msize = sn * abpt->m * size; // qp
+int simd_abpoa_realloc(abpoa_t *ab, int qlen, abpoa_para_t *abpt, SIMD_para_t sp) {
+    uint64_t pn = sp.num_of_value, size = sp.size, sn = (qlen + sp.num_of_value) / pn, node_n = ab->abg->node_n;
+    uint64_t s_msize = sn * abpt->m * size; // qp
 
     if (abpt->gap_mode == ABPOA_LINEAR_GAP) s_msize += (sn * node_n * size); // DP_H, linear
     else if (abpt->gap_mode == ABPOA_AFFINE_GAP) s_msize += (sn * ((node_n << 1) + 1) * size); // DP_HE + dp_f, affine
@@ -1397,6 +1397,10 @@ void simd_abpoa_realloc(abpoa_t *ab, int qlen, abpoa_para_t *abpt, SIMD_para_t s
     if (abpt->bw >= 0 || abpt->align_mode == ABPOA_EXTEND_MODE || abpt->align_mode == ABPOA_LOCAL_MODE) // qi
         s_msize += sn * size;
 
+    if (s_msize > UINT32_MAX) {
+        err_func_format_printf(__func__, "Warning: Graph is too large or query is too long.\n");
+        return 1;
+    }
     if (s_msize > ab->abm->s_msize) {
         if (ab->abm->s_mem) free(ab->abm->s_mem);
         ab->abm->s_msize = MAX_OF_TWO(ab->abm->s_msize << 1, s_msize);
@@ -1410,6 +1414,7 @@ void simd_abpoa_realloc(abpoa_t *ab, int qlen, abpoa_para_t *abpt, SIMD_para_t s
         ab->abm->dp_beg_sn = (int*)_err_realloc(ab->abm->dp_beg_sn, ab->abm->rang_m * sizeof(int));
         ab->abm->dp_end_sn = (int*)_err_realloc(ab->abm->dp_end_sn, ab->abm->rang_m * sizeof(int));
     }
+    return 0;
 }
 
 // -e7 -w XXX
@@ -1543,9 +1548,6 @@ int abpoa_lg_global_align_sequence_with_graph_core(abpoa_t *ab, int qlen, uint8_
         for (i = _beg_sn; i <= _end_sn; ++i) { /* SIMD parallelization */
             dp_h[i] = SIMD_MIN_INF;
         }	                      
-        if (index_i == 25) {
-            printf("ok\n");
-        }
         /* get max m and e */	 
         for (i = 0; i < pre_n[index_i]; ++i) {
             pre_i = pre_index[index_i][i];
@@ -2215,25 +2217,26 @@ int simd_abpoa_align_sequence_with_graph(abpoa_t *ab, uint8_t *query, int qlen, 
         int node_n = ab->abg->node_n;
         max_score = MAX_OF_THREE(qlen * abpt->match, MIN_OF_TWO(qlen, node_n) * abpt->mismatch + MIN_OF_TWO(abpt->gap_open1 + abpt->gap_ext1 * abs(qlen-node_n), abpt->gap_open2 + abpt->gap_ext2 * abs(qlen-node_n)), MIN_OF_TWO(abpt->gap_open1 + node_n * abpt->gap_ext1, abpt->gap_open2 + node_n * abpt->gap_ext2) + MIN_OF_TWO(abpt->gap_open1 + qlen * abpt->gap_ext1, abpt->gap_open2 + qlen * abpt->gap_ext2));
     }
-    int bits;
+    int bits, mem_ret=0;
     if (max_score <= INT8_MAX - abpt->mismatch - abpt->gap_open1 - abpt->gap_ext1 - abpt->gap_open2 - abpt->gap_open2) { // DP_H/E/F: 8  bits
         _simd_p8.inf_min = MAX_OF_THREE(INT8_MIN + abpt->mismatch, INT8_MIN + abpt->gap_open1 + abpt->gap_ext1, INT8_MIN + abpt->gap_open2 + abpt->gap_ext2);
-        simd_abpoa_realloc(ab, qlen, abpt, _simd_p8);
+        mem_ret = simd_abpoa_realloc(ab, qlen, abpt, _simd_p8);
         bits = 8;
     } else if (max_score <= INT16_MAX - abpt->mismatch - abpt->gap_open1 - abpt->gap_ext1 - abpt->gap_open2 - abpt->gap_open2) { // DP_H/E/F: 16 bits
         _simd_p16.inf_min = MAX_OF_THREE(INT16_MIN + abpt->mismatch, INT16_MIN + abpt->gap_open1 + abpt->gap_ext1, INT16_MIN + abpt->gap_open2 + abpt->gap_ext2);
-        simd_abpoa_realloc(ab, qlen, abpt, _simd_p16);
+        mem_ret = simd_abpoa_realloc(ab, qlen, abpt, _simd_p16);
         bits = 16;
     } else { 
         _simd_p32.inf_min = MAX_OF_THREE(INT32_MIN + abpt->mismatch, INT32_MIN + abpt->gap_open1 + abpt->gap_ext1, INT32_MIN + abpt->gap_open2 + abpt->gap_ext2);
-        simd_abpoa_realloc(ab, qlen, abpt, _simd_p32);
+        mem_ret = simd_abpoa_realloc(ab, qlen, abpt, _simd_p32);
         bits = 32;
     }
+    if (mem_ret) return 0;
 
     int _best_score=0;
-#ifndef __DEBUG__
+#ifdef __DEBUG__
     if (abpt->gap_mode == ABPOA_CONVEX_GAP) return abpoa_cg_global_align_sequence_with_graph_core(ab, qlen, query, abpt, _simd_p16, n_cigar, graph_cigar);
-    else if (abpt->gap_mode == ABPOA_LINEAR_GAP) return abpoa_lg_global_align_sequence_with_graph_core(ab, qlen, query, abpt, _simd_p16, n_cigar, graph_cigar);
+    else if (abpt->gap_mode == ABPOA_LINEAR_GAP) return abpoa_lg_global_align_sequence_with_graph_core(ab, qlen, query, abpt, _simd_p32, n_cigar, graph_cigar);
     else if (abpt->gap_mode == ABPOA_AFFINE_GAP) return abpoa_ag_global_align_sequence_with_graph_core(ab, qlen, query, abpt, _simd_p16, n_cigar, graph_cigar);
 #else
     if (abpt->align_mode == ABPOA_GLOBAL_MODE) {

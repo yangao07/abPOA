@@ -87,6 +87,6 @@ int main(void) {
     /* generate DOT partial order graph plot */
     if (abpt->out_pog) abpoa_graph_visual(ab->abg, "abpoa.dot");
 
-    abpoa_free_para(abpt); abpoa_free(ab, abpt);
+    abpoa_free(ab, abpt); abpoa_free_para(abpt); 
     return 0;
 }

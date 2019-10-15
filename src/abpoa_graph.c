@@ -1177,7 +1177,8 @@ int abpoa_add_graph_alignment(abpoa_graph_t *graph, abpoa_para_t *abpt, uint8_t 
         if (graph->node_n < 2) {
             err_fatal(__func__, "Graph node: %d.", graph->node_n);
         } else if (n_cigar == 0) {
-            err_fatal(__func__, "Empty graph cigar.");
+            return 0;
+            //err_fatal(__func__, "Empty graph cigar.");
         }
     }
     // normal graph, normal graph_cigar

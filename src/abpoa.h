@@ -52,7 +52,7 @@ typedef struct {
 } abpoa_graph_t;
 
 typedef struct {
-    SIMDi *s_mem; int s_msize; // qp, DP_HE, dp_f OR qp, DP_H, dp_f : based on (qlen, num_of_value, m, node_n)
+    SIMDi *s_mem; uint32_t s_msize; // qp, DP_HE, dp_f OR qp, DP_H, dp_f : based on (qlen, num_of_value, m, node_n)
     int *dp_beg, *dp_end, *dp_beg_sn, *dp_end_sn; int rang_m; // if band : based on (node_m)
     // int *pre_n, **pre_index; // pre_n, pre_index based on (node_n) TODO use in/out_id directly
 } abpoa_simd_matrix_t;

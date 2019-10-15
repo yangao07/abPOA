@@ -180,7 +180,7 @@ int abpoa_main(const char *list_fn, int in_list, abpoa_para_t *abpt){
 }
 
 int main(int argc, char **argv) {
-    int c, m, g, in_list=0; char *s; abpoa_para_t *abpt = abpoa_init_para();
+    int c, m, g, in_list=0, manual_gap_mode=0; char *s; abpoa_para_t *abpt = abpoa_init_para();
     while ((c = getopt_long(argc, argv, "la:g:w:z:b:M:x:o:e:m:f:csC:v", abpoa_long_opt, NULL)) >= 0) {
         switch(c)
         {
@@ -190,7 +190,7 @@ int main(int argc, char **argv) {
                       abpt->align_mode=m; break;
             case 'g': g = atoi(optarg);
                       if (g != ABPOA_CONVEX_GAP && g != ABPOA_AFFINE_GAP && g != ABPOA_LINEAR_GAP) { err_printf("Unknown gap penalty mode: %d.\n", g); return abpoa_usage(); }
-                      abpt->gap_mode=g; break;
+                      abpt->gap_mode = g; manual_gap_mode = 1; break;
 
             case 'w': abpt->bw = atoi(optarg); break;
             case 'z': abpt->zdrop = atoi(optarg); break;
@@ -218,7 +218,7 @@ int main(int argc, char **argv) {
     if (argc - optind != 1) return abpoa_usage();
 
     abpt->mat = (int*)_err_malloc(abpt->m * abpt->m * sizeof(int));
-    abpoa_set_gap_mode(abpt);
+    if (manual_gap_mode == 0) abpoa_set_gap_mode(abpt);
     gen_simple_mat(abpt->m, abpt->mat, abpt->match, abpt->mismatch);
     abpoa_main(argv[optind], in_list, abpt);
     abpoa_free_para(abpt);
