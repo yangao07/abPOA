@@ -2214,8 +2214,8 @@ int simd_abpoa_align_sequence_with_graph(abpoa_t *ab, uint8_t *query, int qlen, 
     int max_score;
     if (abpt->simd_flag & SIMD_AVX512F && !(abpt->simd_flag & SIMD_AVX512BW)) max_score = INT16_MAX + 1; // AVX512F has no 8/16 bits operations
     else {
-        int node_n = ab->abg->node_n;
-        max_score = MAX_OF_THREE(qlen * abpt->match, MIN_OF_TWO(qlen, node_n) * abpt->mismatch + MIN_OF_TWO(abpt->gap_open1 + abpt->gap_ext1 * abs(qlen-node_n), abpt->gap_open2 + abpt->gap_ext2 * abs(qlen-node_n)), MIN_OF_TWO(abpt->gap_open1 + node_n * abpt->gap_ext1, abpt->gap_open2 + node_n * abpt->gap_ext2) + MIN_OF_TWO(abpt->gap_open1 + qlen * abpt->gap_ext1, abpt->gap_open2 + qlen * abpt->gap_ext2));
+        int len = qlen > ab->abg->node_n ? qlen : ab->abg->node_n;
+        max_score = MAX_OF_TWO(qlen * abpt->match, len * abpt->gap_ext1 + abpt->gap_open1);
     }
     int bits, mem_ret=0;
     if (max_score <= INT8_MAX - abpt->mismatch - abpt->gap_open1 - abpt->gap_ext1 - abpt->gap_open2 - abpt->gap_open2) { // DP_H/E/F: 8  bits
