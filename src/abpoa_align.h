@@ -19,26 +19,18 @@
 //#define ABPOA_GAP_OPEN  5
 //#define ABPOA_GAP_EXT  2
 
-#define ABPOA_GLOBAL_MODE 0
-#define ABPOA_EXTEND_MODE 1
-#define ABPOA_LOCAL_MODE 2
-//#define ABPOA_SEMI_MODE 3
 
-// gap mode
-#define ABPOA_LINEAR_GAP 0
-#define ABPOA_AFFINE_GAP 1
-#define ABPOA_CONVEX_GAP 2
+#define ABPOA_M_OP   0x1
+#define ABPOA_E1_OP  0x2
+#define ABPOA_E2_OP  0x4
+#define ABPOA_E_OP   0x6
+#define ABPOA_F1_OP  0x8 
+#define ABPOA_F2_OP  0x10
+#define ABPOA_F_OP   0x18
+#define ABPOA_ALL_OP 0x1f
 
 #define ABPOA_MULTIP     1
 #define ABPOA_MIN_FRE    0.3
-
-#define ABPOA_CIGAR_STR "MIDXSH"
-#define ABPOA_CMATCH     0
-#define ABPOA_CINS       1
-#define ABPOA_CDEL       2
-#define ABPOA_CDIFF      3
-#define ABPOA_CSOFT_CLIP 4
-#define ABPOA_CHARD_CLIP 5
 
 #define HOP_OFF_SET   0
 #define EOP_OFF_SET   2

@@ -70,11 +70,11 @@ int main(void) {
         uint8_t *bseq = (uint8_t*)malloc(seq_len * sizeof(uint8_t));
         for (j = 0; j < seq_len; ++j) bseq[j] = nst_nt4_table[(int)seq1[j]];
 
-        abpoa_cigar_t *abpoa_cigar = 0; int n_cigar = 0;
-        abpoa_align_sequence_with_graph(ab, bseq, seq_len, abpt, &n_cigar, &abpoa_cigar);
-        abpoa_add_graph_alignment(ab->abg, abpt, bseq, seq_len, n_cigar, abpoa_cigar, i, 1);
+        abpoa_res_t res; res.graph_cigar = 0; res.n_cigar = 0;
+        abpoa_align_sequence_with_graph(ab, bseq, seq_len, abpt, &res);
+        abpoa_add_graph_alignment(ab->abg, abpt, bseq, seq_len, res.n_cigar, res.graph_cigar, i, (seq_n-1)/64+1);
 
-        free(bseq); if (n_cigar) free(abpoa_cigar);
+        free(bseq); if (res.n_cigar) free(res.graph_cigar);
     }
     /* generate consensus sequence from graph */
     if (abpt->out_cons && ab->abg->node_n > 2) {

@@ -5,9 +5,9 @@
 *.elf
 .idea/*
 
-# Snakemake
-.snakemake
-dot_plot/*
+# dot
+abpoa.dot
+abpoa.dot.pdf
 
 
 # Precompiled Headers

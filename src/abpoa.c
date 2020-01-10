@@ -62,8 +62,8 @@ int abpoa_usage(void)
     err_printf("         -o --gap-open   [INT(,INT)] gap open penalty. [%d,%d]\n", ABPOA_GAP_OPEN1, ABPOA_GAP_OPEN2);
     // TODO remind to use valid score para
     err_printf("         -e --gap-ext    [INT(,INT)] gap extension penalty [%d,%d]\n", ABPOA_GAP_EXT1, ABPOA_GAP_EXT2);
-    err_printf("                                     1. abPOA uses 2-piece affine gap penalty by default, i.e.,\n");
-    err_printf("                                        2-piece penalty of a g-long gap: min{o1+g*e1, o2+g*e2}\n");
+    err_printf("                                     1. abPOA uses convex gap penalty by default, i.e.,\n");
+    err_printf("                                        convex penalty of a g-long gap: min{o1+g*e1, o2+g*e2}\n");
     err_printf("                                     2. Set o2 as 0 to apply affine gap penalty and only o1,e1 will be used, i.e.,\n");
     err_printf("                                        affine penalty of a g-long gap: o1+g*e1\n");
     err_printf("                                     3. Set o1 as 0 to apply linear gap penalty and only e1 will be used, i.e.,\n");
@@ -123,10 +123,10 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
                 bseq = (uint8_t*)_err_realloc(bseq, bseq_m * sizeof(uint8_t));  \
             }   \
             for (j = 0; j < seq_l; ++j) bseq[j] = nst_nt4_table[(int)(seq1[j])];    \
-            abpoa_cigar_t *abpoa_cigar=0; int n_cigar=0;    \
-            abpoa_align_sequence_with_graph(ab, bseq, seq_l, abpt, &n_cigar, &abpoa_cigar); \
-            abpoa_add_graph_alignment(ab->abg, abpt, bseq, seq_l, n_cigar, abpoa_cigar, read_id++, read_ids_n);     \
-            if (n_cigar) free(abpoa_cigar); \
+            abpoa_res_t res; res.graph_cigar=0; res.n_cigar=0;    \
+            abpoa_align_sequence_with_graph(ab, bseq, seq_l, abpt, &res); \
+            abpoa_add_graph_alignment(ab->abg, abpt, bseq, seq_l, res.n_cigar, res.graph_cigar, read_id++, read_ids_n);     \
+            if (res.n_cigar) free(res.graph_cigar); \
             /*if (abpt->out_pog) {    \
                 char abpoa_dot_fn[100]; sprintf(abpoa_dot_fn, "./abpoa_%d.dot", i);    \
                 abpoa_graph_visual(ab->abg, abpoa_dot_fn);  \

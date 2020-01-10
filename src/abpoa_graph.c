@@ -146,7 +146,7 @@ void abpoa_free(abpoa_t *ab, abpoa_para_t *abpt) {
     free(ab);
 }
 
-int abpoa_BFS_set_node_index_rank(abpoa_graph_t *graph, int src_id, int sink_id, int *in_degree, int set_remain) {
+void abpoa_BFS_set_node_index_rank(abpoa_graph_t *graph, int src_id, int sink_id, int *in_degree, int set_remain) {
     int *id, cur_id, i, j, out_id, in_id, aligned_id, q_size, new_q_size;
     int index = 0, in_min_remain, in_max_remain;
     kdq_int_t *q = kdq_init_int();
@@ -163,7 +163,7 @@ int abpoa_BFS_set_node_index_rank(abpoa_graph_t *graph, int src_id, int sink_id,
             kdq_destroy_int(q);
             if (set_remain)
                 goto set_remain;
-            else return 0;
+            else return;
         }
         for (i = 0; i < graph->node[cur_id].out_edge_n; ++i) {
             out_id = graph->node[cur_id].out_id[i];
@@ -187,7 +187,7 @@ next_out_node:;
             new_q_size = 0;
         }
     }
-    return -1;
+    err_fatal_simple("Failed to topologically sort graph.");
 set_remain:
     graph->node_id_to_min_remain[sink_id] = graph->node_id_to_max_remain[sink_id] = -1;
     for (i = graph->node_n-1; i >= 0; --i) {
@@ -204,16 +204,15 @@ set_remain:
             }
         }
     }
-    return 0;
 }
 
 // 1. index_to_node_id
 // 2. node_id_to_index
 // 3. node_id_to_rank
-int abpoa_topological_sort(abpoa_graph_t *graph, abpoa_para_t *abpt) {
+void abpoa_topological_sort(abpoa_graph_t *graph, abpoa_para_t *abpt) {
     if (graph->node_n <= 0) {
         err_func_format_printf(__func__, "Empty graph.\n");
-        return 0;
+        return;
     }
     int i, node_n = graph->node_n;
     if (node_n > graph->index_rank_m) {
@@ -239,11 +238,9 @@ int abpoa_topological_sort(abpoa_graph_t *graph, abpoa_para_t *abpt) {
     for (i = 0; i < graph->node_n; ++i) in_degree[i] = graph->node[i].in_edge_n;
 
     // start from ABPOA_SRC_NODE_ID to ABPOA_SINK_NODE_ID
-    if (abpoa_BFS_set_node_index_rank(graph, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, in_degree, abpt->bw>=0) < 0)
-        err_fatal_simple("Failed to topological sort graph.");
+    abpoa_BFS_set_node_index_rank(graph, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, in_degree, abpt->bw>=0);
     graph->is_topological_sorted = 1;
     free(in_degree);
-    return 0;
 }
 
 /* void abpoa_alloc_multip_path(abpoa_graph_t *graph, int multip, int read_ids_n) {
@@ -417,7 +414,7 @@ int dou_cmp(const void *a, const void *b) { return (((dou_t*)b)->v - (((dou_t*)a
     abpoa_free_multip_path(graph, multip);
 }*/
 
-int abpoa_DFS_set_msa_rank(abpoa_graph_t *graph, int src_id, int sink_id, int *in_degree) {
+void abpoa_DFS_set_msa_rank(abpoa_graph_t *graph, int src_id, int sink_id, int *in_degree) {
     int *id, cur_id, i, j, out_id, aligned_id;
     int msa_rank = 0;
     kdq_int_t *q = kdq_init_int();
@@ -441,7 +438,7 @@ int abpoa_DFS_set_msa_rank(abpoa_graph_t *graph, int src_id, int sink_id, int *i
         if (cur_id == sink_id) {
             kdq_destroy_int(q);
             graph->is_set_msa_rank = 1;
-            return 0;
+            return;
         }
         for (i = 0; i < graph->node[cur_id].out_edge_n; ++i) {
             out_id = graph->node[cur_id].out_id[i];
@@ -462,8 +459,7 @@ int abpoa_DFS_set_msa_rank(abpoa_graph_t *graph, int src_id, int sink_id, int *i
 next_out_node:;
         }
     }
-    graph->is_set_msa_rank = 1;
-    return -1;
+    err_fatal_simple("Error in set_msa_rank.\n");
 }
 
 void abpoa_set_msa_rank(abpoa_graph_t *graph, int src_id, int sink_id) {
@@ -494,12 +490,17 @@ void abpoa_set_row_column_weight(abpoa_graph_t *graph, int **rc_weight) {
     }
 }
 
-void abpoa_set_row_column_ids_weight(abpoa_graph_t *graph, uint64_t ***read_ids, int **rc_weight, int seq_n, int read_ids_n) {
+void abpoa_set_row_column_ids_weight(abpoa_graph_t *graph, uint64_t ***read_ids, int **rc_weight, int msa_l, int seq_n, int read_ids_n) {
     int i, j, k, rank, aligned_id;
     uint64_t b, one = 1, *whole_read_ids = (uint64_t*)_err_calloc(read_ids_n, sizeof(uint64_t));
     for (i = 0; i < seq_n; ++i) {
         j = i / 64; b = i & 0x3f;
         whole_read_ids[j] |= (one << b);
+    }
+    for (i = 0; i < msa_l; ++i) {
+        for (j = 0; j < read_ids_n; ++j) {
+            read_ids[i][4][j] = whole_read_ids[j];
+        }
     }
     for (i = 2; i < graph->node_n; ++i) {
         // get msa rank
@@ -513,7 +514,7 @@ void abpoa_set_row_column_ids_weight(abpoa_graph_t *graph, uint64_t ***read_ids,
             b = graph->node[i].read_ids[k];
             rc_weight[rank-1][graph->node[i].base] += get_bit_cnt4(bit_table16, b);
             read_ids[rank-1][graph->node[i].base][k] = b;
-            read_ids[rank-1][4][k] = whole_read_ids[k] ^ b;
+            read_ids[rank-1][4][k] ^= b;
         }
         rc_weight[rank-1][4] -= rc_weight[rank-1][graph->node[i].base];
     }
@@ -883,10 +884,10 @@ int set_clu_read_ids(int **clu_read_ids, int *clu_read_ids_n, int seq_n, uint64_
         }
     }
     for (i = 0; i < seq_n; ++i) {
-        if (diff[i][1] < diff[i][0]) {
-            clu_read_ids[1][clu_read_ids_n[1]++] = i;
-        } else {
+        if (diff[i][0] < diff[i][1]) {
             clu_read_ids[0][clu_read_ids_n[0]++] = i;
+        } else if (diff[i][1] < diff[i][0]) {
+            clu_read_ids[1][clu_read_ids_n[1]++] = i;
         }
     }
     int clu_n = 0;
@@ -958,7 +959,7 @@ void abpoa_diploid_row_column(abpoa_graph_t *graph, int src_id, int sink_id, int
         rc_weight[i] = (int*)_err_calloc(5, sizeof(int)); // ACGT
         rc_weight[i][4] = seq_n;
     } 
-    abpoa_set_row_column_ids_weight(graph, read_ids, rc_weight, seq_n, read_ids_n);
+    abpoa_set_row_column_ids_weight(graph, read_ids, rc_weight, msa_l, seq_n, read_ids_n);
 
     int **clu_read_ids = (int**)_err_malloc(sizeof(int*) * 2), *clu_read_ids_n;
     for (i = 0; i < 2; ++i) clu_read_ids[i] = (int*)_err_malloc(sizeof(int) * seq_n);
@@ -1022,7 +1023,7 @@ void abpoa_set_msa_seq(abpoa_node_t node, int rank, char **msa_seq) {
     }
 }
 
-int abpoa_generate_multiple_sequence_alingment(abpoa_graph_t *graph, int seq_n, FILE *out_fp) {
+void abpoa_generate_multiple_sequence_alingment(abpoa_graph_t *graph, int seq_n, FILE *out_fp) {
     abpoa_set_msa_rank(graph, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID);
 
     int i, j, k, aligned_id, rank;
@@ -1050,7 +1051,6 @@ int abpoa_generate_multiple_sequence_alingment(abpoa_graph_t *graph, int seq_n, 
     for (i = 0; i < seq_n; ++i) fprintf(out_fp, "%s\n", msa_seq[i]);
 
     for (i = 0; i < seq_n; ++i) free(msa_seq[i]); free(msa_seq);
-    return 0;
 }
 
 int abpoa_get_aligned_id(abpoa_graph_t *graph, int node_id, uint8_t base) {
@@ -1078,9 +1078,9 @@ void abpoa_add_graph_aligned_node(abpoa_graph_t *graph, int node_id, int aligned
     abpoa_add_graph_aligned_node1(graph->node + aligned_id, node_id);
 }
 
-int abpoa_align_sequence_with_graph(abpoa_t *ab, uint8_t *query, int qlen, abpoa_para_t *abpt, int *n_cigar, abpoa_cigar_t **graph_cigar) {
+int abpoa_align_sequence_with_graph(abpoa_t *ab, uint8_t *query, int qlen, abpoa_para_t *abpt, abpoa_res_t *res) {
     if (ab->abg->node_n <= 2 || qlen <= 0) return -1;
-    else return simd_abpoa_align_sequence_with_graph(ab, query, qlen, abpt, n_cigar, graph_cigar);
+    else return simd_abpoa_align_sequence_with_graph(ab, query, qlen, abpt, res);
 }
 
 //TODO
@@ -1100,7 +1100,7 @@ int abpoa_add_graph_node(abpoa_graph_t *graph, uint8_t base) {
     return node_id;
 }
 
-int abpoa_add_graph_edge(abpoa_graph_t *graph, int from_id, int to_id, int check_edge, uint8_t add_read_id, int read_id, int read_ids_n) {
+void abpoa_add_graph_edge(abpoa_graph_t *graph, int from_id, int to_id, int check_edge, uint8_t add_read_id, int read_id, int read_ids_n) {
     if (from_id < 0 || from_id >= graph->node_n || to_id < 0 || to_id >= graph->node_n) err_fatal(__func__, "node_n: %d\tfrom_id: %d\tto_id: %d.", graph->node_n, from_id, to_id);
     int out_edge_n = graph->node[from_id].out_edge_n;
     if (check_edge) {
@@ -1110,18 +1110,18 @@ int abpoa_add_graph_edge(abpoa_graph_t *graph, int from_id, int to_id, int check
                 graph->node[from_id].out_weight[i]++; // update weight on existing edge
                 // update label id
                 goto ADD_READ_ID;
-                return 0;
+                // return;
             }
         }
     }
 
     // add edge
     /// in edge
-    graph = abpoa_realloc_graph_edge(graph, 0, to_id); 
+    graph = abpoa_realloc_graph_edge(graph, 0, to_id);
     graph->node[to_id].in_id[graph->node[to_id].in_edge_n] = from_id;
     ++graph->node[to_id].in_edge_n;
     /// out edge
-    graph = abpoa_realloc_graph_edge(graph, 1, from_id); 
+    graph = abpoa_realloc_graph_edge(graph, 1, from_id);
     graph->node[from_id].out_id[out_edge_n] = to_id;
     graph->node[from_id].out_weight[out_edge_n] = 1; // initial weight for new edge
     ++graph->node[from_id].out_edge_n;
@@ -1139,10 +1139,9 @@ ADD_READ_ID:
         }
         abpoa_set_read_id(from_node->read_ids, read_id);
     }
-    return 0;
 }
 
-int abpoa_add_graph_sequence(abpoa_graph_t *graph, abpoa_para_t *abpt, uint8_t *seq, int seq_l, int start, int end, uint8_t add_read_id, int read_id, int read_ids_n) {
+void abpoa_add_graph_sequence(abpoa_graph_t *graph, abpoa_para_t *abpt, uint8_t *seq, int seq_l, int start, int end, uint8_t add_read_id, int read_id, int read_ids_n) {
     if (seq_l <= 0 || start >= seq_l || end <= start) err_fatal(__func__, "seq_l: %d\tstart: %d\tend: %d.", seq_l, start, end);
     if (start < 0) start = 0; if (end > seq_l) end = seq_l;
     int node_id = abpoa_add_graph_node(graph, seq[start]);
@@ -1155,7 +1154,6 @@ int abpoa_add_graph_sequence(abpoa_graph_t *graph, abpoa_para_t *abpt, uint8_t *
     abpoa_add_graph_edge(graph, node_id, ABPOA_SINK_NODE_ID, 0, add_read_id, read_id, read_ids_n);
     graph->is_topological_sorted = graph->is_called_cons = graph->is_set_msa_rank = 0;
     abpoa_topological_sort(graph, abpt);
-    return 0;
 }
 
 // fusion stratergy :

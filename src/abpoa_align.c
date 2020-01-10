@@ -58,6 +58,7 @@ abpoa_para_t *abpoa_init_para(void) {
     abpt->bw = -1;        // disable bandwidth
     abpt->use_ada = 0;    // use adaptive band
     abpt->ret_cigar = 1;  // return cigar
+    abpt->rev_cigar = 0;  // reverse cigar
     abpt->out_msa = 0;    // output msa
     abpt->out_cons = 0;   // output consensus sequence in msa
     abpt->multip = ABPOA_MULTIP; // muliple consensus for multiploid data
