@@ -25,6 +25,13 @@ char bit_table16[65536];
 #define ABPOA_CSOFT_CLIP 4
 #define ABPOA_CHARD_CLIP 5
 
+#define ABPOA_SRC_NODE_ID 0
+#define ABPOA_SINK_NODE_ID 1
+
+#define ABPOA_HB 0
+#define ABPOA_MF 1
+#define ABPOA_RC 2
+ 
 // XXX max of in_edge is pow(2,30)
 // for MATCH/MISMATCH: node_id << 34  | query_id << 4 | op
 // for INSERTION:      query_id << 34 | op_len << 4   | op
@@ -119,10 +126,10 @@ int abpoa_add_graph_alignment(abpoa_graph_t *graph, abpoa_para_t *abpt, uint8_t 
 //     cons_l: store consensus sequences length
 //     cons_n: store number of consensus sequences
 //     Note: cons_seq and cons_l need to be freed by user.
-int abpoa_generate_consensus(abpoa_graph_t *graph, uint8_t cons_agrm, int multip, double min_fre, int seq_n, FILE *out_fp, uint8_t **cons_seq, int *cons_l, int *cons_n);
+int abpoa_generate_consensus(abpoa_graph_t *graph, uint8_t cons_agrm, int multip, double min_fre, int seq_n, FILE *out_fp, uint8_t ***cons_seq, int **cons_l, int *cons_n);
 // generate column multiple sequence alignment from graph
 // store msa into msa[] // TODO
-void abpoa_generate_multiple_sequence_alingment(abpoa_graph_t *graph, int seq_n, FILE *out_fp);
+void abpoa_generate_multiple_sequence_alingment(abpoa_graph_t *graph, int seq_n, FILE *out_fp, uint8_t ***msa_seq, int *msa_l);
 
 // generate DOT graph plot 
 int abpoa_graph_visual(abpoa_graph_t *graph, char *dot_fn);

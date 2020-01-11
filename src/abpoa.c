@@ -29,7 +29,7 @@ const struct option abpoa_long_opt [] = {
 
     { "out-cons", 0, NULL, 'c' },
     { "cons-agrm", 1, NULL, 'C' },
-    { "multiploid", 1, NULL, 'm', },
+    { "multi", 1, NULL, 'm', },
     { "min-frequency", 1, NULL, 'f', },
     { "out-msa", 0, NULL, 's' },
 
@@ -81,7 +81,7 @@ int abpoa_usage(void)
     err_printf("                                       0: heaviest bundling\n");
     err_printf("                                       1: minimum flow\n");
     err_printf("                                       2: row-column MSA\n\n");
-    err_printf("         -m --multiploid             maximum number of output consensus sequences (for multiploid data). [%d]\n", ABPOA_MULTIP);
+    err_printf("         -m --multi                  maximum number of output consensus sequences (for diploid data, <= 2). [%d]\n", ABPOA_MULTIP);
     err_printf("                                     When 2 or more consensus are needed, --cons-agrm is set to \'row-column MSA\'\n");
     err_printf("         -f --min-frequency [DOU]    minimum frequency of each haploid (for multiploid data). [%.2f]\n", ABPOA_MIN_FRE);
     err_printf("         -s --out-msa                output multiple sequence alignment in pir format. [False]\n");
@@ -139,7 +139,7 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
     }   \
     /* generate multiple sequence alignment */  \
     if (abpt->out_msa &&  ab->abg->node_n > 2)  \
-        abpoa_generate_multiple_sequence_alingment(ab->abg, tot_n, stdout);   \
+        abpoa_generate_multiple_sequence_alingment(ab->abg, tot_n, stdout, NULL, NULL);   \
     /* generate dot plot */     \
     if (abpt->out_pog) {    \
         char abpoa_dot_fn[100] = "./abpoa.dot";    \
@@ -203,7 +203,9 @@ int main(int argc, char **argv) {
 
             case 'c': abpt->out_cons = 1; break;
             case 'C': abpt->cons_agrm = atoi(optarg); break;
-            case 'm': abpt->multip = atoi(optarg); break;
+            case 'm': abpt->multip = atoi(optarg); 
+                      if (abpt->multip > 2) { err_printf("\'-m\' needs to be <= 2.\n"); return abpoa_usage(); }
+                      break;
             case 'f': abpt->min_fre = atof(optarg); break;
             case 's': abpt->out_msa = 1; break;
 

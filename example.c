@@ -78,11 +78,24 @@ int main(void) {
     }
     /* generate consensus sequence from graph */
     if (abpt->out_cons && ab->abg->node_n > 2) {
-        abpoa_generate_consensus(ab->abg, abpt->cons_agrm, 1, 0.0, seq_n, stdout, NULL, NULL, NULL);
+        // abpoa_generate_consensus(ab->abg, abpt->cons_agrm, 1, 0.0, seq_n, stdout, NULL, NULL, NULL);
+        uint8_t **cons_seq; int *cons_l, cons_n;
+        abpoa_generate_consensus(ab->abg, abpt->cons_agrm, 1, 0.0, seq_n, stdout, &cons_seq, &cons_l, &cons_n);
+        if (cons_n) {
+            for (i = 0; i < cons_n; ++i) free(cons_seq[i]); 
+            free(cons_seq); free(cons_l);
+        }
     }
 
     /* generate multiple sequence alignment */
-    if (abpt->out_msa &&  ab->abg->node_n > 2) abpoa_generate_multiple_sequence_alingment(ab->abg, seq_n, stdout);
+    if (abpt->out_msa &&  ab->abg->node_n > 2) {
+        // abpoa_generate_multiple_sequence_alingment(ab->abg, seq_n, stdout, NULL, NULL);
+        uint8_t **msa_seq; int msa_l;
+        abpoa_generate_multiple_sequence_alingment(ab->abg, seq_n, stdout, &msa_seq, &msa_l);
+        if (msa_l) {
+            for (i = 0; i < seq_n; ++i) free(msa_seq[i]); free(msa_seq);
+        }
+    }
 
     /* generate DOT partial order graph plot */
     if (abpt->out_pog) abpoa_graph_visual(ab->abg, "abpoa.dot");

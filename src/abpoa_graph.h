@@ -14,13 +14,6 @@
 //#define ABPOA_GRAPH_CREF_SKIP 4
 //#define ABPOA_GRAPH_CCLIP 5
 
-#define ABPOA_SRC_NODE_ID 0
-#define ABPOA_SINK_NODE_ID 1
-
-#define ABPOA_HB 0
-#define ABPOA_MF 1
-#define ABPOA_RC 2
- 
 #ifdef __cplusplus
 extern "C" {
 #endif
