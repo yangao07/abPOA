@@ -46,6 +46,7 @@ extern "C" {
 typedef struct {
     int n_cigar; abpoa_cigar_t *graph_cigar;
     int node_s, node_e, query_s, query_e; // for local and  extension mode
+    int n_aln_bases, n_matched_bases;
 } abpoa_res_t;
 
 typedef struct {

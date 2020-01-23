@@ -141,6 +141,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
                 cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CMATCH, 1, id, j-1);                      \
                 i = pre_i; --j; hit = 1; id = abpoa_graph_index_to_node_id(graph, i);                       \
                 dp_h = DP_H + i * dp_sn; _dp_h = (score_t*)dp_h;                                            \
+                ++res->n_aln_bases; res->n_matched_bases += s == mat[0] ? 1 : 0;                            \
                 break;                                                                                      \
             }                                                                                               \
         }                                                                                                   \
@@ -192,6 +193,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
                     i = pre_i; --j; id = abpoa_graph_index_to_node_id(graph, i); hit = 1;                   \
                     dp_h = DP_HE + dp_sn * (i << 1); _dp_h = (score_t*)dp_h;                                \
                     cur_op = ABPOA_ALL_OP;                                                                  \
+                    ++res->n_aln_bases; res->n_matched_bases += s == mat[0] ? 1 : 0;                        \
                     break;                                                                                  \
                 }                                                                                           \
             }                                                                                               \
@@ -199,9 +201,8 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
         if (hit == 0 && cur_op & ABPOA_E1_OP) {                                                             \
             for (k = 0; k < pre_n[i]; ++k) {                                                                \
                 pre_i = pre_index_i[k];                                                                     \
-                /* deletion */                                                                              \
                 pre_dp_e = DP_HE + dp_sn * ((pre_i << 1) + 1); _pre_dp_e = (score_t*)pre_dp_e;              \
-                if (_pre_dp_e[j] == _dp_h[j]) {                                                             \
+                if (_pre_dp_e[j] == _dp_h[j]) { /* deletion */                                              \
                     pre_dp_h = DP_HE + dp_sn * (pre_i << 1); _pre_dp_h = (score_t*)pre_dp_h;                \
                     if (_pre_dp_h[j] - gap_e == _pre_dp_e[j]) cur_op = ABPOA_E1_OP;                         \
                     else cur_op = ABPOA_M_OP;                                                               \
@@ -216,6 +217,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
             if (_dp_h[j-1] - gap_e == _dp_h[j]) cur_op = ABPOA_F1_OP;                                       \
             else cur_op = ABPOA_M_OP; /*if (_dp_h[j-1] - gap_oe == _dp_h[j]) */                             \
             cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, 1, id, j-1); --j;                       \
+            ++res->n_aln_bases;                                                                             \
         }                                                                                                   \
     }                                                                                                       \
     if (j > start_j) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CSOFT_CLIP, j-start_j, -1, j-1);     \
@@ -243,13 +245,13 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
         if (cur_op & ABPOA_M_OP) {                                                                          \
             for (k = 0; k < pre_n[i]; ++k) {                                                                \
                 pre_i = pre_index_i[k];                                                                     \
-                /* match/mismatch */                                                                        \
                 pre_dp_h = DP_H2E + dp_sn * (pre_i * 3); _pre_dp_h = (score_t*)pre_dp_h;                    \
-                if (_pre_dp_h[j-1] + s == _dp_h[j]) {                                                       \
+                if (_pre_dp_h[j-1] + s == _dp_h[j]) { /* match/mismatch */                                  \
                     cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CMATCH, 1, id, j-1);                  \
                     i = pre_i; --j; id = abpoa_graph_index_to_node_id(graph, i); hit = 1;                   \
                     dp_h = DP_H2E + dp_sn * (i * 3); _dp_h = (score_t*)dp_h;                                \
                     cur_op = ABPOA_ALL_OP;                                                                  \
+                    ++res->n_aln_bases; res->n_matched_bases += s == mat[0] ? 1 : 0;                        \
                     break;                                                                                  \
                 }                                                                                           \
             }                                                                                               \
@@ -257,10 +259,9 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
         if (hit == 0 && cur_op & ABPOA_E_OP) {                                                              \
             for (k = 0; k < pre_n[i]; ++k) {                                                                \
                 pre_i = pre_index_i[k];                                                                     \
-                /* deletion */                                                                              \
                 if (cur_op & ABPOA_E1_OP) {                                                                 \
                     pre_dp_e1 = DP_H2E + dp_sn * ((pre_i * 3) + 1); _pre_dp_e1 = (score_t*)pre_dp_e1;       \
-                    if (_pre_dp_e1[j] == _dp_h[j]) {                                                        \
+                    if (_pre_dp_e1[j] == _dp_h[j]) { /* deletion */                                         \
                         pre_dp_h = DP_H2E + dp_sn * (pre_i * 3); _pre_dp_h = (score_t*)pre_dp_h;            \
                         if (_pre_dp_h[j] - gap_ext1 == _pre_dp_e1[j]) cur_op = ABPOA_E1_OP;                 \
                         else cur_op = ABPOA_M_OP;                                                           \
@@ -272,7 +273,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
                 }                                                                                           \
                 if (cur_op & ABPOA_E2_OP) {                                                                 \
                     pre_dp_e2 = DP_H2E + dp_sn * ((pre_i * 3) + 2); _pre_dp_e2 = (score_t*)pre_dp_e2;       \
-                    if (_pre_dp_e2[j] == _dp_h[j]) {                                                        \
+                    if (_pre_dp_e2[j] == _dp_h[j]) { /* deletion */                                         \
                         pre_dp_h = DP_H2E + dp_sn * (pre_i * 3); _pre_dp_h = (score_t*)pre_dp_h;            \
                         if (_pre_dp_h[j] - gap_ext2 == _pre_dp_e2[j]) cur_op = ABPOA_E_OP;                  \
                         else cur_op = ABPOA_M_OP;                                                           \
@@ -297,6 +298,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
                 else cur_op = ABPOA_M_OP; /*if (_dp_h[j-1] - gap_oe1 == _dp_h[j]) */                        \
             }                                                                                               \
             cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, 1, id, j-1); --j;                       \
+            ++res->n_aln_bases;                                                                             \
         }                                                                                                   \
       /*printf("%d, %d, %d\n", i, j, cur_op);*/                                                             \
     }                                                                                                       \
@@ -325,10 +327,11 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
         for (k = 0; k < pre_n[i]; ++k) {                                                                    \
             pre_i = pre_index_i[k];                                                                         \
             pre_dp_h = DP_H + pre_i * dp_sn; _pre_dp_h = (score_t*)pre_dp_h;                                \
-            if (_pre_dp_h[j-1] + s == _dp_h[j]) {                                                           \
+            if (_pre_dp_h[j-1] + s == _dp_h[j]) { /* match/mismatch */                                      \
                 cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CMATCH, 1, id, j-1);                      \
                 i = pre_i; --j; hit = 1; id = abpoa_graph_index_to_node_id(graph, i);                       \
                 dp_h = DP_H + i * dp_sn; _dp_h = (score_t*)dp_h;                                            \
+                ++res->n_aln_bases; res->n_matched_bases += s == mat[0] ? 1 : 0;                            \
                 break;                                                                                      \
             }                                                                                               \
         }                                                                                                   \
@@ -336,7 +339,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
             for (k = 0; k < pre_n[i]; ++k) {                                                                \
                 pre_i = pre_index_i[k];                                                                     \
                 pre_dp_h = DP_H + pre_i * dp_sn; _pre_dp_h = (score_t*)pre_dp_h;                            \
-                if (_pre_dp_h[j] - gap_e == _dp_h[j]) {                                                     \
+                if (_pre_dp_h[j] - gap_e == _dp_h[j]) { /* deletion */                                      \
                     cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CDEL, 1, id, j-1);                    \
                     i = pre_i; hit = 1; id = abpoa_graph_index_to_node_id(graph, i);                        \
                     dp_h = DP_H + i * dp_sn; _dp_h = (score_t*)dp_h;                                        \
@@ -344,8 +347,9 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
                 }                                                                                           \
             }                                                                                               \
         }                                                                                                   \
-        if (hit == 0 && _dp_h[j-1] - gap_e == _dp_h[j]) {                                                   \
+        if (hit == 0 && _dp_h[j-1] - gap_e == _dp_h[j]) { /* insertion */                                   \
             cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, 1, id, j-1); --j;                       \
+            ++res->n_aln_bases;                                                                             \
         }                                                                                                   \
     }                                                                                                       \
     if (j > start_j) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CSOFT_CLIP, j-start_j, -1, j-1);     \
@@ -380,6 +384,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
                     i = pre_i; --j; hit = 1; id = abpoa_graph_index_to_node_id(graph, i);                   \
                     dp_h = DP_HE + dp_sn * (i << 1); _dp_h = (score_t*)dp_h;                                \
                     cur_op = ABPOA_ALL_OP;                                                                  \
+                    ++res->n_aln_bases; res->n_matched_bases += s == mat[0] ? 1 : 0;                        \
                     break;                                                                                  \
                 }                                                                                           \
             }                                                                                               \
@@ -403,6 +408,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
             if (_dp_h[j-1] - gap_e == _dp_h[j]) cur_op = ABPOA_F1_OP;                                       \
             else cur_op = ABPOA_M_OP; /*if (_dp_h[j-1] - gap_oe == _dp_h[j]) {*/                            \
             cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, 1, id, j-1); --j;                       \
+            ++res->n_aln_bases;                                                                             \
         }                                                                                                   \
     }                                                                                                       \
     if (j > start_j) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CSOFT_CLIP, j-start_j, -1, j-1);     \
@@ -437,6 +443,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
                 i = pre_i; --j; hit = 1; id = abpoa_graph_index_to_node_id(graph, i);                       \
                 dp_h = DP_H2E + dp_sn * (i * 3); _dp_h = (score_t*)dp_h;                                    \
                 cur_op = ABPOA_ALL_OP;                                                                      \
+                ++res->n_aln_bases; res->n_matched_bases += s == mat[0] ? 1 : 0;                            \
                 break;                                                                                      \
             }                                                                                               \
         }                                                                                                   \
@@ -482,6 +489,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
                 else cur_op = ABPOA_M_OP;                                                                   \
             }                                                                                               \
             cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, 1, id, j-1); --j;                       \
+            ++res->n_aln_bases;                                                                             \
         }                                                                                                   \
     }                                                                                                       \
     if (j > start_j) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CSOFT_CLIP, j-start_j, -1, j-1);     \
@@ -1366,6 +1374,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
     b_score = best_score;                                                                                           \
 }
 
+// TODO end_bonus for extension
 #define simd_abpoa_lg_extend_align_sequence_with_graph_core(score_t, ab, query, qlen, abpt, res, sp,                \
     SIMDSetOne, SIMDMax, SIMDAdd, SIMDSub, SIMDShiftOneN, SIMDSetIfGreater, SIMDGetIfGreater, b_score) {            \
     simd_abpoa_lg_var(score_t, sp, SIMDSetOne, SIMDShiftOneN, SIMDAdd);                                             \
@@ -1801,7 +1810,6 @@ int abpoa_ag_global_align_sequence_with_graph_core(abpoa_t *ab, int qlen, uint8_
     //simd_abpoa_cg_var(int16_t, sp, SIMDSetOnei16);                                                                         
     //simd_abpoa_var(int16_t, sp, SIMDSetOnei16);        
     //int tot_dp_sn = 0;  
-    printf("affine\n");
     abpoa_graph_t *graph = ab->abg; abpoa_simd_matrix_t *abm = ab->abm;                             
     int matrix_row_n = graph->node_n, matrix_col_n = qlen + 1;                                      
     int **pre_index, *pre_n, pre_i;                                                                 
@@ -2013,7 +2021,7 @@ int abpoa_ag_global_align_sequence_with_graph_core(abpoa_t *ab, int qlen, uint8_
         _set_max_score(best_score, best_i, best_j, _dp_h[qlen], in_index, qlen);    
     }	                                                                            
 
-    // simd_abpoa_print_cg_matrix(int16_t); printf("best_score: (%d, %d) -> %d\n", best_i, best_j, best_score);        
+    simd_abpoa_print_ag_matrix(int16_t); printf("best_score: (%d, %d) -> %d\n", best_i, best_j, best_score);        
     //simd_abpoa_ag_get_cigar(int16_t);                                                                                   
     int m = abpt->m, n_c = 0, s, m_c = 0, id, hit, _start_i, _start_j, cur_op = ABPOA_ALL_OP;                                                       
     int16_t *_pre_dp_h, *_pre_dp_e; abpoa_cigar_t *cigar = 0;                                                                               
@@ -2405,13 +2413,19 @@ int abpoa_cg_global_align_sequence_with_graph_core(abpoa_t *ab, int qlen, uint8_
 int simd_abpoa_align_sequence_with_graph(abpoa_t *ab, uint8_t *query, int qlen, abpoa_para_t *abpt, abpoa_res_t *res) {
     if (abpt->simd_flag == 0) err_fatal_simple("No SIMD instruction available.");
 
-    int max_score;
+    int max_score, bits, mem_ret=0, _best_score=0;
+#ifdef __DEBUG__
+    _simd_p16.inf_min = MAX_OF_THREE(INT16_MIN + abpt->mismatch, INT16_MIN + abpt->gap_open1 + abpt->gap_ext1, INT16_MIN + abpt->gap_open2 + abpt->gap_ext2);
+    if (simd_abpoa_realloc(ab, qlen, abpt, _simd_p16)) return 0;
+    if (abpt->gap_mode == ABPOA_CONVEX_GAP) return abpoa_cg_global_align_sequence_with_graph_core(ab, qlen, query, abpt, _simd_p16, res);
+    else if (abpt->gap_mode == ABPOA_LINEAR_GAP) return abpoa_lg_global_align_sequence_with_graph_core(ab, qlen, query, abpt, _simd_p16, res);
+    else if (abpt->gap_mode == ABPOA_AFFINE_GAP) return abpoa_ag_global_align_sequence_with_graph_core(ab, qlen, query, abpt, _simd_p16, res);
+#else
     if (abpt->simd_flag & SIMD_AVX512F && !(abpt->simd_flag & SIMD_AVX512BW)) max_score = INT16_MAX + 1; // AVX512F has no 8/16 bits operations
     else {
         int len = qlen > ab->abg->node_n ? qlen : ab->abg->node_n;
         max_score = MAX_OF_TWO(qlen * abpt->match, len * abpt->gap_ext1 + abpt->gap_open1);
     }
-    int bits, mem_ret=0;
     if (max_score <= INT8_MAX - abpt->mismatch - abpt->gap_open1 - abpt->gap_ext1 - abpt->gap_open2 - abpt->gap_open2) { // DP_H/E/F: 8  bits
         _simd_p8.inf_min = MAX_OF_THREE(INT8_MIN + abpt->mismatch, INT8_MIN + abpt->gap_open1 + abpt->gap_ext1, INT8_MIN + abpt->gap_open2 + abpt->gap_ext2);
         mem_ret = simd_abpoa_realloc(ab, qlen, abpt, _simd_p8);
@@ -2427,12 +2441,6 @@ int simd_abpoa_align_sequence_with_graph(abpoa_t *ab, uint8_t *query, int qlen, 
     }
     if (mem_ret) return 0;
 
-    int _best_score=0;
-#ifdef __DEBUG__
-    if (abpt->gap_mode == ABPOA_CONVEX_GAP) return abpoa_cg_global_align_sequence_with_graph_core(ab, qlen, query, abpt, _simd_p16, res);
-    else if (abpt->gap_mode == ABPOA_LINEAR_GAP) return abpoa_lg_global_align_sequence_with_graph_core(ab, qlen, query, abpt, _simd_p16, res);
-    else if (abpt->gap_mode == ABPOA_AFFINE_GAP) return abpoa_ag_global_align_sequence_with_graph_core(ab, qlen, query, abpt, _simd_p16, res);
-#else
     if (abpt->align_mode == ABPOA_GLOBAL_MODE) {
         if (bits == 8) {
             if (abpt->gap_mode == ABPOA_LINEAR_GAP) { // linear gap

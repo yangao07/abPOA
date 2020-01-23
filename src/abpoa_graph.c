@@ -610,7 +610,9 @@ void abpoa_multip_consensus(uint64_t ***read_ids, int **cluster_ids, int *cluste
                 cons_seq[cons_l++] = max_base;
             }
         }
-        if (out_fp) for (j = 0; j < cons_l; ++j) fprintf(out_fp, "%c", "ACGT"[cons_seq[j]]); fprintf(out_fp, "\n");
+        if (out_fp) {
+            for (j = 0; j < cons_l; ++j) fprintf(out_fp, "%c", "ACGT"[cons_seq[j]]); fprintf(out_fp, "\n");
+        }
         if (_cons_n) {
             (*_cons_l)[i] = cons_l;
             (*_cons_seq)[i] = (uint8_t*)_err_malloc(sizeof(uint8_t) * cons_l);
