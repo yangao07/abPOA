@@ -7,9 +7,6 @@ ifneq ($(gdb),)
 	CFLAGS   =	 -g -Wall -D __DEBUG__ -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Wno-misleading-indentation
 endif
 
-ifneq ($(old),)
-	CFLAGS  += -D __OLD__
-endif
 # for gprof
 ifneq ($(pg),)
 	PG_FLAG  =   -pg

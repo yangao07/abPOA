@@ -48,8 +48,6 @@ int abpoa_usage(void)
     err_printf("         -a --aln-mode   [INT]       align mode. [%d]\n", ABPOA_GLOBAL_MODE);
     err_printf("                                       %d: global\n", ABPOA_GLOBAL_MODE);
     err_printf("                                       %d: extension\n\n", ABPOA_EXTEND_MODE);
-    //err_printf("                                       %d: local\n", ABPOA_LOCAL_MODE);
-    //err_printf("                                       %d: semi-global\n\n", ABPOA_SEMI_MODE);
     err_printf("         -g --gap-mode   [INT]       gap penalty mode. [%d]\n", ABPOA_CONVEX_GAP);
     err_printf("                                     When \'-o\' and \'-e\' are set, gap mode will be changed accordingly.\n");
     err_printf("                                     See \'-o\' and \'-e\' for more details.\n");
