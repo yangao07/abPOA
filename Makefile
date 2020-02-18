@@ -5,6 +5,7 @@ CFLAGS  =	-Wall -O3 -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unuse
 ifneq ($(gdb),)
 	#CFLAGS   =	 -Wall -O3 -D __DEBUG__ -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Wno-misleading-indentation
 	CFLAGS   =	 -g -Wall -D __DEBUG__ -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Wno-misleading-indentation
+	#CFLAGS   =	 -g -Wall -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Wno-misleading-indentation
 endif
 
 # for gprof

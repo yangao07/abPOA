@@ -17,6 +17,9 @@ char bit_table16[65536];
 #define ABPOA_AFFINE_GAP 1
 #define ABPOA_CONVEX_GAP 2
 
+#define YSTOP_MIN_NUM 5
+#define YSTOP_MIN_FRAC 0.5
+
 #define ABPOA_CIGAR_STR "MIDXSH"
 #define ABPOA_CMATCH     0
 #define ABPOA_CINS       1
@@ -54,9 +57,10 @@ typedef struct {
     int match, mismatch, gap_open1, gap_open2, gap_ext1, gap_ext2; int inf_min;
     int bw; // band width
     int zdrop, end_bonus; // from minimap2
+    int ystop_iter, ystop_min_processed_n, ystop_min_wei; float ystop_min_frac;
     int simd_flag; // available SIMD instruction
     // alignment mode
-    uint8_t use_ada:1, ret_cigar:1, rev_cigar:1, out_msa:1, out_cons:1, out_pog:1, use_read_ids:1; // mode: 0: global, 1: local, 2: extend
+    uint8_t ret_cigar:1, rev_cigar:1, out_msa:1, out_cons:1, out_pog:1, use_read_ids:1; // mode: 0: global, 1: local, 2: extend
     int align_mode, gap_mode, cons_agrm;
     int multip; double min_fre; // for multiploid data
 } abpoa_para_t;
@@ -116,8 +120,9 @@ int abpoa_align_sequence_with_graph(abpoa_t *ab, uint8_t *query, int qlen, abpoa
 
 // add an alignment to a graph
 int abpoa_add_graph_node(abpoa_graph_t *graph, uint8_t base);
-void abpoa_add_graph_edge(abpoa_graph_t *graph, int from_id, int to_id, int check_edge, uint8_t add_read_id, int read_id, int read_ids_n);
-int abpoa_add_graph_alignment(abpoa_graph_t *graph, abpoa_para_t *abpt, uint8_t *query, int qlen, int n_cigar, abpoa_cigar_t *abpoa_cigar, int read_id, int read_ids_n);
+int abpoa_add_graph_edge(abpoa_graph_t *graph, abpoa_para_t *abpt, int from_id, int to_id, int check_edge, int check_ystop, uint8_t add_read_id, int read_id, int read_ids_n);
+int abpoa_add_graph_alignment(abpoa_graph_t *graph, abpoa_para_t *abpt, uint8_t *query, int qlen, int n_cigar, abpoa_cigar_t *abpoa_cigar, int check_ystop, int read_id, int read_ids_n);
+void abpoa_topological_sort(abpoa_graph_t *graph, abpoa_para_t *abpt);
 
 // generate consensus sequence from graph
 // para:
@@ -133,7 +138,7 @@ int abpoa_generate_consensus(abpoa_graph_t *graph, uint8_t cons_agrm, int multip
 void abpoa_generate_multiple_sequence_alingment(abpoa_graph_t *graph, int seq_n, FILE *out_fp, uint8_t ***msa_seq, int *msa_l);
 
 // generate DOT graph plot 
-int abpoa_graph_visual(abpoa_graph_t *graph, char *dot_fn);
+int abpoa_graph_visual(abpoa_graph_t *graph, abpoa_para_t *abpt, char *dot_fn);
 // int abpoa_main(const char *in_fn, int in_list, abpoa_para_t *abpt);
 
 #ifdef __cplusplus

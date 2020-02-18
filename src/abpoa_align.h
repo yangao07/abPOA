@@ -48,28 +48,15 @@
 // have: min_remain, max_remain, max_i (max in row)
 // range: (min_of_two(max_i+1, qlen-max_remain), max_of_two(max_i+1, qlen-min_remain))
 // with w: (min-w, max+w)
-#define GET_AD_DP_BEGIN(graph, w, i, qlen) MAX_OF_TWO(0,    MIN_OF_TWO(abpoa_graph_node_id_to_min_rank(graph, i), qlen - abpoa_graph_node_id_to_max_remain(graph, i))-w)
-#define GET_AD_DP_END(graph, w, i, qlen)   MIN_OF_TWO(qlen, MAX_OF_TWO(abpoa_graph_node_id_to_max_rank(graph, i), qlen - abpoa_graph_node_id_to_min_remain(graph, i))+w)
+//#define GET_AD_DP_BEGIN(graph, w, i, qlen) MAX_OF_TWO(0,    MIN_OF_TWO(abpoa_graph_node_id_to_min_rank(graph, i), qlen - abpoa_graph_node_id_to_max_remain(graph, i))-w)
+//#define GET_AD_DP_END(graph, w, i, qlen)   MIN_OF_TWO(qlen, MAX_OF_TWO(abpoa_graph_node_id_to_max_rank(graph, i), qlen - abpoa_graph_node_id_to_min_remain(graph, i))+w)
+#define GET_AD_DP_BEGIN(graph, w, i, qlen) MAX_OF_TWO(0, abpoa_graph_node_id_to_min_rank(graph, i)-w)
+#define GET_AD_DP_END(graph, w, i, qlen)   MIN_OF_TWO(qlen, abpoa_graph_node_id_to_max_rank(graph, i)+w)
 
-#define _set_max_score(best_score, best_i, best_j, score, i, j) { \
-    if (score > best_score) {                                     \
-        best_score = score; best_i = i; best_j = j;               \
-    }                                                             \
-}
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-// TODO splice mode
-/* banded global partial order graph alignment */
-int abpoa_banded_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *query, int qlen, abpoa_para_t *abpt, int *n_cigar, abpoa_cigar_t **graph_cigar);
-
-/* Adaptive banded global partial order graph alignment */
-int ada_abpoa_banded_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *query, int qlen, abpoa_para_t *abpt, int *n_cigar, abpoa_cigar_t **graph_cigar);
-
-/* Banded global partial order graph alignment */
-int abpoa_global_align_sequence_with_graph(abpoa_graph_t *graph, uint8_t *query, int qlen, abpoa_para_t *abpt, int *n_cigar, abpoa_cigar_t **graph_cigar);
 
 static inline abpoa_cigar_t *abpoa_push_cigar(int *n_cigar, int *m_cigar, abpoa_cigar_t *cigar, int op, int len, int32_t node_id, int32_t query_id) {
     abpoa_cigar_t l = len;
