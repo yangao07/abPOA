@@ -29,8 +29,9 @@ int font_size=24;
 
 // base (index, rank, node_id)
 // A (1, 1, 2) A: base 1: index 1: rank 2: node_id
-int abpoa_graph_visual(abpoa_graph_t *graph, abpoa_para_t *abpt, char *dot_fn) {
-    if (graph->is_topological_sorted == 0) abpoa_topological_sort(graph, abpt);
+int abpoa_graph_visual(abpoa_t *ab, abpoa_para_t *abpt, char *dot_fn) {
+    abpoa_graph_t *graph = ab->abg;
+    if (graph->is_topological_sorted == 0) abpoa_topological_sort(ab, abpt);
 
     // all settings
     char node_color[5][10] = {"purple3", "red3", "seagreen4", "gold2", "gray"}; // ACGTN

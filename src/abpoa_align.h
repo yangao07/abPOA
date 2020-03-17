@@ -51,7 +51,8 @@
 //#define GET_AD_DP_BEGIN(graph, w, i, qlen) MAX_OF_TWO(0,    MIN_OF_TWO(abpoa_graph_node_id_to_min_rank(graph, i), qlen - abpoa_graph_node_id_to_max_remain(graph, i))-w)
 //#define GET_AD_DP_END(graph, w, i, qlen)   MIN_OF_TWO(qlen, MAX_OF_TWO(abpoa_graph_node_id_to_max_rank(graph, i), qlen - abpoa_graph_node_id_to_min_remain(graph, i))+w)
 #define GET_AD_DP_BEGIN(graph, w, i, qlen) MAX_OF_TWO(0, abpoa_graph_node_id_to_min_rank(graph, i)-w)
-#define GET_AD_DP_END(graph, w, i, qlen)   MIN_OF_TWO(qlen, abpoa_graph_node_id_to_max_rank(graph, i)+w)
+//#define GET_AD_DP_END(graph, w, i, qlen)   MIN_OF_TWO(qlen, abpoa_graph_node_id_to_max_rank(graph, i)+w)
+#define GET_AD_DP_END(graph, w, i, qlen)   MIN_OF_TWO(qlen, MAX_OF_TWO(abpoa_graph_node_id_to_max_rank(graph, i), qlen - abpoa_graph_node_id_to_min_remain(graph, i))+w)
 
 
 #ifdef __cplusplus

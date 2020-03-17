@@ -17,6 +17,9 @@ char bit_table16[65536];
 #define ABPOA_AFFINE_GAP 1
 #define ABPOA_CONVEX_GAP 2
 
+#define YSTOP_MIN_NUM 5
+#define YSTOP_MIN_FRAC 0.5
+
 #define ABPOA_CIGAR_STR "MIDXSH"
 #define ABPOA_CMATCH     0
 #define ABPOA_CINS       1
@@ -54,11 +57,12 @@ typedef struct {
     int match, mismatch, gap_open1, gap_open2, gap_ext1, gap_ext2; int inf_min;
     int bw; // band width
     int zdrop, end_bonus; // from minimap2
+    int ystop_iter_n, ystop_min_processed_n, ystop_min_wei; float ystop_min_frac;
     int simd_flag; // available SIMD instruction
     // alignment mode
-    uint8_t use_ada:1, ret_cigar:1, rev_cigar:1, out_msa:1, out_cons:1, out_pog:1, use_read_ids:1; // mode: 0: global, 1: local, 2: extend
+    uint8_t ret_cigar:1, rev_cigar:1, out_msa:1, out_cons:1, out_pog:1, use_read_ids:1; // mode: 0: global, 1: local, 2: extend
     int align_mode, gap_mode, cons_agrm;
-    int multip; double min_fre; // for multiploid data
+    int multip; double min_freq; // for multiploid data
 } abpoa_para_t;
 
 typedef struct {
@@ -96,29 +100,48 @@ typedef struct {
 
 // init for abpoa parameters
 abpoa_para_t *abpoa_init_para(void);
+void abpoa_post_set_para(abpoa_para_t *abpt);
 void abpoa_free_para(abpoa_para_t *abpt);
-void gen_simple_mat(int m, int *mat, int match, int mismatch);
-void abpoa_set_gap_mode(abpoa_para_t *abpt);
-
 
 // init for alignment
 abpoa_t *abpoa_init(void);
 void abpoa_free(abpoa_t *ab, abpoa_para_t *abpt);
 
-void set_65536_table(void);
-void set_bit_table16(void);
+int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seqs, int *seq_lens, uint8_t **seqs, FILE *out_fp, uint8_t ***cons_seq, int **cons_l, int *cons_n, uint8_t ***msa_seq, int *msa_l);
 
 // clean alignment graph
 void abpoa_reset_graph(abpoa_t *ab, int qlen, abpoa_para_t *abpt);
 
+// for development:
 // align a sequence to a graph
-int abpoa_align_sequence_with_graph(abpoa_t *ab, uint8_t *query, int qlen, abpoa_para_t *abpt, abpoa_res_t *res);
+int abpoa_align_sequence_to_graph(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int qlen, abpoa_res_t *res);
+
+// add a node to a graph
+// para:
+//   base: 0123 for ACGT
+int abpoa_add_graph_node(abpoa_t *ab, uint8_t base);
+
+// add an edge to a graph
+// para:
+//   from_id/to_id: ids of from and to nodes
+//   check_edge: set as 1 if this edge maybe alread exist and only need to update weight, set as 0 if the edge is new
+//   add_read_id: set as 1 if read_id is used (to use row-column algorithm/generate MSA result/diploid consensus)
+//   read_id: is of sequence
+//   read_ids_n: size of read_id array, each one is 64-bit (1+(tot_read_n-1)/64)
+int abpoa_add_graph_edge(abpoa_t *ab, abpoa_para_t *abpt, int from_id, int to_id, int check_edge, int check_ystop, uint8_t add_read_id, int read_id, int read_ids_n);
 
 // add an alignment to a graph
-int abpoa_add_graph_node(abpoa_graph_t *graph, uint8_t base);
-void abpoa_add_graph_edge(abpoa_graph_t *graph, int from_id, int to_id, int check_edge, uint8_t add_read_id, int read_id, int read_ids_n);
-int abpoa_add_graph_alignment(abpoa_graph_t *graph, abpoa_para_t *abpt, uint8_t *query, int qlen, int n_cigar, abpoa_cigar_t *abpoa_cigar, int read_id, int read_ids_n);
-void abpoa_topological_sort(abpoa_graph_t *graph, abpoa_para_t *abpt);
+// para:
+//   query: 0123 for ACGT
+//   qlen: query length
+//   n_cigar/abpoa_cigar: from alignment result (abpoa_res_t)
+//   check_ystop: set as 1 if ystop heuristics is applied for consensus calling
+//   read_id: id of sequence
+//   tot_read_n: total number of sequence
+int abpoa_add_graph_alignment(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int qlen, int n_cigar, abpoa_cigar_t *abpoa_cigar, int check_ystop, int read_id, int tot_read_n);
+
+// topological sortting of graph
+void abpoa_topological_sort(abpoa_t *ab, abpoa_para_t *abpt);
 
 // generate consensus sequence from graph
 // para:
@@ -128,13 +151,14 @@ void abpoa_topological_sort(abpoa_graph_t *graph, abpoa_para_t *abpt);
 //     cons_l: store consensus sequences length
 //     cons_n: store number of consensus sequences
 //     Note: cons_seq and cons_l need to be freed by user.
-int abpoa_generate_consensus(abpoa_graph_t *graph, uint8_t cons_agrm, int multip, double min_fre, int seq_n, FILE *out_fp, uint8_t ***cons_seq, int **cons_l, int *cons_n);
+int abpoa_generate_consensus(abpoa_t *ab, uint8_t cons_agrm, int multip, double min_freq, int seq_n, FILE *out_fp, uint8_t ***cons_seq, int **cons_l, int *cons_n);
+
 // generate column multiple sequence alignment from graph
 // store msa into msa[] // TODO
-void abpoa_generate_multiple_sequence_alingment(abpoa_graph_t *graph, int seq_n, FILE *out_fp, uint8_t ***msa_seq, int *msa_l);
+void abpoa_generate_rc_msa(abpoa_t *ab, int seq_n, FILE *out_fp, uint8_t ***msa_seq, int *msa_l);
 
 // generate DOT graph plot 
-int abpoa_graph_visual(abpoa_graph_t *graph, abpoa_para_t *abpt, char *dot_fn);
+int abpoa_graph_visual(abpoa_t *ab, abpoa_para_t *abpt, char *dot_fn);
 // int abpoa_main(const char *in_fn, int in_list, abpoa_para_t *abpt);
 
 #ifdef __cplusplus

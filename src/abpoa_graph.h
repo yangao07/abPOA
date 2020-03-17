@@ -18,6 +18,9 @@
 extern "C" {
 #endif
 
+void set_65536_table(void);
+void set_bit_table16(void);
+
 abpoa_node_t *abpoa_init_node(int n);
 void abpoa_free_node(abpoa_node_t *node, int n, abpoa_para_t *abpt);
 void abpoa_set_graph_node(abpoa_graph_t *graph, int node_i);

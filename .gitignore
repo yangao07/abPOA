@@ -50,3 +50,15 @@ data/*
 #tags
 tags
 cscope.*
+
+# python
+python/build/*
+python/dist/*
+python/pyabpoa.c
+python/pyabPOA.egg-info/*
+
+# eval file
+msa_abPOA*
+msa_abPOA.c
+s2g_abPOA*
+s2g_abPOA.c

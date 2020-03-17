@@ -29,77 +29,93 @@ unsigned char nst_nt4_table[256] = {
 };
 
 int main(void) {
-    int i, j, seq_n = 6;
-    char seqs[6][100] = {
-        "CATAAAAGAACGTAGGTCGCCCGTCCGTAACCTGTCGGATCACCGGAAAGGACCCGTAAAGTGATAATGAT",
-        "ATAAAGGCAGTCGCTCTGTAAGCTGTCGATTCACCGGAAAGATGGCGTTACCACGTAAAGTGATAATGATTAT",
-        "ATCAAAGAACGTGTAGCCTGTCCGTAATCTAGCGCATTTCACACGAGACCCGCGTAATGGG",
-        "CGTAAATAGGTAATGATTATCATTACATATCACAACTAGGGCCGTATTAATCATGATATCATCA",
-        "GTCGCTAGAGGCATCGTGAGTCGCTTCCGTACCGCAAGGATGACGAGTCACTTAAAGTGATAAT",
-        "CCGTAACCTTCATCGGATCACCGGAAAGGACCCGTAAATAGACCTGATTATCATCTACAT" };
+    int i, j, n_seqs = 10;
+    char seqs[10][100] = {
+        "CGTCAATCTATCGAAGCATACGCGGGCAGAGCCGAAGACCTCGGCAATCCA",
+        "CCACGTCAATCTATCGAAGCATACGCGGCAGCCGAACTCGACCTCGGCAATCAC",
+        "CGTCAATCTATCGAAGCATACGCGGCAGAGCCCGGAAGACCTCGGCAATCAC",
+        "CGTCAATGCTAGTCGAAGCAGCTGCGGCAGAGCCGAAGACCTCGGCAATCAC",
+        "CGTCAATCTATCGAAGCATTCTACGCGGCAGAGCCGACCTCGGCAATCAC",
+        "CGTCAATCTAGAAGCATACGCGGCAAGAGCCGAAGACCTCGGCCAATCAC",
+        "CGTCAATCTATCGGTAAAGCATACGCTCTGTAGCCGAAGACCTCGGCAATCAC",
+        "CGTCAATCTATCTTCAAGCATACGCGGCAGAGCCGAAGACCTCGGCAATC",
+        "CGTCAATGGATCGAGTACGCGGCAGAGCCGAAGACCTCGGCAATCAC",
+        "CGTCAATCTAATCGAAGCATACGCGGCAGAGCCGTCTACCTCGGCAATCACGT"
+        };
 
+    // initialize variables
     abpoa_t *ab = abpoa_init();
     abpoa_para_t *abpt = abpoa_init_para();
 
-    // score parameters
-    //abpt->m = 5;
-    //abpt->match = 2;      // match score
-    //abpt->mismatch = 4;   // mismatch penalty
-    //abpt->gap_open1 = 4;  // gap open penalty #1
-    //abpt->gap_ext1 = 2;   // gap extension penalty #1
-    //abpt->gap_open2 = 24; // gap open penalty #2
-    //abpt->gap_ext2 = 1;   // gap extension penalty #2
+    // alignment parameters
+    // abpt->align_mode = 0; // 0:global alignment, 1:extension
+    // abpt->m = 5;
+    // abpt->match = 2;      // match score
+    // abpt->mismatch = 4;   // mismatch penalty
+    // abpt->gap_mode = ABPOA_CONVEX_GAP; // gap penalty mode
+    // abpt->gap_open1 = 4;  // gap open penalty #1
+    // abpt->gap_ext1 = 2;   // gap extension penalty #1
+    // abpt->gap_open2 = 24; // gap open penalty #2
+    // abpt->gap_ext2 = 1;   // gap extension penalty #2
                             // gap_penalty = min{gap_open1 + gap_len * gap_ext1, gap_open2 + gap_len * gap_ext2}
-    abpt->mat = (int*)malloc(abpt->m * abpt->m * sizeof(int));
-    gen_simple_mat(abpt->m, abpt->mat, abpt->match, abpt->mismatch);
+    // abpt->cons_agrm = 0; // consensus algorithm heaviest bundling
+    abpt->bw = 5;
     // output options
-    abpt->align_mode = 0; // 0:global, 1:extension, 2: local
     abpt->out_msa = 1; // generate Row-Column multiple sequence alignment(RC-MSA), set 0 to disable
     abpt->out_cons = 1; // generate consensus sequence, set 0 to disable
     abpt->out_pog = 1; // generate parital order graph using DOT, set 0 to disable
-    abpt->cons_agrm = 0; // heaviest bundling
 
-    if (abpt->cons_agrm == 2 || abpt->out_msa || abpt->multip > 1) {
-        abpt->use_read_ids = 1;
-        set_65536_table();
-        if (abpt->cons_agrm == 2 || abpt->multip > 1) set_bit_table16();
+    abpoa_post_set_para(abpt); // 1: set gap mode manually, 0: set gap mode based on current score/penalty
+
+    // collect sequence length, trasform ACGT to 0123
+    int *seq_lens = (int*)malloc(sizeof(int) * n_seqs);
+    uint8_t **bseqs = (uint8_t**)malloc(sizeof(uint8_t*) * n_seqs);
+    for (i = 0; i < n_seqs; ++i) {
+        seq_lens[i] = strlen(seqs[i]);
+        bseqs[i] = (uint8_t*)malloc(sizeof(uint8_t) * seq_lens[i]);
+        for (j = 0; j < seq_lens[i]; ++j)
+            bseqs[i][j] = nst_nt4_table[(int)seqs[i][j]];
     }
 
-    for (i = 0; i < seq_n; ++i) {
-        char *seq1 = seqs[i]; int seq_len = strlen(seq1);
-        uint8_t *bseq = (uint8_t*)malloc(seq_len * sizeof(uint8_t));
-        for (j = 0; j < seq_len; ++j) bseq[j] = nst_nt4_table[(int)seq1[j]];
+    // output to stdout
+    fprintf(stdout, "=== stdout ===\n");
+    // perform abpoa-msa
+    abpoa_msa(ab, abpt, n_seqs, seq_lens, bseqs, stdout, NULL, NULL, NULL, NULL, NULL);
 
-        abpoa_res_t res; res.graph_cigar = 0; res.n_cigar = 0;
-        abpoa_align_sequence_with_graph(ab, bseq, seq_len, abpt, &res);
-        abpoa_add_graph_alignment(ab->abg, abpt, bseq, seq_len, res.n_cigar, res.graph_cigar, i, (seq_n-1)/64+1);
+    abpoa_reset_graph(ab, seq_lens[0], abpt); // reset graph before re-use
 
-        free(bseq); if (res.n_cigar) free(res.graph_cigar);
+    // output to variables
+    uint8_t **cons_seq; int *cons_l, cons_n=0;
+    uint8_t **msa_seq; int msa_l=0;
+    // perform abpoa-msa
+    abpoa_msa(ab, abpt, n_seqs, seq_lens, bseqs, NULL, &cons_seq, &cons_l, &cons_n, &msa_seq, &msa_l);
+
+    fprintf(stdout, "=== variables ===\n");
+    for (i = 0; i < cons_n; ++i) {
+        fprintf(stdout, ">Consensus_sequence\n");
+        for (j = 0; j < cons_l[i]; ++j)
+            fprintf(stdout, "%c", "ACGTN"[cons_seq[i][j]]);
+        fprintf(stdout, "\n");
     }
-    /* generate consensus sequence from graph */
-    if (abpt->out_cons && ab->abg->node_n > 2) {
-        // abpoa_generate_consensus(ab->abg, abpt->cons_agrm, 1, 0.0, seq_n, stdout, NULL, NULL, NULL);
-        uint8_t **cons_seq; int *cons_l, cons_n;
-        abpoa_generate_consensus(ab->abg, abpt->cons_agrm, 1, 0.0, seq_n, stdout, &cons_seq, &cons_l, &cons_n);
-        if (cons_n) {
-            for (i = 0; i < cons_n; ++i) free(cons_seq[i]); 
-            free(cons_seq); free(cons_l);
+    fprintf(stdout, ">Multiple_sequence_alignment\n");
+    for (i = 0; i < n_seqs; ++i) {
+        for (j = 0; j < msa_l; ++j) {
+            fprintf(stdout, "%c", "ACGTN-"[msa_seq[i][j]]);
         }
+        fprintf(stdout, "\n");
     }
 
-    /* generate multiple sequence alignment */
-    if (abpt->out_msa &&  ab->abg->node_n > 2) {
-        // abpoa_generate_multiple_sequence_alingment(ab->abg, seq_n, stdout, NULL, NULL);
-        uint8_t **msa_seq; int msa_l;
-        abpoa_generate_multiple_sequence_alingment(ab->abg, seq_n, stdout, &msa_seq, &msa_l);
-        if (msa_l) {
-            for (i = 0; i < seq_n; ++i) free(msa_seq[i]); free(msa_seq);
-        }
+    if (cons_n) {
+        for (i = 0; i < cons_n; ++i) free(cons_seq[i]); 
+        free(cons_seq); free(cons_l);
     }
-
+    if (msa_l) {
+        for (i = 0; i < n_seqs; ++i) free(msa_seq[i]); free(msa_seq);
+    }
     /* generate DOT partial order graph plot */
-    if (abpt->out_pog) abpoa_graph_visual(ab->abg, "abpoa.dot");
+    if (abpt->out_pog) abpoa_graph_visual(ab, abpt, "abpoa.dot");
 
+    for (i = 0; i < n_seqs; ++i) free(bseqs[i]); free(bseqs); free(seq_lens);
     abpoa_free(ab, abpt); abpoa_free_para(abpt); 
     return 0;
 }
