@@ -29,7 +29,7 @@ int font_size=24;
 
 // base (index, rank, node_id)
 // A (1, 1, 2) A: base 1: index 1: rank 2: node_id
-int abpoa_graph_visual(abpoa_t *ab, abpoa_para_t *abpt, char *dot_fn) {
+int abpoa_graph_visual(abpoa_t *ab, abpoa_para_t *abpt) {
     abpoa_graph_t *graph = ab->abg;
     if (graph->is_topological_sorted == 0) abpoa_topological_sort(ab, abpt);
 
@@ -43,9 +43,10 @@ int abpoa_graph_visual(abpoa_t *ab, abpoa_para_t *abpt, char *dot_fn) {
     char **node_label = (char**)_err_malloc(graph->node_n * sizeof(char*));
     for (i = 0; i < graph->node_n; ++i) node_label[i] = (char*)_err_malloc(sizeof(char) * 100);
  
-    FILE *fp = xopen(dot_fn, "w");
+    FILE *fp = xopen(abpt->out_pog, "w");
     fprintf(fp, "// ABPOA graph dot file.\n// %d nodes.\n", graph->node_n);
-    fprintf(fp, "digraph ABPOA_graph {\n\tgraph [dpi=%f]; size=\"%f,%f\";\n\trankdir=\"%s\";\n\tnode [width=%f, style=%s, fixedsize=%s, shape=%s];\n", dpi_size, graph_width, graph_height, rankdir, node_width, node_style, node_fixedsize, node_shape);
+    // fprintf(fp, "digraph ABPOA_graph {\n\tgraph [dpi=%f]; size=\"%f,%f\";\n\trankdir=\"%s\";\n\tnode [width=%f, style=%s, fixedsize=%s, shape=%s];\n", dpi_size, graph_width, graph_height, rankdir, node_width, node_style, node_fixedsize, node_shape);
+    fprintf(fp, "digraph ABPOA_graph {\n\tgraph [rankdir=\"%s\"];\n\tnode [width=%f, style=%s, fixedsize=%s, shape=%s];\n", rankdir, node_width, node_style, node_fixedsize, node_shape);
 
     for (i = 0; i < graph->node_n; ++i) {
         id = abpoa_graph_index_to_node_id(graph, i);
@@ -104,7 +105,7 @@ int abpoa_graph_visual(abpoa_t *ab, abpoa_para_t *abpt, char *dot_fn) {
     err_fclose(fp);
 
     char cmd[1024];
-    sprintf(cmd, "dot %s -Tpdf > %s.pdf", dot_fn, dot_fn);
+    sprintf(cmd, "dot %s -Tpdf > %s.pdf", abpt->out_pog, abpt->out_pog);
     if (system(cmd) != 0) err_fatal_simple("Fail to plot ABPOA DAG.");
     return 0;
 }

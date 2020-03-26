@@ -166,8 +166,7 @@ label:  \
     }   \
     /* generate dot plot */     \
     if (abpt->out_pog) {    \
-        char abpoa_dot_fn[100] = "./abpoa.dot";    \
-        abpoa_graph_visual(ab, abpt, abpoa_dot_fn);  \
+        abpoa_graph_visual(ab, abpt);  \
     }   \
     ks_destroy(fs); gzclose(readfp);    \
 }
@@ -225,7 +224,7 @@ int main(int argc, char **argv) {
             case 'f': abpt->min_freq = atof(optarg); break;
             case 's': abpt->out_msa = 1; break;
 
-            case 'g': abpt->out_pog= 1; break;
+            case 'g': abpt->out_pog= optarg; break;
 
             case 'h': return abpoa_usage();
             case 'v': printf("%s\n", VERSION); goto End; break;

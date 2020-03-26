@@ -1,5 +1,6 @@
-CC      =	gcc
-CFLAGS  =	-Wall -O3 -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Wno-misleading-indentation
+#CC      =	gcc
+EXTRA_FLAGS = -Wno-unused-function -Wno-misleading-indentation
+CFLAGS  =	-Wall -O3 $(EXTRA_FLAGS)
 
 # for debug
 ifneq ($(debug),)
@@ -7,9 +8,9 @@ ifneq ($(debug),)
 endif
 # for gdb
 ifneq ($(gdb),)
-	CFLAGS   =	 -Wall -g ${DFLAGS} -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Wno-misleading-indentation
+	CFLAGS   =	 -Wall -g ${DFLAGS} $(EXTRA_FLAGS)
 else
-	CFLAGS   =	 -Wall -O3 ${DFLAGS} -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -Wno-misleading-indentation
+	CFLAGS   =	 -Wall -O3 ${DFLAGS} $(EXTRA_FLAGS)
 endif
 
 # for gprof

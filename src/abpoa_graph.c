@@ -246,9 +246,9 @@ void abpoa_topological_sort(abpoa_t *ab, abpoa_para_t *abpt) {
             graph->node_id_to_min_rank = (int*)_err_realloc(graph->node_id_to_min_rank, graph->index_rank_m * sizeof(int));
             graph->node_id_to_max_rank = (int*)_err_realloc(graph->node_id_to_max_rank, graph->index_rank_m * sizeof(int));
             graph->node_id_to_min_remain = (int*)_err_realloc(graph->node_id_to_min_remain, graph->index_rank_m * sizeof(int));
-        } 
-        if (abpt->zdrop > 0) {
-            if (abpt->bw < 0) graph->node_id_to_min_remain = (int*)_err_realloc(graph->node_id_to_min_remain, graph->index_rank_m * sizeof(int));
+            graph->node_id_to_max_remain = (int*)_err_realloc(graph->node_id_to_max_remain, graph->index_rank_m * sizeof(int));
+        } else if (abpt->zdrop > 0) {
+            graph->node_id_to_min_remain = (int*)_err_realloc(graph->node_id_to_min_remain, graph->index_rank_m * sizeof(int));
             graph->node_id_to_max_remain = (int*)_err_realloc(graph->node_id_to_max_remain, graph->index_rank_m * sizeof(int));
         }
     }
@@ -261,11 +261,9 @@ void abpoa_topological_sort(abpoa_t *ab, abpoa_para_t *abpt) {
             graph->node_id_to_max_rank[i] = 0;
             graph->node_id_to_min_rank[i] = node_n;
         }
-    }
-    if (abpt->zdrop > 0) {
-        // set min/max remain
         abpoa_BFS_set_node_remain(graph, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID);
-    }
+    } else if (abpt->zdrop > 0)
+        abpoa_BFS_set_node_remain(graph, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID);
     graph->is_topological_sorted = 1;
 }
 
@@ -599,7 +597,8 @@ void abpoa_multip_row_column_ids_weight(int msa_l, uint64_t ***read_ids, int **r
 }
 
 void abpoa_set_weight_matrix(abpoa_graph_t *graph, int **weight_matrix, int seq_n) {
-    int i = seq_n; i = graph->cons_l; weight_matrix[0][0] = 0; // TODO
+    return;
+    // int i = seq_n; i = graph->cons_l; weight_matrix[0][0] = 0; // TODO
 }
 
 void abpoa_multip_consensus(uint64_t ***read_ids, int **cluster_ids, int *cluster_ids_n, int multip, int read_ids_n, int msa_l, FILE *out_fp, uint8_t ***_cons_seq, int **_cons_l, int *_cons_n) {
@@ -1317,9 +1316,9 @@ void abpoa_reset_graph(abpoa_t *ab, int qlen, abpoa_para_t *abpt) {
             ab->abg->node_id_to_min_rank = (int*)_err_realloc(ab->abg->node_id_to_min_rank, node_m * sizeof(int));
             ab->abg->node_id_to_max_rank = (int*)_err_realloc(ab->abg->node_id_to_max_rank, node_m * sizeof(int));
             ab->abg->node_id_to_min_remain = (int*)_err_realloc(ab->abg->node_id_to_min_remain, node_m * sizeof(int));
-        }
-        if (abpt->zdrop > 0) {
-            if (abpt->bw < 0) ab->abg->node_id_to_min_remain = (int*)_err_realloc(ab->abg->node_id_to_min_remain, node_m * sizeof(int));
+            ab->abg->node_id_to_max_remain = (int*)_err_realloc(ab->abg->node_id_to_max_remain, node_m * sizeof(int));
+        } else if (abpt->zdrop > 0) {
+            ab->abg->node_id_to_min_remain = (int*)_err_realloc(ab->abg->node_id_to_min_remain, node_m * sizeof(int));
             ab->abg->node_id_to_max_remain = (int*)_err_realloc(ab->abg->node_id_to_max_remain, node_m * sizeof(int));
         }
     }

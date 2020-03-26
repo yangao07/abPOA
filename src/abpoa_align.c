@@ -40,7 +40,7 @@ abpoa_para_t *abpoa_init_para(void) {
     abpt->min_freq = 0.3;
     abpt->cons_agrm = ABPOA_HB;   // consensus calling algorithm 
     abpt->use_read_ids = 0;
-    abpt->out_pog= 0; // generate partial order graph
+    abpt->out_pog= NULL; // generate partial order graph
 
     // number of residue types
     abpt->m = 5; // nucleotides TODO score matrix for aa

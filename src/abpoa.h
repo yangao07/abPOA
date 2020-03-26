@@ -60,7 +60,8 @@ typedef struct {
     int ystop_iter_n, ystop_min_processed_n, ystop_min_wei; float ystop_min_frac;
     int simd_flag; // available SIMD instruction
     // alignment mode
-    uint8_t ret_cigar:1, rev_cigar:1, out_msa:1, out_cons:1, out_pog:1, use_read_ids:1; // mode: 0: global, 1: local, 2: extend
+    uint8_t ret_cigar:1, rev_cigar:1, out_msa:1, out_cons:1, use_read_ids:1; // mode: 0: global, 1: local, 2: extend
+    char *out_pog;
     int align_mode, gap_mode, cons_agrm;
     int multip; double min_freq; // for multiploid data
 } abpoa_para_t;
@@ -158,7 +159,7 @@ int abpoa_generate_consensus(abpoa_t *ab, uint8_t cons_agrm, int multip, double 
 void abpoa_generate_rc_msa(abpoa_t *ab, int seq_n, FILE *out_fp, uint8_t ***msa_seq, int *msa_l);
 
 // generate DOT graph plot 
-int abpoa_graph_visual(abpoa_t *ab, abpoa_para_t *abpt, char *dot_fn);
+int abpoa_graph_visual(abpoa_t *ab, abpoa_para_t *abpt);
 // int abpoa_main(const char *in_fn, int in_list, abpoa_para_t *abpt);
 
 #ifdef __cplusplus
