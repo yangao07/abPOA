@@ -316,8 +316,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
                             dp_h = DP_H2E2F + dp_sn * i * 5; _dp_h = (score_t*)dp_h;                        \
                             break;                                                                          \
                         }                                                                                   \
-                    }                                                                                       \
-                    if (cur_op & ABPOA_E2_OP) {                                                             \
+                    } else {                                                                                \
                         _dp_e2 = (score_t*)(dp_h + dp_sn * 2);                                              \
                         if (_dp_e2[j] == _pre_dp_e2[j] - gap_ext2) {                                        \
                             _pre_dp_h = (score_t*)(DP_H2E2F + dp_sn * pre_i * 5);                           \
@@ -348,7 +347,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
             cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, 1, id, j-1); --j;                       \
             ++res->n_aln_bases;                                                                             \
         }                                                                                                   \
-      /*printf("%d, %d, %d\n", i, j, cur_op);*/                                                             \
+     /* printf("%d, %d, %d\n", i, j, cur_op); */                                                            \
     }                                                                                                       \
     if (j > start_j) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CSOFT_CLIP, j-start_j, -1, j-1);     \
     /* reverse cigar */                                                                                     \
@@ -861,8 +860,6 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
         /* H = max{H, F}    */                                                                                                  \
         dp_h[sn_i] = SIMDMax(dp_h[sn_i], dp_f1[sn_i]);                                                                           \
         dp_h[sn_i] = SIMDMax(dp_h[sn_i], dp_f2[sn_i]);                                                                          \
-    }                                                                                                                           \
-    for (sn_i = beg_sn; sn_i <= end_sn; ++sn_i) { /* SIMD parallelization */                                                    \
         /* e for next cell */                                                                                                   \
         dp_e1[sn_i] = SIMDMax(SIMDSub(dp_e1[sn_i], GAP_E1), SIMDSub(dp_h[sn_i], GAP_OE1));                                      \
         dp_e2[sn_i] = SIMDMax(SIMDSub(dp_e2[sn_i], GAP_E2), SIMDSub(dp_h[sn_i], GAP_OE2));                                      \
@@ -1304,14 +1301,10 @@ int abpoa_cg_dp(SIMDi *q, SIMDi *dp_h, SIMDi *dp_e1, SIMDi *dp_e2, SIMDi *dp_f1,
         /* H = max{H, F}    */
         dp_h[sn_i] = SIMDMaxi16(SIMDMaxi16(dp_h[sn_i], dp_f1[sn_i]), dp_f2[sn_i]);
         // debug_simd_abpoa_print_cg_matrix_row("4.4", int16_t, index_i);
-    }
-    debug_simd_abpoa_print_cg_matrix_row("4", int16_t, index_i);
-    for (sn_i = beg_sn; sn_i <= end_sn; ++sn_i) { /* SIMD parallelization */
         /* e for next cell */
         dp_e1[sn_i] = SIMDMaxi16(SIMDSubi16(dp_e1[sn_i], GAP_E1), SIMDSubi16(dp_h[sn_i], GAP_OE1));
         dp_e2[sn_i] = SIMDMaxi16(SIMDSubi16(dp_e2[sn_i], GAP_E2), SIMDSubi16(dp_h[sn_i], GAP_OE2));
     }
-    // if (index_i == 182) debug_simd_abpoa_print_cg_matrix_row("5", int16_t, index_i);
     return tot_dp_sn;
 }
 
@@ -1501,10 +1494,10 @@ int abpoa_cg_global_align_sequence_to_graph_core(abpoa_t *ab, int qlen, uint8_t 
             abpoa_ada_max_i(max_i, graph, node_id);
         } 
     }                                                                                                                   
-    printf("dp_sn: %d\n", tot_dp_sn);
+    // printf("dp_sn: %d\n", tot_dp_sn);
     // printf("dp_sn: %d, node_n: %d, seq_n: %d\n", tot_dp_sn, graph->node_n, qlen);   
     abpoa_global_get_max(graph, DP_H2E2F, 5*dp_sn, qlen,  &best_score, &best_i, &best_j);
- // simd_abpoa_print_cg_matrix(int16_t); printf("best_score: (%d, %d) -> %d\n", best_i, best_j, best_score);        
+    // simd_abpoa_print_cg_matrix(int16_t); printf("best_score: (%d, %d) -> %d\n", best_i, best_j, best_score);        
     abpoa_cg_backtrack(DP_H2E2F, dp_beg, dp_end, dp_sn, abpt->m, mat, gap_ext1, gap_ext2, gap_oe1, gap_oe2, pre_index, pre_n, 0, 0, best_i, best_j, qlen, graph, abpt, query, res);
     simd_abpoa_free_var; free(GAP_E1S); free(GAP_E2S);
     return best_score;

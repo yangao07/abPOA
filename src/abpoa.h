@@ -67,13 +67,13 @@ typedef struct {
 } abpoa_para_t;
 
 typedef struct {
-    int node_id, index, rank;
+    int node_id;
     int in_edge_n, in_edge_m, *in_id;
     int out_edge_n, out_edge_m, *out_id, *out_weight;
     uint64_t *read_ids; int read_ids_n; // for multiploid
 
     int aligned_node_n, aligned_node_m, *aligned_node_id; // mismatch; aligned node will have same rank
-    int heaviest_weight, heaviest_out_id; // for consensus
+    // int heaviest_weight, heaviest_out_id; // for consensus
     uint8_t base; // 0~m
     // ID, pos ???
 } abpoa_node_t;
