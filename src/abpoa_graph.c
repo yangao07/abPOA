@@ -237,7 +237,7 @@ void abpoa_topological_sort(abpoa_t *ab, abpoa_para_t *abpt) {
     }
     int node_n = graph->node_n;
     if (node_n > graph->index_rank_m) {
-        graph->index_rank_m = MAX_OF_TWO(node_n, graph->index_rank_m << 1);
+        graph->index_rank_m = node_n; kroundup32(graph->index_rank_m);
         // fprintf(stderr, "node_n: %d, index_rank_m: %d\n", node_n, graph->index_rank_m);
         graph->index_to_node_id = (int*)_err_realloc(graph->index_to_node_id, graph->index_rank_m * sizeof(int));
         graph->node_id_to_index = (int*)_err_realloc(graph->node_id_to_index, graph->index_rank_m * sizeof(int));
@@ -440,8 +440,10 @@ int dou_cmp(const void *a, const void *b) { return (((dou_t*)b)->v - (((dou_t*)a
 
 void abpoa_DFS_set_msa_rank(abpoa_graph_t *graph, int src_id, int sink_id, int *in_degree) {
     // fprintf(stderr, "node_n: %d, m: %d\n", graph->node_n, graph->index_rank_m);
-    if (graph->node_n > graph->index_rank_m)
-        graph->node_id_to_msa_rank = (int*)_err_realloc(graph->node_id_to_msa_rank, graph->node_n * sizeof(int));
+    if (graph->node_n > graph->index_rank_m) {
+        int m = graph->node_n; kroundup32(m);
+        graph->node_id_to_msa_rank = (int*)_err_realloc(graph->node_id_to_msa_rank, m * sizeof(int));
+    }
     int *id, cur_id, i, j, out_id, aligned_id;
     int msa_rank = 0;
     kdq_int_t *q = kdq_init_int();
@@ -844,7 +846,7 @@ HB_CONS:
 
 void abpoa_row_column_consensus(abpoa_graph_t *graph, int **rc_weight, int msa_l, int seq_n) {
     if (graph->cons_m < msa_l+1) {
-        graph->cons_m = MAX_OF_TWO(graph->cons_m << 1, msa_l+1);
+        graph->cons_m = msa_l; kroundup32(graph->cons_m);
         graph->cons_seq = (uint8_t*)_err_realloc(graph->cons_seq, graph->cons_m * sizeof(uint8_t));
     }
     int i, j, w, max_base, max_w, gap_w;
@@ -1086,7 +1088,7 @@ void abpoa_generate_rc_msa(abpoa_t *ab, int seq_n, FILE *out_fp, uint8_t ***msa_
     int _msa_l = graph->node_id_to_msa_rank[ABPOA_SINK_NODE_ID]-1;
 
     for (i = 0; i < seq_n; ++i) {
-        _msa_seq[i] = (uint8_t*)_err_malloc((_msa_l) * sizeof(uint8_t));
+        _msa_seq[i] = (uint8_t*)_err_malloc(_msa_l * sizeof(uint8_t));
         for (j = 0; j < _msa_l; ++j) 
             _msa_seq[i][j] = 5;
     }
@@ -1144,7 +1146,14 @@ void abpoa_add_graph_aligned_node(abpoa_t *ab, int node_id, int aligned_id) {
 int abpoa_align_sequence_to_graph(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int qlen, abpoa_res_t *res) {
     if (ab->abg->node_n <= 2 || qlen <= 0) return -1;
     if (ab->abg->is_topological_sorted == 0) abpoa_topological_sort(ab, abpt);
-    return simd_abpoa_align_sequence_to_graph(ab, query, qlen, abpt, res);
+    // struct rusage r1, r2; double aln_user=0, aln_sys=0;
+    // getrusage(RUSAGE_SELF, &r1);
+    simd_abpoa_align_sequence_to_graph(ab, query, qlen, abpt, res);
+    // getrusage(RUSAGE_SELF, &r2);
+    // aln_user = r2.ru_utime.tv_sec*1e6 + r2.ru_utime.tv_usec - r1.ru_utime.tv_sec*1e6 - r1.ru_utime.tv_usec;
+    // aln_sys = r2.ru_stime.tv_sec*1e6 + r2.ru_stime.tv_usec - r1.ru_stime.tv_sec*1e6 - r1.ru_stime.tv_usec;
+    // printf("user: %lf, sys: %lf\n", aln_user, aln_sys); 
+    return 0;
 }
 
 //TODO
@@ -1324,8 +1333,8 @@ void abpoa_reset_graph(abpoa_t *ab, int qlen, abpoa_para_t *abpt) {
         }
     }
     ab->abg->node_n = 2;
-    if ((qlen+2)*2 > ab->abg->node_m) {
-        node_m = MAX_OF_TWO(ab->abg->node_m << 1, (qlen+2)*2);
+    if (qlen+2 > ab->abg->node_m) {
+        node_m = qlen+2; kroundup32(node_m);
         ab->abg->node = (abpoa_node_t*)_err_realloc(ab->abg->node, node_m * sizeof(abpoa_node_t));
         for (i = ab->abg->node_m; i < node_m; ++i) 
             abpoa_set_graph_node(ab->abg, i);

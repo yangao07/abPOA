@@ -35,13 +35,14 @@ int abpoa_graph_visual(abpoa_t *ab, abpoa_para_t *abpt) {
 
     // all settings
     char node_color[5][10] = {"purple3", "red3", "seagreen4", "gold2", "gray"}; // ACGTN
-    float dpi_size = 3000, graph_width = 100, graph_height = 6, node_width=1;
+    // float dpi_size = 3000, graph_width = 100, graph_height = 6; 
+    float node_width=1;
     char rankdir[5] = "LR", node_style[10]="filled", node_fixedsize[10]="true", node_shape[10]="circle";
     int show_aligned_mismatch = 1;
 
     int i, j, id, index, out_id; char base;
     char **node_label = (char**)_err_malloc(graph->node_n * sizeof(char*));
-    for (i = 0; i < graph->node_n; ++i) node_label[i] = (char*)_err_malloc(sizeof(char) * 100);
+    for (i = 0; i < graph->node_n; ++i) node_label[i] = (char*)_err_malloc(sizeof(char) * 128);
  
     FILE *fp = xopen(abpt->out_pog, "w");
     fprintf(fp, "// ABPOA graph dot file.\n// %d nodes.\n", graph->node_n);

@@ -31,7 +31,17 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <zlib.h>
+#include <sys/resource.h>
+#include <sys/time.h>
 
+#ifndef kroundup32
+#define kroundup32(x) (--(x), (x)|=(x)>>1, (x)|=(x)>>2, (x)|=(x)>>4, (x)|=(x)>>8, (x)|=(x)>>16, ++(x))
+#endif
+
+#ifndef kroundup64
+#define kroundup64(x) (--(x), (x)|=(x)>>1, (x)|=(x)>>2, (x)|=(x)>>4, (x)|=(x)>>8, (x)|=(x)>>16, (x)|=(x)>>32, ++(x))
+#endif
+ 
 #ifdef __GNUC__
 // Tell GCC to validate printf format string and args
 #define ATTRIBUTE(list) __attribute__ (list)
@@ -99,8 +109,10 @@ extern "C" {
     void *err_calloc(const char* func, size_t n, size_t s);
     void *err_realloc(const char* func, void *p, size_t s);
 
+    void usr_sys_cputime(double *usr_t, double *sys_t);
 	double cputime();
 	double realtime();
+    long peakrss(void);
     void print_format_time(FILE *out);
     int err_func_format_printf(const char *func, const char *format, ...);
 
@@ -118,7 +130,7 @@ extern "C" {
         m = MAX_OF_TWO(n, m);                           \
         p = (type*)_err_malloc((m) * sizeof(type));     \
     } else if (n >= m) {                                \
-        m = MAX_OF_TWO(n+1, m << 1);                    \
+        m = n + 1; kroundup32(m);                       \
         p = (type*)_err_realloc(p, (m) * sizeof(type)); \
     }                                                   \
 }

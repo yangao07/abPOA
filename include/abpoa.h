@@ -34,7 +34,7 @@ char bit_table16[65536];
 #define ABPOA_HB 0
 #define ABPOA_MF 1
 #define ABPOA_RC 2
- 
+
 // XXX max of in_edge is pow(2,30)
 // for MATCH/MISMATCH: node_id << 34  | query_id << 4 | op
 // for INSERTION:      query_id << 34 | op_len << 4   | op

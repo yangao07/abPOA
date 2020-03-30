@@ -438,7 +438,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
         for (j = qlen+1; j < qp_sn * pn; ++j) _qp[j] = 0;                                               \
     }                                                                                                   \
     if (abpt->bw >= 0 || abpt->align_mode == ABPOA_EXTEND_MODE) { /* query index */                     \
-        _qi = (score_t*)qi;                                                          \
+        _qi = (score_t*)qi;                                                                             \
         for (i = 0; i <= qlen; ++i) _qi[i] = i;                                                         \
         for (i = qlen+1; i < (qlen/pn+1) * pn; ++i) _qi[i] = -1;                                        \
     }                                                                                                   \
@@ -446,7 +446,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
     dp_beg = abm->dp_beg, dp_end = abm->dp_end, dp_beg_sn = abm->dp_beg_sn, dp_end_sn = abm->dp_end_sn; \
     /* index of pre-node */                                                                             \
     pre_index = (int**)_err_malloc(graph->node_n * sizeof(int*));                                       \
-    pre_n = (int*)_err_malloc(graph->node_n * sizeof(int*));                                            \
+    pre_n = (int*)_err_malloc(graph->node_n * sizeof(int));                                             \
     for (i = 0; i < graph->node_n; ++i) {                                                               \
         node_id = abpoa_graph_index_to_node_id(graph, i); /* i: node index */                           \
         pre_n[i] = graph->node[node_id].in_edge_n;                                                      \
@@ -1101,12 +1101,12 @@ int simd_abpoa_realloc(abpoa_t *ab, int qlen, abpoa_para_t *abpt, SIMD_para_t sp
     }
     if (s_msize > ab->abm->s_msize) {
         if (ab->abm->s_mem) free(ab->abm->s_mem);
-        ab->abm->s_msize = MAX_OF_TWO(ab->abm->s_msize << 1, s_msize);
+        kroundup64(s_msize); ab->abm->s_msize = s_msize;
         ab->abm->s_mem = (SIMDi*)SIMDMalloc(ab->abm->s_msize, size);
     }
 
     if ((int)node_n > ab->abm->rang_m) {
-        ab->abm->rang_m = MAX_OF_TWO(ab->abm->rang_m << 1, (int)node_n);
+        ab->abm->rang_m = node_n; kroundup32(ab->abm->rang_m);
         ab->abm->dp_beg = (int*)_err_realloc(ab->abm->dp_beg, ab->abm->rang_m * sizeof(int));
         ab->abm->dp_end = (int*)_err_realloc(ab->abm->dp_end, ab->abm->rang_m * sizeof(int));
         ab->abm->dp_beg_sn = (int*)_err_realloc(ab->abm->dp_beg_sn, ab->abm->rang_m * sizeof(int));
@@ -1471,7 +1471,7 @@ int abpoa_cg_global_align_sequence_to_graph_core(abpoa_t *ab, int qlen, uint8_t 
     dp_beg = abm->dp_beg, dp_end = abm->dp_end, dp_beg_sn = abm->dp_beg_sn, dp_end_sn = abm->dp_end_sn;
     /* index of pre-node */
     pre_index = (int**)_err_malloc(graph->node_n * sizeof(int*));
-    pre_n = (int*)_err_malloc(graph->node_n * sizeof(int*));
+    pre_n = (int*)_err_malloc(graph->node_n * sizeof(int));
     for (i = 0; i < graph->node_n; ++i) {
         node_id = abpoa_graph_index_to_node_id(graph, i); /* i: node index */
         pre_n[i] = graph->node[node_id].in_edge_n;

@@ -125,7 +125,7 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
             char *seq1 = seq->seq.s;    \
             /* printf("seq(%d): %s\n", seq_l, seq1); */   \
             if (seq_l > bseq_m) {   \
-                bseq_m = MAX_OF_TWO(seq_l+1, bseq_m * 2);   \
+                bseq_m = seq_l; kroundup32(bseq_m); \
                 bseq = (uint8_t*)_err_realloc(bseq, bseq_m * sizeof(uint8_t));  \
             }   \
             for (j = 0; j < seq_l; ++j) bseq[j] = nst_nt4_table[(int)(seq1[j])];    \
@@ -173,7 +173,7 @@ label:  \
 
 int abpoa_main(const char *list_fn, int in_list, abpoa_para_t *abpt){
     kseq_t *read_seq = (kseq_t*)calloc(CHUNK_READ_N, sizeof(kseq_t));
-    int bseq_m = 1000; uint8_t *bseq = (uint8_t*)_err_malloc(bseq_m * sizeof(uint8_t));
+    int bseq_m = 1024; uint8_t *bseq = (uint8_t*)_err_malloc(bseq_m * sizeof(uint8_t));
     // int nseqs_m, *seq_m=NULL, *seq_node_ids_l=NULL, **seq_node_ids=NULL; // for msa
     int i, j, n_seqs, tot_n, read_id;
     // TODO abpoa_init for each input file ???
