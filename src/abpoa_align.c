@@ -68,6 +68,7 @@ void abpoa_post_set_para(abpoa_para_t *abpt) {
         set_65536_table();
         if (abpt->cons_agrm == 2 || abpt->multip > 1) set_bit_table16();
     }
+    if (abpt->align_mode == ABPOA_LOCAL_MODE) abpt->bw = -1;
 }
 
 void abpoa_free_para(abpoa_para_t *abpt) {

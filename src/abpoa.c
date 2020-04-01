@@ -53,6 +53,7 @@ int abpoa_usage(void)
 
     err_printf("         -a --aln-mode   [INT]       align mode. [%d]\n", ABPOA_GLOBAL_MODE);
     err_printf("                                       %d: global\n", ABPOA_GLOBAL_MODE);
+    err_printf("                                       %d: local\n\n", ABPOA_LOCAL_MODE);
     err_printf("                                       %d: extension\n\n", ABPOA_EXTEND_MODE);
 
     err_printf("         -M --match      [INT]       match score. [%d]\n", ABPOA_MATCH);
@@ -201,7 +202,9 @@ int main(int argc, char **argv) {
         {
             case 'l': in_list = 1; break;
             case 'a': m = atoi(optarg);
-                      if (m != ABPOA_GLOBAL_MODE && m != ABPOA_EXTEND_MODE) { err_printf("Unknown alignment mode: %d.\n", m); return abpoa_usage(); }
+                      if (m != ABPOA_GLOBAL_MODE && m != ABPOA_EXTEND_MODE && m != ABPOA_LOCAL_MODE) { 
+                          err_printf("Unknown alignment mode: %d.\n", m); return abpoa_usage();
+                      }
                       abpt->align_mode=m; break;
             case 'w': abpt->bw = atoi(optarg); break;
             case 'z': abpt->zdrop = atoi(optarg); break;

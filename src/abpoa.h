@@ -8,8 +8,8 @@ char LogTable65536[65536];
 char bit_table16[65536];
 
 #define ABPOA_GLOBAL_MODE 0
-#define ABPOA_EXTEND_MODE 1
-#define ABPOA_LOCAL_MODE 2
+#define ABPOA_LOCAL_MODE  1
+#define ABPOA_EXTEND_MODE 2
 //#define ABPOA_SEMI_MODE 3
 
 // gap mode
