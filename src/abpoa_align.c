@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include "simd_abpoa_align.h"
 #include "abpoa_align.h"
 #include "utils.h"
 
@@ -74,6 +75,13 @@ void abpoa_free_para(abpoa_para_t *abpt) {
     free(abpt);
 }
 
+int abpoa_align_sequence_to_graph(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int qlen, abpoa_res_t *res) {
+    if (ab->abg->node_n <= 2 || qlen <= 0) return -1;
+    if (ab->abg->is_topological_sorted == 0) abpoa_topological_sort(ab, abpt);
+    simd_abpoa_align_sequence_to_graph(ab, query, qlen, abpt, res);
+    return 0;
+}
+
 // do msa for a set of input sequences
 // @function: 
 //    generate consensus sequence
@@ -86,6 +94,7 @@ void abpoa_free_para(abpoa_para_t *abpt) {
 int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seqs, int *seq_lens, uint8_t **seqs, FILE *out_fp, uint8_t ***cons_seq, int **cons_l, int *cons_n, uint8_t ***msa_seq, int *msa_l) {
     if ((!abpt->out_msa && !abpt->out_cons) || n_seqs <= 0) return 0;
     int i, only_cons = !abpt->out_msa && abpt->out_cons, check_ystop, ystop, ystop_n = 0, tot_n = n_seqs;
+    abpoa_reset_graph(ab, seq_lens[0], abpt);
     abpoa_res_t res;
     for (i = 0; i < n_seqs; ++i) {
         res.graph_cigar = 0, res.n_cigar = 0;
@@ -112,5 +121,3 @@ int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seqs, int *seq_lens, uint8_
     }
     return 1;
 }
-
-

@@ -1143,19 +1143,6 @@ void abpoa_add_graph_aligned_node(abpoa_t *ab, int node_id, int aligned_id) {
     abpoa_add_graph_aligned_node1(graph->node + aligned_id, node_id);
 }
 
-int abpoa_align_sequence_to_graph(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int qlen, abpoa_res_t *res) {
-    if (ab->abg->node_n <= 2 || qlen <= 0) return -1;
-    if (ab->abg->is_topological_sorted == 0) abpoa_topological_sort(ab, abpt);
-    // struct rusage r1, r2; double aln_user=0, aln_sys=0;
-    // getrusage(RUSAGE_SELF, &r1);
-    simd_abpoa_align_sequence_to_graph(ab, query, qlen, abpt, res);
-    // getrusage(RUSAGE_SELF, &r2);
-    // aln_user = r2.ru_utime.tv_sec*1e6 + r2.ru_utime.tv_usec - r1.ru_utime.tv_sec*1e6 - r1.ru_utime.tv_usec;
-    // aln_sys = r2.ru_stime.tv_sec*1e6 + r2.ru_stime.tv_usec - r1.ru_stime.tv_sec*1e6 - r1.ru_stime.tv_usec;
-    // printf("user: %lf, sys: %lf\n", aln_user, aln_sys); 
-    return 0;
-}
-
 //TODO
 void abpoa_set_read_id(uint64_t *read_ids, int read_id) {
     int n = read_id / 64;

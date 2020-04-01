@@ -79,14 +79,16 @@ int main(void) {
 
     // output to stdout
     fprintf(stdout, "=== stdout ===\n");
+
     // perform abpoa-msa
     abpoa_msa(ab, abpt, n_seqs, seq_lens, bseqs, stdout, NULL, NULL, NULL, NULL, NULL);
 
     abpoa_reset_graph(ab, seq_lens[0], abpt); // reset graph before re-use
 
-    // output to variables
+    // variables to store result
     uint8_t **cons_seq; int *cons_l, cons_n=0;
     uint8_t **msa_seq; int msa_l=0;
+
     // perform abpoa-msa
     abpoa_msa(ab, abpt, n_seqs, seq_lens, bseqs, NULL, &cons_seq, &cons_l, &cons_n, &msa_seq, &msa_l);
 
@@ -112,6 +114,7 @@ int main(void) {
     if (msa_l) {
         for (i = 0; i < n_seqs; ++i) free(msa_seq[i]); free(msa_seq);
     }
+
     /* generate DOT partial order graph plot */
     if (abpt->out_pog) abpoa_graph_visual(ab, abpt, "abpoa.dot");
 

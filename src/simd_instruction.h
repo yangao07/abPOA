@@ -574,10 +574,6 @@ extern "C" {
 
 int simd_check(void);
 
-#ifdef __cplusplus
-}
-#endif
-
 static void *SIMDMalloc(size_t size, size_t align) {
     void *ret = (void*)_mm_malloc(size, align);
     if (ret == NULL) {
@@ -586,5 +582,10 @@ static void *SIMDMalloc(size_t size, size_t align) {
     }
     else return ret;
 }
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif // SIMD_INSTRUCTION_H
