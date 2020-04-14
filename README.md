@@ -1,6 +1,6 @@
 # abPOA: adaptive banded Partial Order Alignment
 [![Github All Releases](https://img.shields.io/github/downloads/yangao07/abPOA/total.svg?label=Download)](https://github.com/yangao07/abPOA/releases)
-[![BioConda Install](https://img.shields.io/conda/dn/bioconda/tidehunter.svg?style=flag&label=BioConda%20install)](https://anaconda.org/bioconda/abpoa)
+[![BioConda Install](https://img.shields.io/conda/dn/bioconda/abpoa.svg?style=flag&label=BioConda%20install)](https://anaconda.org/bioconda/abpoa)
 [![Latest Release](https://img.shields.io/github/release/yangao07/abPOA.svg?label=Release)](https://github.com/yangao07/abPOA/releases/latest)
 [![Build Status](https://img.shields.io/travis/yangao07/abPOA/master.svg?label=Master)](https://travis-ci.org/yangao07/abPOA)
 [![License](https://img.shields.io/badge/License-GPL-black.svg)](https://github.com/yangao07/abPOA/blob/master/LICENSE)
