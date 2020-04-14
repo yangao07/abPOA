@@ -16,11 +16,11 @@ tar -zxvf abPOA-v1.0.0.tar.gz && cd abPOA-v1.0.0
 Install via conda and run with test data:
 ```
 conda install -c bioconda abpoa
-abPOA ./test_data/test_50x4.fa > cons.fa
+abPOA ./test_data/seq.fa > cons.fa
 ```
 Or, make from source and run with test data:
 ```
-make; ./bin/abPOA ./test_data/test_50x4.fa > cons.fa
+make; ./bin/abPOA ./test_data/seq.fa > cons.fa
 ```
 ## Table of Contents
 
