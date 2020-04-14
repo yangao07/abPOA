@@ -4,32 +4,34 @@
 #include "abpoa_graph.h"
 #include "utils.h"
 
-/* example of dot file for graphviz 
-digraph test1 {
-    a -> b -> c;
-    a -> {x y};
-    b [shape=box];
-    c [label="hello\nworld",color=blue,fontsize=24,
-      fontname="Palatino-Italic",fontcolor=red,style=filled];
-    a -> z [label="hi", weight=100];
-    x -> z [label="multi-line\nlabel"];
-    edge [style=dashed,color=red];
-    b -> x;
-    {rank=same; b x}
-}
-graph test2 {
-    a -- b -- c [style=dashed];
-    a -- {x y};
-    x -- c [w=10.0];
-    x -- y [w=5.0,len=3];
-}
+/* example of dot file for graphviz */
+/*
+   digraph test1 {
+       a -> b -> c;
+       a -> {x y};
+       b [shape=box];
+       c [label="hello\nworld",color=blue,fontsize=24,
+         fontname="Palatino-Italic",fontcolor=red,style=filled];
+       a -> z [label="hi", weight=100];
+       x -> z [label="multi-line\nlabel"];
+       edge [style=dashed,color=red];
+       b -> x;
+       {rank=same; b x}
+   }
+   graph test2 {
+       a -- b -- c [style=dashed];
+       a -- {x y};
+       x -- c [w=10.0];
+       x -- y [w=5.0,len=3];
+   }
 */
 
-int font_size=24;
 
 // base (index, rank, node_id)
 // A (1, 1, 2) A: base 1: index 1: rank 2: node_id
-int abpoa_graph_visual(abpoa_t *ab, abpoa_para_t *abpt) {
+int abpoa_dump_pog(abpoa_t *ab, abpoa_para_t *abpt) {
+    char PROG[20] = "abPOA"; int font_size=24;
+
     abpoa_graph_t *graph = ab->abg;
     if (graph->is_topological_sorted == 0) abpoa_topological_sort(ab, abpt);
 
@@ -44,14 +46,16 @@ int abpoa_graph_visual(abpoa_t *ab, abpoa_para_t *abpt) {
     char **node_label = (char**)_err_malloc(graph->node_n * sizeof(char*));
     for (i = 0; i < graph->node_n; ++i) node_label[i] = (char*)_err_malloc(sizeof(char) * 128);
  
-    FILE *fp = xopen(abpt->out_pog, "w");
-    fprintf(fp, "// ABPOA graph dot file.\n// %d nodes.\n", graph->node_n);
+    char *dot_fn = (char*)malloc(strlen(abpt->out_pog) + 10);
+    strcpy(dot_fn, abpt->out_pog);
+    FILE *fp = xopen(strcat(dot_fn, ".dot"), "w");
+    fprintf(fp, "// %s graph dot file.\n// %d nodes.\n", PROG, graph->node_n);
     // fprintf(fp, "digraph ABPOA_graph {\n\tgraph [dpi=%f]; size=\"%f,%f\";\n\trankdir=\"%s\";\n\tnode [width=%f, style=%s, fixedsize=%s, shape=%s];\n", dpi_size, graph_width, graph_height, rankdir, node_width, node_style, node_fixedsize, node_shape);
     fprintf(fp, "digraph ABPOA_graph {\n\tgraph [rankdir=\"%s\"];\n\tnode [width=%f, style=%s, fixedsize=%s, shape=%s];\n", rankdir, node_width, node_style, node_fixedsize, node_shape);
 
     for (i = 0; i < graph->node_n; ++i) {
         id = abpoa_graph_index_to_node_id(graph, i);
-        index = i; // int rank = abpoa_graph_node_id_to_max_rank(graph, id);
+        index = i;
         if (id == ABPOA_SRC_NODE_ID) {
             base = 'S';
             //sprintf(node_label[id], "\"%c\n(%d,%d,%d)\"", base, index, rank, id);
@@ -106,7 +110,11 @@ int abpoa_graph_visual(abpoa_t *ab, abpoa_para_t *abpt) {
     err_fclose(fp);
 
     char cmd[1024];
-    sprintf(cmd, "dot %s -Tpdf > %s.pdf", abpt->out_pog, abpt->out_pog);
-    if (system(cmd) != 0) err_fatal_simple("Fail to plot ABPOA DAG.");
+    char *type = strrchr(abpt->out_pog, '.');
+    if (strcmp(type+1, "pdf") != 0 && strcmp(type+1, "png") != 0)
+        err_fatal_simple("POG can only be dump to .pdf/.png file");
+    sprintf(cmd, "dot %s -T%s > %s", dot_fn, type+1, abpt->out_pog);
+    free(dot_fn);
+    if (system(cmd) != 0) err_fatal(__func__, "Fail to plot %s DAG.", PROG);
     return 0;
 }

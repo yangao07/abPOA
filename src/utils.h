@@ -241,5 +241,37 @@ static inline uint64_t hash_64(uint64_t key)
 	key ^= (key >> 31);
 	return key;
 }
+#ifndef _PRINT_FORMAT_H_
+#define _PRINT_FORMAT_H_
+
+#define NONE "\e[0m" //remove color/font
+#define BLACK "\e[0;30m" // black
+#define B_BLACK "\e[1;30m" // bold black
+#define RED "\e[0;31m" // read
+#define B_RED "\e[1;31m" // bold red
+#define GREEN "\e[0;32m" // green
+#define B_GREEN "\e[1;32m" // bold gren
+#define BROWN "\e[0;33m" // brown
+#define YELLOW "\e[1;33m" // yellow
+#define BLUE "\e[0;34m" // blue
+#define B_BLUE "\e[1;34m" // bold blue
+#define PURPLE "\e[0;35m" // purple
+#define B_PURPLE "\e[1;35m" // bold purple
+#define CYAN "\e[0;36m" // cyan
+#define B_CYAN "\e[1;36m" // bold cyan
+#define GRAY "\e[0;37m" // gray
+#define WHITE "\e[1;37m" // white, bold
+#define BOLD "\e[1m" // bold
+#define UNDERLINE "\e[4m" // underline
+#define BLINK "\e[5m" // blink
+#define REVERSE "\e[7m" // reverse background and foreground
+#define HIDE "\e[8m" // hide
+#define STRIKE "\e[9m" // strikethrough
+#define CLEAR "\e[2J" // clear
+#define CLRLINE "\r\e[K" // clear line
+
+// from https://blog.csdn.net/MoDa_Li/java/article/details/82156888
+
+#endif
 
 #endif

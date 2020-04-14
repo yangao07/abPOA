@@ -21,9 +21,6 @@ extern "C" {
 void set_65536_table(void);
 void set_bit_table16(void);
 
-abpoa_node_t *abpoa_init_node(int n);
-void abpoa_free_node(abpoa_node_t *node, int n, abpoa_para_t *abpt);
-void abpoa_set_graph_node(abpoa_graph_t *graph, int node_i);
 abpoa_graph_t *abpoa_init_graph(void);
 void abpoa_free_graph(abpoa_graph_t *graph, abpoa_para_t *abpt);
 
@@ -32,14 +29,14 @@ static inline int abpoa_graph_node_id_to_index(abpoa_graph_t *graph, int node_id
     return graph->node_id_to_index[node_id];
 }
 
-static inline int abpoa_graph_node_id_to_max_rank(abpoa_graph_t *graph, int node_id) {
+static inline int abpoa_graph_node_id_to_max_pos_right(abpoa_graph_t *graph, int node_id) {
     if (node_id < 0 || node_id >= graph->node_n) err_fatal(__func__, "Wrong node id: %d\n", node_id);
-    return graph->node_id_to_max_rank[node_id];
+    return graph->node_id_to_max_pos_right[node_id];
 }
 
-static inline int abpoa_graph_node_id_to_min_rank(abpoa_graph_t *graph, int node_id) {
+static inline int abpoa_graph_node_id_to_max_pos_left(abpoa_graph_t *graph, int node_id) {
     if (node_id < 0 || node_id >= graph->node_n) err_fatal(__func__, "Wrong node id: %d\n", node_id);
-    return graph->node_id_to_min_rank[node_id];
+    return graph->node_id_to_max_pos_left[node_id];
 }
 
 static inline int abpoa_graph_node_id_to_max_remain(abpoa_graph_t *graph, int node_id) {

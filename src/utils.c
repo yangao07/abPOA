@@ -42,11 +42,6 @@
 #include <time.h>
 #include "utils.h"
 
-#include "ksort.h"
-#define pair64_lt(a, b) ((a).x < (b).x || ((a).x == (b).x && (a).y < (b).y))
-KSORT_INIT(128, pair64_t, pair64_lt)
-KSORT_INIT(64,  uint64_t, ks_lt_generic)
-
 #include "kseq.h"
 KSEQ_INIT2(, gzFile, err_gzread)
 

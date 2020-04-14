@@ -1,6 +1,6 @@
 default: install
 
-simd_flag = AVX2=1
+simd_flag = 
 ifneq ($(AVX2),)
 	simd_flag = AVX2=1
 endif

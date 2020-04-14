@@ -4,21 +4,14 @@
 #include "abpoa.h"
 #include "abpoa_graph.h"
 
-#define CHUNK_READ_N 1000
+#define CHUNK_READ_N 1024
 
-// SPOA
 #define ABPOA_MATCH  2
 #define ABPOA_MISMATCH  4
 #define ABPOA_GAP_OPEN1  4
 #define ABPOA_GAP_OPEN2  24
 #define ABPOA_GAP_EXT1  2
 #define ABPOA_GAP_EXT2  1
-
-//#define ABPOA_MATCH  1
-//#define ABPOA_MISMATCH  3
-//#define ABPOA_GAP_OPEN  5
-//#define ABPOA_GAP_EXT  2
-
 
 #define ABPOA_M_OP   0x1
 #define ABPOA_E1_OP  0x2
@@ -29,29 +22,13 @@
 #define ABPOA_F_OP   0x18
 #define ABPOA_ALL_OP 0x1f
 
-#define ABPOA_MULTIP     1
-#define ABPOA_MIN_FRE    0.3
+#define DIPLOID_MIN_FREQ    0.3
 
-#define HOP_OFF_SET   0
-#define EOP_OFF_SET   2
-#define FOP_OFF_SET   4
-
-// calculate band range for each row:
-// have: min_rank, max_rank, min_remain, max_remain
-// then: min_len = min_rank + min_remain, max_len = max_rank + max_remain
-// range: (min_of_two(min_rank, max_rank+qlen-max_len), max_of_two(min_rank+qlen-min_len, max_rank))
-// with w: (min-w, max+w)
-#define GET_DP_BEGIN(graph, w, i, qlen) MAX_OF_TWO(0,    MIN_OF_TWO(abpoa_graph_node_id_to_min_rank(graph, i), qlen - abpoa_graph_node_id_to_max_remain(graph, i))-w)
-#define GET_DP_END(graph, w, i, qlen)   MIN_OF_TWO(qlen, MAX_OF_TWO(abpoa_graph_node_id_to_max_rank(graph, i), qlen - abpoa_graph_node_id_to_min_remain(graph, i))+w)
-
-// calculate band range for each row:
-// have: min_remain, max_remain, max_i (max in row)
-// range: (min_of_two(max_i+1, qlen-max_remain), max_of_two(max_i+1, qlen-min_remain))
-// with w: (min-w, max+w)
-//#define GET_AD_DP_BEGIN(graph, w, i, qlen) MAX_OF_TWO(0,    MIN_OF_TWO(abpoa_graph_node_id_to_min_rank(graph, i), qlen - abpoa_graph_node_id_to_max_remain(graph, i))-w)
-#define GET_AD_DP_END(graph, w, i, qlen)   MIN_OF_TWO(qlen, MAX_OF_TWO(abpoa_graph_node_id_to_max_rank(graph, i), qlen - abpoa_graph_node_id_to_min_remain(graph, i))+w)
-#define GET_AD_DP_BEGIN(graph, w, i, qlen) MAX_OF_TWO(0, abpoa_graph_node_id_to_min_rank(graph, i)-w)
-// #define GET_AD_DP_END(graph, w, i, qlen)   MIN_OF_TWO(qlen, abpoa_graph_node_id_to_max_rank(graph, i)+w)
+// start and end of each band:
+//   range: (min_of_two(max_left, qlen-max_remain), max_of_two(max_right, qlen-min_remain))
+//   with extra band width: (range_min-w, range_max+w)
+#define GET_AD_DP_BEGIN(graph, w, i, qlen) MAX_OF_TWO(0,    MIN_OF_TWO(abpoa_graph_node_id_to_max_pos_left(graph, i), qlen - abpoa_graph_node_id_to_max_remain(graph, i))-w)
+#define GET_AD_DP_END(graph, w, i, qlen)   MIN_OF_TWO(qlen, MAX_OF_TWO(abpoa_graph_node_id_to_max_pos_right(graph, i), qlen - abpoa_graph_node_id_to_min_remain(graph, i))+w)
 
 #ifdef __cplusplus
 extern "C" {
@@ -112,70 +89,6 @@ static inline void abpoa_print_cigar(int n_cigar, abpoa_cigar_t *cigar, abpoa_gr
     for (i = 0; i < 6; ++i)
         printf("%d%c ", n[i], ABPOA_CIGAR_STR[i]);
     printf("\n");
-}
-
-// type of score matrix (DP_H, DP_E): 8/16/32
-static inline void abpoa_backtrack(int *DP_H, int *DP_E, int matrix_col_n, int m,  int *mat, int8_t gap_e, int **pre_index, int *pre_n, uint8_t *backtrack_z, int best_i, int best_j, int z_col_n, abpoa_graph_t *graph, uint8_t *query, int *n_cigar, abpoa_cigar_t **graph_cigar) {
-    int i, j, k, pre_i;
-    if (n_cigar && graph_cigar) {
-        int n_c = 0, s, m_c = 0, id, which, last_which;
-        int op_shift[3] = {HOP_OFF_SET, EOP_OFF_SET, FOP_OFF_SET};
-        uint8_t d;
-        abpoa_cigar_t *cigar = 0;
-        i = best_i, j = best_j, id = abpoa_graph_index_to_node_id(graph, i), last_which = 0;
-        while (i > 0 && j > 0) {
-            d = backtrack_z[(long)(i-1) * z_col_n + j-1];
-            which = (d >> op_shift[last_which]) & 3;
-            if (which == 0) { // match
-                cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CMATCH, 1, id, j-1);
-                s = mat[graph->node[id].base * m + query[j-1]];
-                //s = graph->node[id].base == query[j-1] ? match : -mis;
-
-                for (k = 0; k < pre_n[i]; ++k) {
-                    pre_i = pre_index[i][k];
-                    if (DP_H[pre_i * matrix_col_n + j-1] + s == DP_H[i * matrix_col_n + j]) {
-                        i = pre_i;
-                        break;
-                    }
-                }
-                id = abpoa_graph_index_to_node_id(graph, i);
-                j--; last_which = which;
-            } else if (which == 1) { // deletion
-                cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CDEL, 1, id, j-1);
-                if (last_which == 1) {
-                    for (k = 0; k < pre_n[i]; ++k) {
-                        pre_i = pre_index[i][k];
-                        if (DP_E[pre_i * matrix_col_n + j] - gap_e == DP_E[i * matrix_col_n + j]) {
-                            i = pre_i;
-                            break;
-                        }
-                    }
-                } else if (last_which == 0) {
-                    for (k = 0; k < pre_n[i]; ++k) {
-                        pre_i = pre_index[i][k];
-                        if (DP_E[pre_i * matrix_col_n + j] == DP_H[i * matrix_col_n + j]) {
-                            i = pre_i;
-                            break;
-                        }
-                    }
-                } else {
-                    printf("\nunexpected cigar op.\n");
-                }
-                id = abpoa_graph_index_to_node_id(graph, i);
-                last_which = which;
-            } else { // insertion
-                cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, 1, id, j-1);
-                j--; last_which = which;
-            }
-        }
-        if (j > 0) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CSOFT_CLIP, j, -1, j-1);
-        // reverse cigar
-        *graph_cigar = abpoa_reverse_cigar(n_c, cigar);
-        *n_cigar = n_c;
-#ifdef __DEBUG__
-        abpoa_print_cigar(n_c, *graph_cigar, graph);
-#endif
-    }
 }
 
 #ifdef __cplusplus

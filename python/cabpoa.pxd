@@ -6,6 +6,7 @@ cdef extern from "../include/simd_instruction.h":
 
 cdef extern from "../include/abpoa.h":
     cdef int ABPOA_GLOBAL_MODE "ABPOA_GLOBAL_MODE"
+    cdef int ABPOA_LOCAL_MODE "ABPOA_LOCAL_MODE"
     cdef int ABPOA_EXTEND_MODE "ABPOA_EXTEND_MODE"
 
     # gap mode
@@ -13,8 +14,8 @@ cdef extern from "../include/abpoa.h":
     cdef int ABPOA_AFFINE_GAP "ABPOA_AFFINE_GAP"
     cdef int ABPOA_CONVEX_GAP "ABPOA_CONVEX_GAP"
 
-    cdef int YSTOP_MIN_NUM "YSTOP_MIN_NUM"
-    cdef float YSTOP_MIN_FRAC "YSTOP_MIN_FRAC"
+    cdef int ABPOA_EXTRA_B "ABPOA_EXTRA_B"
+    cdef float ABPOA_EXTRA_F "ABPOA_EXTRA_F"
 
     cdef char *ABPOA_CIGAR_STR "ABPOA_CIGAR_STR"
     cdef int ABPOA_CMATCH "ABPOA_CMATCH"
@@ -27,9 +28,13 @@ cdef extern from "../include/abpoa.h":
     cdef int ABPOA_SRC_NODE_ID "ABPOA_SRC_NODE_ID"
     cdef int ABPOA_SINK_NODE_ID "ABPOA_SINK_NODE_ID"
 
+    cdef int ABPOA_OUT_CONS "ABPOA_OUT_CONS"
+    cdef int ABPOA_OUT_MSA "ABPOA_OUT_MSA"
+    cdef int ABPOA_OUT_BOTH "ABPOA_OUT_BOTH"
+
     cdef int ABPOA_HB "ABPOA_HB"
+    cdef int ABPOA_HC "ABPOA_HC"
     cdef int ABPOA_MF "ABPOA_MF"
-    cdef int ABPOA_RC "ABPOA_RC"
 
     ctypedef struct abpoa_res_t:
         int n_cigar
@@ -43,16 +48,15 @@ cdef extern from "../include/abpoa.h":
         int *mat # score matrix
         int match, mismatch, gap_open1, gap_open2, gap_ext1, gap_ext2
         int inf_min
-        int bw # band width
+        int wb # 1st part of extra band width
+        float wf # 2nd part of extra band width. w=wb+wf*L (L is sequence length)
         int zdrop, end_bonus # from minimap2
-        int ystop_iter_n, ystop_min_processed_n, ystop_min_wei
-        float ystop_min_frac
         int simd_flag # available SIMD instruction
         # alignment mode
-        uint8_t ret_cigar, rev_cigar, out_msa, out_cons, out_pog, use_read_ids # mode: 0: global, 1: local, 2: extend
+        uint8_t ret_cigar, rev_cigar, out_msa, out_cons, is_diploid, use_read_ids # mode: 0: global, 1: local, 2: extend
+        char *out_pog
         int align_mode, gap_mode, cons_agrm
-        int multip
-        double min_freq # for multiploid data
+        double min_freq # for diploid data
 
 
     ctypedef struct abpoa_node_t:
@@ -63,7 +67,7 @@ cdef extern from "../include/abpoa.h":
         int *out_id
         int *out_weight
         uint64_t *read_ids
-        int read_ids_n # for multiploid
+        int read_ids_n # for diploid
         int aligned_node_n, aligned_node_m
         int *aligned_node_id # mismatch; aligned node will have same rank
         int heaviest_weight, heaviest_out_id # for consensus
@@ -101,10 +105,10 @@ cdef extern from "../include/abpoa.h":
     void abpoa_free(abpoa_t *ab, abpoa_para_t *abpt)
 
     # do msa for a set of input sequences
-    int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seqs, int *seq_lens, uint8_t **seqs, FILE *out_fp, uint8_t ***cons_seq, int **cons_l, uint8_t ***msa_seq, int *msa_l)
+    int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seqs, int *seq_lens, uint8_t **seqs, FILE *out_fp, uint8_t ***cons_seq, int **cons_l, int *cons_n, uint8_t ***msa_seq, int *msa_l)
 
     # clean alignment graph
-    void abpoa_reset_graph(abpoa_t *ab, int qlen, abpoa_para_t *abpt)
+    void abpoa_reset_graph(abpoa_t *ab, abpoa_para_t *abpt, int qlen)
 
     # align a sequence to a graph
     int abpoa_align_sequence_to_graph(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int qlen, abpoa_res_t *res)
@@ -112,7 +116,7 @@ cdef extern from "../include/abpoa.h":
     # add an alignment to a graph
     int abpoa_add_graph_node(abpoa_t *ab, uint8_t base)
     void abpoa_add_graph_edge(abpoa_t *ab, int from_id, int to_id, int check_edge, uint8_t add_read_id, int read_id, int read_ids_n)
-    int abpoa_add_graph_alignment(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int qlen, int n_cigar, uint64_t *abpoa_cigar, int check_ystop, int read_id, int tot_read_n)
+    int abpoa_add_graph_alignment(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int qlen, int n_cigar, uint64_t *abpoa_cigar, int read_id, int tot_read_n)
     void abpoa_topological_sort(abpoa_t *ab, abpoa_para_t *abpt)
 
     # generate consensus sequence from graph
@@ -123,10 +127,9 @@ cdef extern from "../include/abpoa.h":
     #     cons_l: store consensus sequences length
     #     cons_n: store number of consensus sequences
     #     Note: cons_seq and cons_l need to be freed by user.
-    int abpoa_generate_consensus(abpoa_t *ab, uint8_t cons_agrm, int multip, double min_freq, int seq_n, FILE *out_fp, uint8_t ***cons_seq, int **cons_l, int *cons_n)
+    int abpoa_generate_consensus(abpoa_t *ab, abpoa_para_t *abpt, int seq_n, FILE *out_fp, uint8_t ***cons_seq, int **cons_l, int *cons_n)
     # generate column multiple sequence alignment from graph
-    # store msa into msa[] // TODO
     void abpoa_generate_rc_msa(abpoa_t *ab, int seq_n, FILE *out_fp, uint8_t ***msa_seq, int *msa_l)
 
     # generate DOT graph plot 
-    int abpoa_graph_visual(abpoa_t *ab, abpoa_para_t *abpt, char *dot_fn)
+    int abpoa_dump_pog(abpoa_t *ab, abpoa_para_t *abpt)

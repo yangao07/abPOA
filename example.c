@@ -49,7 +49,6 @@ int main(void) {
 
     // alignment parameters
     // abpt->align_mode = 0; // 0:global alignment, 1:extension
-    // abpt->m = 5;
     // abpt->match = 2;      // match score
     // abpt->mismatch = 4;   // mismatch penalty
     // abpt->gap_mode = ABPOA_CONVEX_GAP; // gap penalty mode
@@ -57,15 +56,15 @@ int main(void) {
     // abpt->gap_ext1 = 2;   // gap extension penalty #1
     // abpt->gap_open2 = 24; // gap open penalty #2
     // abpt->gap_ext2 = 1;   // gap extension penalty #2
-                            // gap_penalty = min{gap_open1 + gap_len * gap_ext1, gap_open2 + gap_len * gap_ext2}
-    // abpt->cons_agrm = 0; // consensus algorithm heaviest bundling
-    abpt->bw = 5;
+                             // gap_penalty = min{gap_open1 + gap_len * gap_ext1, gap_open2 + gap_len * gap_ext2}
+    // abpt->bw = 10;        // extra band used in adaptive banded DP
+    // abpt->bf = 0.01; 
+     
     // output options
     abpt->out_msa = 1; // generate Row-Column multiple sequence alignment(RC-MSA), set 0 to disable
     abpt->out_cons = 1; // generate consensus sequence, set 0 to disable
-    abpt->out_pog = 1; // generate parital order graph using DOT, set 0 to disable
 
-    abpoa_post_set_para(abpt); // 1: set gap mode manually, 0: set gap mode based on current score/penalty
+    abpoa_post_set_para(abpt);
 
     // collect sequence length, trasform ACGT to 0123
     int *seq_lens = (int*)malloc(sizeof(int) * n_seqs);
@@ -78,12 +77,12 @@ int main(void) {
     }
 
     // output to stdout
-    fprintf(stdout, "=== stdout ===\n");
+    fprintf(stdout, "=== output to stdout ===\n");
 
     // perform abpoa-msa
     abpoa_msa(ab, abpt, n_seqs, seq_lens, bseqs, stdout, NULL, NULL, NULL, NULL, NULL);
 
-    abpoa_reset_graph(ab, seq_lens[0], abpt); // reset graph before re-use
+    abpoa_reset_graph(ab, abpt, seq_lens[0]); // reset graph before re-use
 
     // variables to store result
     uint8_t **cons_seq; int *cons_l, cons_n=0;
@@ -92,7 +91,7 @@ int main(void) {
     // perform abpoa-msa
     abpoa_msa(ab, abpt, n_seqs, seq_lens, bseqs, NULL, &cons_seq, &cons_l, &cons_n, &msa_seq, &msa_l);
 
-    fprintf(stdout, "=== variables ===\n");
+    fprintf(stdout, "=== output to variables ===\n");
     for (i = 0; i < cons_n; ++i) {
         fprintf(stdout, ">Consensus_sequence\n");
         for (j = 0; j < cons_l[i]; ++j)
@@ -116,7 +115,8 @@ int main(void) {
     }
 
     /* generate DOT partial order graph plot */
-    if (abpt->out_pog) abpoa_graph_visual(ab, abpt, "abpoa.dot");
+    abpt->out_pog = strdup("example.png"); // dump parital order graph to file
+    if (abpt->out_pog != NULL) abpoa_dump_pog(ab, abpt);
 
     for (i = 0; i < n_seqs; ++i) free(bseqs[i]); free(bseqs); free(seq_lens);
     abpoa_free(ab, abpt); abpoa_free_para(abpt); 

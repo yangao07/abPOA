@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-int simd_abpoa_align_sequence_to_graph(abpoa_t *ab, uint8_t *query, int qlen, abpoa_para_t *abpt, abpoa_res_t *res);
+int simd_abpoa_align_sequence_to_graph(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int qlen, abpoa_res_t *res);
 abpoa_simd_matrix_t *abpoa_init_simd_matrix(void);
 void abpoa_free_simd_matrix(abpoa_simd_matrix_t *abm);
 

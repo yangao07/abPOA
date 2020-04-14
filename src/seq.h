@@ -1,5 +1,5 @@
-#ifndef ALIGN_H
-#define ALIGN_H
+#ifndef SEQ_H
+#define SEQ_H
 
 #ifdef __cplusplus
 extern "C" {

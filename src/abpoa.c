@@ -5,38 +5,41 @@
 #include "abpoa.h"
 #include "abpoa_graph.h"
 #include "abpoa_align.h"
-#include "align.h"
+#include "seq.h"
 #include "kseq.h"
 #include "utils.h"
 
 KSEQ_INIT(gzFile, gzread)
 
 char PROG[20] = "abPOA";
+#define _ba BOLD UNDERLINE "a" NONE
+#define _bb BOLD UNDERLINE "b" NONE
+#define _bP BOLD UNDERLINE "P" NONE
+#define _bO BOLD UNDERLINE "O" NONE
+#define _bA BOLD UNDERLINE "A" NONE
+char DESCRIPTION[100] = _ba "daptive " _bb "anded " _bP "artial " _bO "rder " _bA "lignment";
 char VERSION[20] = "1.0.0";
 
 const struct option abpoa_long_opt [] = {
-    { "in-list", 0, NULL, 'l' },
-    { "align-mode", 1, NULL, 'a' },
+    { "align-mode", 1, NULL, 'm' },
 
     { "match", 1, NULL, 'M' },
     { "mismatch", 1, NULL, 'X' },
     { "gap-open", 1, NULL, 'O' },
     { "gap-ext", 1, NULL, 'E' },
 
-    { "band-width", 1, NULL, 'w' },
+    { "extra-b", 1, NULL, 'b' },
+    { "extra-f", 1, NULL, 'f' },
     { "zdrop", 1, NULL, 'z' },
-    { "ystop", 1, NULL, 'y' },
-    { "ystop-min", 1, NULL, 't' },
-    { "ystop-frac", 1, NULL, 'r' },
-    { "end-bouns", 1, NULL, 'b' },
+    { "bouns", 1, NULL, 'e' },
 
-    { "out-cons", 0, NULL, 'c' },
-    { "cons-agrm", 1, NULL, 'C' },
-    { "multi", 1, NULL, 'm', },
-    { "min-freq", 1, NULL, 'f', },
-    { "out-msa", 0, NULL, 's' },
-
-    { "out-pog", 0, NULL, 'g' },
+    { "in-list", 0, NULL, 'l' },
+    { "output", 1, NULL, 'o' },
+    { "result", 1, NULL, 'r' },
+    { "out-pog", 1, NULL, 'g' },
+    { "cons-alg", 1, NULL, 'a' },
+    { "diploid", 0, NULL, 'd', },
+    { "min-freq", 1, NULL, 'q', },
 
     { "help", 0, NULL, 'h' },
     { "version", 0, NULL, 'v' },
@@ -47,54 +50,50 @@ const struct option abpoa_long_opt [] = {
 int abpoa_usage(void)
 {
     err_printf("\n");
-    err_printf("Usage:   %s [option] <in.fa/fq> > msa.out\n\n", PROG);
-    err_printf("Options:\n\n");
-    err_printf("         -l --in-list                use list of filename as input. [False]\n\n");
+    err_printf("%s: %s\n\n", PROG, DESCRIPTION);
+    // err_printf("Version: %s\n", VERSION);
+    err_printf("Usage: %s [option] <in.fa/fq> > cons.fa/msa.out\n\n", PROG);
+    err_printf("Options:\n");
+    err_printf("  Alignment:\n");
+    err_printf("    -m --aln-mode INT       alignment mode [%d]\n", ABPOA_GLOBAL_MODE);
+    err_printf("                              %d: global, %d: local, %d: extension\n", ABPOA_GLOBAL_MODE, ABPOA_LOCAL_MODE, ABPOA_EXTEND_MODE);
+    err_printf("    -M --match    INT       match score [%d]\n", ABPOA_MATCH);
+    err_printf("    -X --mismatch INT       mismatch penalty [%d]\n", ABPOA_MISMATCH);
+    err_printf("    -O --gap-open INT(,INT) gap opening penalty (O1,O2) [%d,%d]\n", ABPOA_GAP_OPEN1, ABPOA_GAP_OPEN2);
+    err_printf("    -E --gap-ext  INT(,INT) gap extension penalty (E1,E2) [%d,%d]\n", ABPOA_GAP_EXT1, ABPOA_GAP_EXT2);
+    err_printf("                            %s provides 3 gap penalty modes, penalty of a g-long gap:\n", PROG);
+    err_printf("                            - convex (default): min{O1+g*E1, O2+g*E2}\n");
+    err_printf("                            - affine (set O2 as 0): O1+g*E1\n");
+    err_printf("                            - linear (set O1 as 0): g*E1\n");
+    err_printf("  Adaptive banded DP:\n");
+    err_printf("    -b --extra-b  INT       first part of extra band [%d]\n", ABPOA_EXTRA_B);
+    err_printf("                            set b as < 0 to disable adaptive banded DP\n");
+    err_printf("    -f --extra-f  FLOAT     second part of extra band: f * L, L is the length of input sequence [%.2f]\n", ABPOA_EXTRA_F);
+    err_printf("                            width of extra bind is b + f * L\n");
+    // err_printf("    -z --zdrop    INT       Z-drop score in extension alignment [-1]\n");
+    // err_printf("                            set as <= 0 to disable Z-drop extension\n");
+    // err_printf("    -e --bonus    INT       end bonus score in extension alignment [-1]\n");
+    // err_printf("                            set as <= 0 to disable end bounus\n");
+    err_printf("  Input/Output:\n");
+    err_printf("    -l --in-list            input file is a list of sequence file [False]\n");
+    err_printf("                            each line is one sequence file\n");
+    err_printf("    -o --output   FILE      ouput to FILE [stdout]\n");
+    err_printf("    -r --result   INT       output result mode [%d]\n", ABPOA_OUT_CONS);
+    // err_printf("                            %d: consensus (FASTA format), %d: MSA (PIR format), %d: both 0 & 1\n", ABPOA_OUT_CONS, ABPOA_OUT_MSA, ABPOA_OUT_BOTH);
+    err_printf("                            - %d: consensus (FASTA format)\n", ABPOA_OUT_CONS);
+    err_printf("                            - %d: MSA (PIR format)\n", ABPOA_OUT_MSA);
+    err_printf("                            - %d: both 0 & 1\n", ABPOA_OUT_BOTH);
+    err_printf("    -g --out-pog  FILE      dump partial order graph to FILE (.pdf/.png) [Null]\n\n");
+    err_printf("    -a --cons-alg INT       algorithm for consensus calling [0]\n");
+    // err_printf("                            %d: heaviest bundling, %d: heaviest column\n", ABPOA_HB, ABPOA_HC);
+    err_printf("                            - %d: heaviest bundling\n", ABPOA_HB);
+    err_printf("                            - %d: heaviest in column\n", ABPOA_HC);
+    err_printf("    -d --diploid            input is diploid [False]\n");
+    err_printf("                            -a/--cons-alg is forced to be %d when input is diploid\n", ABPOA_HC);
+    err_printf("    -q --min-freq FLOAT     min frequency of each consensus for diploid input [%.2f]\n\n", DIPLOID_MIN_FREQ);
 
-    err_printf("         -a --aln-mode   [INT]       align mode. [%d]\n", ABPOA_GLOBAL_MODE);
-    err_printf("                                       %d: global\n", ABPOA_GLOBAL_MODE);
-    err_printf("                                       %d: local\n\n", ABPOA_LOCAL_MODE);
-    err_printf("                                       %d: extension\n\n", ABPOA_EXTEND_MODE);
-
-    err_printf("         -M --match      [INT]       match score. [%d]\n", ABPOA_MATCH);
-    err_printf("         -X --mismatch   [INT]       mismatch penalty. [%d]\n", ABPOA_MISMATCH);
-    err_printf("         -O --gap-open   [INT(,INT)] gap open penalty. [%d,%d]\n", ABPOA_GAP_OPEN1, ABPOA_GAP_OPEN2);
-    err_printf("         -E --gap-ext    [INT(,INT)] gap extension penalty [%d,%d]\n", ABPOA_GAP_EXT1, ABPOA_GAP_EXT2);
-    err_printf("                                     1. abPOA uses convex gap penalty by default, i.e.,\n");
-    err_printf("                                        convex penalty of a g-long gap: min{o1+g*e1, o2+g*e2}\n");
-    err_printf("                                     2. Set o2 as 0 to apply affine gap penalty and only o1,e1 will be used, i.e.,\n");
-    err_printf("                                        affine penalty of a g-long gap: o1+g*e1\n");
-    err_printf("                                     3. Set o1 as 0 to apply linear gap penalty and only e1 will be used, i.e.,\n");
-    err_printf("                                        linear penalty of a g-long gap: g*e1\n\n");
-
-    err_printf("         -w --band-width [INT]       band width used in alignment. [-1]\n");
-    err_printf("                                       Effective for global and extension alignment. Set as negative to disable.\n");
-    err_printf("         -z --zdrop      [INT]       Z-drop score. [-1]\n");
-    err_printf("                                       Effective for extension alignment. Set as 0 or negative to disable.\n");
-    err_printf("         -b --end-bonus  [INT]       end bonus score. [-1]\n");
-    err_printf("                                       Effective for extension alignment. Set as 0 or negative to disable.\n\n");
-    err_printf("         -y --ystop      [INT]       Y-stop minimum iteration. [-1]\n");
-    err_printf("                                       Effective when only -c is set and -s is not set. Set as 0 or negative \n");
-    err_printf("                                       to disable.\n");
-    err_printf("         -t --ystop-min  [INT]       Y-stop minimum processed reads. [%d]\n", YSTOP_MIN_NUM);
-    err_printf("                                       Effective when -y is set.\n");
-    err_printf("         -r --ystop-frac [FLOAT]     Y-stop threshold. [%.1f]\n", YSTOP_MIN_FRAC);
-    err_printf("                                       If float: fraction of number of total reads in alignment so far if float.\n");
-    err_printf("                                       If integer: minimum edge weight. Effective when -y is set.\n\n");
-
-    err_printf("         -c --out-cons               output consensus sequence. [False]\n");
-    err_printf("         -s --out-msa                output multiple sequence alignment in pir format. [False]\n");
-    err_printf("         -g --out-pog                generate visualized partial order graph. [False]\n\n");
-    err_printf("         -C --cons-agrm  [INT]       algorithm for consensus calling. [0]\n");
-    err_printf("                                       0: heaviest bundling\n");
-    err_printf("                                       1: minimum flow\n");
-    err_printf("                                       2: row-column MSA\n\n");
-    err_printf("         -m --multi                  maximum number of output consensus sequences (for diploid data, <= 2). [%d]\n", ABPOA_MULTIP);
-    err_printf("                                     When 2 or more consensus are needed, --cons-agrm is set to \'row-column MSA\'\n");
-    err_printf("         -f --min-freq   [FLOAT]     minimum frequency of each haploid (for multiploid data). [%.2f]\n\n", ABPOA_MIN_FRE);
-
-    err_printf("         -h --help                   print this help usage information.\n");
-    err_printf("         -v --version                show version number.\n");
+    err_printf("    -h --help               print this help usage information\n");
+    err_printf("    -v --version            show version number\n");
     err_printf("\n");
     return 1;
 }
@@ -110,14 +109,13 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
     return n;
 }
 
-#define abpoa_core(read_fn, label) {   \
+#define abpoa_core(read_fn) {   \
     gzFile readfp = xzopen(read_fn, "r"); kstream_t *fs = ks_init(readfp);  \
-    int check_ystop, ystop_n=0, ystop;  \
     for (i = 0; i < CHUNK_READ_N; ++i) read_seq[i].f = fs;  \
     /* progressively partial order alignment */     \
     n_seqs = 0,  tot_n = 0, read_id = 0; \
     /* reset graph for a new input file */  \
-    abpoa_reset_graph(ab, bseq_m, abpt);    \
+    abpoa_reset_graph(ab, abpt, bseq_m);    \
     while ((n_seqs = abpoa_read_seq(read_seq, CHUNK_READ_N)) != 0) {    \
         for (i = 0; i < n_seqs; ++i) {  \
             kseq_t *seq = read_seq + i; \
@@ -132,29 +130,14 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
             for (j = 0; j < seq_l; ++j) bseq[j] = nst_nt4_table[(int)(seq1[j])];    \
             abpoa_res_t res; res.graph_cigar=0; res.n_cigar=0;    \
             abpoa_align_sequence_to_graph(ab, abpt, bseq, seq_l, &res); \
-            if (abpt->ystop_iter_n > 0 && abpt->out_cons && !abpt->out_msa && i+tot_n >= abpt->ystop_min_processed_n) { \
-                abpt->ystop_min_wei = (tot_n + i + 1) * abpt->ystop_min_frac;   \
-                check_ystop = 1;    \
-            } else check_ystop = 0;   \
-            ystop = abpoa_add_graph_alignment(ab, abpt, bseq, seq_l, res.n_cigar, res.graph_cigar, check_ystop, read_id++, tot_n+n_seqs);     \
-            if (check_ystop) {  \
-                /*fprintf(stderr, "%c", "NS"[ystop]); */\
-                if (ystop) ++ystop_n; \
-                else ystop_n = 0;  \
-                if (ystop_n >= abpt->ystop_iter_n) {   \
-                    tot_n += i+1;   \
-                    if (res.n_cigar) free(res.graph_cigar); \
-                    goto label;  \
-                }   \
-            }   \
+            abpoa_add_graph_alignment(ab, abpt, bseq, seq_l, res.n_cigar, res.graph_cigar, read_id++, tot_n+n_seqs);     \
             if (res.n_cigar) free(res.graph_cigar); \
         }   \
         tot_n += n_seqs;    \
     }   \
-label:  \
     /* generate consensus from graph */ \
     if (abpt->out_cons) {   \
-        abpoa_generate_consensus(ab, abpt->cons_agrm, abpt->multip, abpt->min_freq, tot_n, stdout, NULL, NULL, NULL); \
+        abpoa_generate_consensus(ab, abpt, tot_n, stdout, NULL, NULL, NULL); \
     }   \
     /* generate multiple sequence alignment */  \
     if (abpt->out_msa) {  \
@@ -167,7 +150,7 @@ label:  \
     }   \
     /* generate dot plot */     \
     if (abpt->out_pog) {    \
-        abpoa_graph_visual(ab, abpt);  \
+        abpoa_dump_pog(ab, abpt);  \
     }   \
     ks_destroy(fs); gzclose(readfp);    \
 }
@@ -182,11 +165,11 @@ int abpoa_main(const char *list_fn, int in_list, abpoa_para_t *abpt){
         FILE *list_fp = fopen(list_fn, "r"); char read_fn[1024];
         while (fgets(read_fn, sizeof(read_fn), list_fp)) {
             read_fn[strlen(read_fn)-1] = '\0';
-            abpoa_core(read_fn, LIST_LABEL);
+            abpoa_core(read_fn);
         }
         fclose(list_fp);
     } else { // input file
-        abpoa_core(list_fn, FN_LABEL);
+        abpoa_core(list_fn);
     }
 
     free(bseq);
@@ -197,36 +180,38 @@ int abpoa_main(const char *list_fn, int in_list, abpoa_para_t *abpt){
 
 int main(int argc, char **argv) {
     int c, m, in_list=0; char *s; abpoa_para_t *abpt = abpoa_init_para();
-    while ((c = getopt_long(argc, argv, "la:w:z:y:t:r:b:M:X:O:E:m:f:csC:ghv", abpoa_long_opt, NULL)) >= 0) {
+    while ((c = getopt_long(argc, argv, "m:M:X:O:E:b:f:z:e:lo:r:g:a:dq:hv", abpoa_long_opt, NULL)) >= 0) {
         switch(c)
         {
-            case 'l': in_list = 1; break;
-            case 'a': m = atoi(optarg);
+            case 'm': m = atoi(optarg);
                       if (m != ABPOA_GLOBAL_MODE && m != ABPOA_EXTEND_MODE && m != ABPOA_LOCAL_MODE) { 
                           err_printf("Unknown alignment mode: %d.\n", m); return abpoa_usage();
-                      }
-                      abpt->align_mode=m; break;
-            case 'w': abpt->bw = atoi(optarg); break;
-            case 'z': abpt->zdrop = atoi(optarg); break;
-            case 'b': abpt->end_bonus= atoi(optarg); break;
-            case 'y': abpt->ystop_iter_n = atoi(optarg); break;
-            case 't': abpt->ystop_min_processed_n = atoi(optarg); break;
-            case 'r': abpt->ystop_min_frac = atof(optarg); break;
-
+                      } abpt->align_mode=m; break;
             case 'M': abpt->match = atoi(optarg); break;
             case 'X': abpt->mismatch = atoi(optarg); break;
             case 'O': abpt->gap_open1 = strtol(optarg, &s, 10); if (*s == ',') abpt->gap_open2 = strtol(s+1, &s, 10); break;
             case 'E': abpt->gap_ext1 = strtol(optarg, &s, 10); if (*s == ',') abpt->gap_ext2 = strtol(s+1, &s, 10); break;
 
-            case 'c': abpt->out_cons = 1; break;
-            case 'C': abpt->cons_agrm = atoi(optarg); break;
-            case 'm': abpt->multip = atoi(optarg); 
-                      if (abpt->multip > 2) { err_printf("\'-m\' needs to be <= 2.\n"); return abpoa_usage(); }
-                      break;
-            case 'f': abpt->min_freq = atof(optarg); break;
-            case 's': abpt->out_msa = 1; break;
+            case 'b': abpt->wb = atoi(optarg); break;
+            case 'f': abpt->wf = atof(optarg); break;
+            case 'z': abpt->zdrop = atoi(optarg); break;
+            case 'e': abpt->end_bonus= atoi(optarg); break;
 
+            case 'l': in_list = 1; break;
+            case 'o': if (strcmp(optarg, "-") != 0) {
+                          if (freopen(optarg, "wb", stdout) == NULL)
+                              err_fatal(__func__, "Failed to open the output file %s", optarg);
+                      } break;
+            case 'r': if (atoi(optarg) == ABPOA_OUT_CONS) abpt->out_cons = 1, abpt->out_msa = 0;
+                      else if (atoi(optarg) == ABPOA_OUT_MSA) abpt->out_cons = 0, abpt->out_msa = 1;
+                      else if (atoi(optarg) == ABPOA_OUT_BOTH) abpt->out_cons = abpt->out_msa = 1;
+                      else err_printf("Error: unknown output result mode: %s.\n", optarg);
+                      break;
             case 'g': abpt->out_pog= optarg; break;
+
+            case 'a': abpt->cons_agrm = atoi(optarg); break;
+            case 'd': abpt->is_diploid = 1; break; 
+            case 'q': abpt->min_freq = atof(optarg); break;
 
             case 'h': return abpoa_usage();
             case 'v': printf("%s\n", VERSION); goto End; break;

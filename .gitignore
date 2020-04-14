@@ -46,6 +46,7 @@ example
 data/*
 *.dot
 *.png
+*.pdf
 
 #tags
 tags
@@ -54,6 +55,7 @@ cscope.*
 # python
 python/build/*
 python/dist/*
+python/example.png
 python/pyabpoa.c
 python/pyabPOA.egg-info/*
 
