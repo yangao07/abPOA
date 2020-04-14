@@ -59,7 +59,7 @@ typedef struct {
 typedef struct {
     int m; int *mat; // score matrix
     int match, mismatch, gap_open1, gap_open2, gap_ext1, gap_ext2; int inf_min;
-    int wb; float wf; // band width
+    int wb; float wf; // extra band width
     int zdrop, end_bonus; // from minimap2
     int simd_flag; // available SIMD instruction
     // alignment mode

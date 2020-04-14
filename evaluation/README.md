@@ -15,14 +15,14 @@ cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 make # make spoa library
 ```
-Build two wrap-up programs:
+Then, build two wrap-up programs:
 ```
 cd ../abPOA/evaluation
 gcc -O3 msa_abPOA.c -I ../include -L ../lib -labpoa -lz -o msa_abPOA
 g++ -O3 msa_spoa.cpp -std=c++11 -I ../../spoa/include/ -L ../../spoa/build/lib/ -lspoa -o msa_spoa
 ```
 
-To run the two programs:
+Run the two wrap-up programs:
 ```
 msa_abPOA seq_sets.fa -n depth -b 10 > cons.fa # enable adaptive banded DP
 msa_abPOA seq_sets.fa -n depth -b -1 > cons.fa # disable adaptvie banded DP

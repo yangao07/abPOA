@@ -1,6 +1,6 @@
 # abPOA: adaptive banded Partial Order Alignment
 [![Github All Releases](https://img.shields.io/github/downloads/yangao07/abPOA/total.svg?label=Download)](https://github.com/yangao07/abPOA/releases)
-<!-- [![BioConda Install](https://img.shields.io/conda/dn/bioconda/tidehunter.svg?style=flag&label=BioConda%20install)](https://anaconda.org/bioconda/abpoa) -->
+[![BioConda Install](https://img.shields.io/conda/dn/bioconda/tidehunter.svg?style=flag&label=BioConda%20install)](https://anaconda.org/bioconda/abpoa)
 [![Latest Release](https://img.shields.io/github/release/yangao07/abPOA.svg?label=Release)](https://github.com/yangao07/abPOA/releases/latest)
 [![Build Status](https://img.shields.io/travis/yangao07/abPOA/master.svg?label=Master)](https://travis-ci.org/yangao07/abPOA)
 [![License](https://img.shields.io/badge/License-GPL-black.svg)](https://github.com/yangao07/abPOA/blob/master/LICENSE)
@@ -26,16 +26,20 @@ make; ./bin/abPOA ./test_data/test_50x4.fa > cons.fa
 
 - [Introduction](#introduction)
 - [Installation](#install)
-  - [Installing abPOA via conda and pip](#conda)
+  - [Installing abPOA and pyabPOA via conda or pip](#conda)
   - [Building abPOA from source files](#build)
   - [Pre-built binary executable file for Linux/Unix](#binary)
-- [Getting started with toy example in `test_data`](#start)
+- [General usage](#usage)
+  - [Generate consensus sequence](#gen_cons)
+  - [Generate row-column multiple sequence alignment](#gen_msa)
+  - [Generate plot of alignment graph](#gen_plot)
 - [Commands and options](#cmd)
 - [Input](#input)
-  - [Adapter sequence](#adapter)
 - [Output](#output)
-  - [Tabular format](#tabular)
-  - [FASTA format](#fasta)
+  - [Consensus sequence](#cons)
+  - [Multiple sequence alignment](#msa)
+  - [Plot of alignment graph](#plot)
+- [For development](#dev)
 - [Contact](#contact)
 
 ## <a name="introduction"></a>Introduction
@@ -150,7 +154,7 @@ For example:
 >Consensus_sequence
 ACGTGTACACGTTGAC
 ```
-### <a name="msa"></a>Multiple sequence alignment
+### <a name="msa"></a>Row-column multiple sequence alignment
 abPOA outputs the row-column multiple sequence alignment of input sequences in PIR format with a FASTA header. For example:
 ```
 >Multiple_sequence_alignment
@@ -168,12 +172,14 @@ abPOA can generate a plot of the final partial order alignment graph with the he
 ![pog](https://github.com/yangao07/abPOA/blob/master/pog.png)
 
 ## <a name="dev"></a>For development
-abPOA is not only a standalone tool for MSA and consensus calling, it can also work as a programming library. [example.c](example.c) shows how to use the C APIs of abPOA to perform MSA and generate a consensus from a set of sequences.
+abPOA is not only a standalone tool for MSA and consensus calling, it can also work as a programming library. [example.c](example.c) shows how to use the C APIs of abPOA to perform MSA and generate a consensus from a set of sequences. Basically, the library file `libabpoa.a` and two header files [abpoa.h](include/abpoa.h) and [simd_instruction.h](include/simd_instruction.h) are needed to make abPOA work in your program.
 
-abPOA also provides Python bindings of all the C APIs. Refer to [python/README.md](python/README.md) for more details.
+abPOA also provides Python bindings of all the C APIs. Refer to [python/README.md](python) for more details.
 
 ## <a name="contact"></a>Contact
 Yan Gao yangao07@hit.edu.cn
+
+Yi Xing XINGYI@email.chop.edu
 
 Yadong Wang ydwang@hit.edu.cn
 
