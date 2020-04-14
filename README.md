@@ -37,7 +37,7 @@ make; ./bin/abPOA ./test_data/test_50x4.fa > cons.fa
 - [Input](#input)
 - [Output](#output)
   - [Consensus sequence](#cons)
-  - [Multiple sequence alignment](#msa)
+  - [Row-column multiple sequence alignment](#msa)
   - [Plot of alignment graph](#plot)
 - [For development](#dev)
 - [Contact](#contact)
@@ -91,7 +91,7 @@ tar -zxvf abPOA-v1.0.0_x64-linux.tar.gz
 abPOA seq.fa > cons.fa
 ```
 
-### <a name="gen_cons"></a>Generate MSA in PIR format
+### <a name="gen_cons"></a>Generate row-column multiple sequence alignment in PIR format
 
 ```
 abPOA seq.fa -r2 > cons.out
@@ -170,6 +170,9 @@ The `-` in the sequence stands for alignment gap.
 abPOA can generate a plot of the final partial order alignment graph with the help of `DOT` programs. For example:
 
 ![pog](https://github.com/yangao07/abPOA/blob/master/pog.png)
+
+The numbers inside the nodes are the node IDs. The numbers on the edges are the edge weights.
+`S` and `E` are virtual start and end nodes that have no sequence bases.
 
 ## <a name="dev"></a>For development
 abPOA is not only a standalone tool for MSA and consensus calling, it can also work as a programming library. [example.c](example.c) shows how to use the C APIs of abPOA to perform MSA and generate a consensus from a set of sequences. Basically, the library file `libabpoa.a` and two header files [abpoa.h](include/abpoa.h) and [simd_instruction.h](include/simd_instruction.h) are needed to make abPOA work in your program.
