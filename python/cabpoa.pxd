@@ -1,10 +1,10 @@
 from libc.stdint cimport int8_t, uint8_t, int32_t, int64_t, uint32_t, uint64_t
 from libc.stdio cimport FILE
 
-cdef extern from "../include/simd_instruction.h":
+cdef extern from "simd_instruction.h":
     int simd_check()
 
-cdef extern from "../include/abpoa.h":
+cdef extern from "abpoa.h":
     cdef int ABPOA_GLOBAL_MODE "ABPOA_GLOBAL_MODE"
     cdef int ABPOA_LOCAL_MODE "ABPOA_LOCAL_MODE"
     cdef int ABPOA_EXTEND_MODE "ABPOA_EXTEND_MODE"

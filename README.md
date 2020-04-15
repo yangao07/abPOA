@@ -16,17 +16,17 @@ tar -zxvf abPOA-v1.0.0.tar.gz && cd abPOA-v1.0.0
 Install via conda and run with test data:
 ```
 conda install -c bioconda abpoa
-abPOA ./test_data/seq.fa > cons.fa
+abpoa ./test_data/seq.fa > cons.fa
 ```
 Or, make from source and run with test data:
 ```
-make; ./bin/abPOA ./test_data/seq.fa > cons.fa
+make; ./bin/abpoa ./test_data/seq.fa > cons.fa
 ```
 ## Table of Contents
 
 - [Introduction](#introduction)
 - [Installation](#install)
-  - [Installing abPOA and pyabPOA via conda or pip](#conda)
+  - [Installing abPOA and pyabpoa via conda or pip](#conda)
   - [Building abPOA from source files](#build)
   - [Pre-built binary executable file for Linux/Unix](#binary)
 - [General usage](#usage)
@@ -53,12 +53,12 @@ It right now supports SSE2/SSE41/AVX2 vectorization and more advanced instructio
 
 ## <a name="install"></a>Installation
 
-### <a name="conda"></a>Installing abPOA and [pyabPOA](python/README.md) via conda or pip
+### <a name="conda"></a>Installing abPOA and [pyabpoa](python/README.md) via conda or pip
 On Linux/Unix and Mac OS, abPOA can be installed via
 ```
 conda install -c bioconda abpoa   # install abPOA program
-conda install -c bioconda pyabpoa # install pyabPOA module
-pip install pyabpoa               # install pyabPOA module
+conda install -c bioconda pyabpoa # install pyabpoa module
+pip install pyabpoa               # install pyabpoa module
 ```
 
 ### <a name="build"></a>Building abPOA from source files
@@ -88,26 +88,26 @@ tar -zxvf abPOA-v1.0.0_x64-linux.tar.gz
 ### <a name="gen_cons"></a>Generate consensus sequence
 
 ```
-abPOA seq.fa > cons.fa
+abpoa seq.fa > cons.fa
 ```
 
 ### <a name="gen_cons"></a>Generate row-column multiple sequence alignment in PIR format
 
 ```
-abPOA seq.fa -r2 > cons.out
+abpoa seq.fa -r2 > cons.out
 ```
 
 ### <a name="gen_plot"></a>Generate plot of alignment graph
 
 ```
-abPOA seq.fa -g poa.png > cons.fa
+abpoa seq.fa -g poa.png > cons.fa
 ```
 
 ## <a name="cmd"></a>Commands and options
 ```
-abPOA: adaptive banded Partial Order Alignment
+abpoa: adaptive banded Partial Order Alignment
 
-Usage: abPOA [option] <in.fa/fq> > cons.fa/msa.out
+Usage: abpoa [option] <in.fa/fq> > cons.fa/msa.out
 
 Options:
   Alignment:
@@ -142,20 +142,20 @@ Options:
 ```
 
 ## <a name="input"></a>Input
-abPOA works with FASTA, FASTQ, gzip'd FASTA(.fa.gz) and gzip'd FASTQ(.fq.gz) formats. The input file is expected to contains multiple reads which will be processed as a whole set. 
+abpoa works with FASTA, FASTQ, gzip'd FASTA(.fa.gz) and gzip'd FASTQ(.fq.gz) formats. The input file is expected to contains multiple reads which will be processed as a whole set. 
 
-abPOA also can take a list of file names as input with option `-l`, where each line is the path of one sequence file containing multiple sequences.
+abpoa also can take a list of file names as input with option `-l`, where each line is the path of one sequence file containing multiple sequences.
 
 ## <a name="output"></a>Output
 ### <a name="cons"></a>Consensus sequence 
-abPOA outputs consensus sequence in FASTA format with the name field as "Consensus_sequence".
+abpoa outputs consensus sequence in FASTA format with the name field as "Consensus_sequence".
 For example:
 ```
 >Consensus_sequence
 ACGTGTACACGTTGAC
 ```
 ### <a name="msa"></a>Row-column multiple sequence alignment
-abPOA outputs the row-column multiple sequence alignment of input sequences in PIR format with a FASTA header. For example:
+abpoa outputs the row-column multiple sequence alignment of input sequences in PIR format with a FASTA header. For example:
 ```
 >Multiple_sequence_alignment
 ACGTGTACA-GTTGAC

@@ -1,4 +1,4 @@
-import pyabPOA as pa
+import pyabpoa as pa
 
 #@parameters of msa_aligner:
 #   aln_mode='g' # g: global, l: local, e: extension

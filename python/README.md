@@ -1,20 +1,20 @@
-# pyabPOA: abPOA Python interface
+# pyabpoa: abPOA Python interface
 ## Introduction
-pyabPOA provides an easy-to-use interface to [abPOA](https://github.com/yangao07/abPOA).
+pyabpoa provides an easy-to-use interface to [abPOA](https://github.com/yangao07/abPOA).
 
 ## Installation
 
-### Install pyabPOA with conda or pip
+### Install pyabpoa with conda or pip
 
-pyabPOA can be installed with conda or pip:
+pyabpoa can be installed with conda or pip:
 
 ```
 conda install -c bioconda pyabpoa
-pip install pyabPOA
+pip install pyabpoa
 ```
 
-### Install pyabPOA from source
-Alternatively, you can install pyabPOA from source:
+### Install pyabpoa from source
+Alternatively, you can install pyabpoa from source:
 ```
 git clone https://github.com/yangao07/abPOA.git
 cd abPOA/python
@@ -29,7 +29,7 @@ python ./example.py
 
 ## Usage
 ```
-import pyabPOA as pa
+import pyabpoa as pa
 a = pa.msa_aligner()
 seqs=[
 'CCGAAGA',
@@ -48,11 +48,11 @@ res.print_msa() # print row-column multiple sequence alignment in PIR format
 
 ## APIs
 
-### Class pyabPOA.msa_aligner
+### Class pyabpoa.msa_aligner
 ```
-pyabPOA.msa_aligner(aln_mode='g', ...)
+pyabpoa.msa_aligner(aln_mode='g', ...)
 ```
-This constructs a multiple sequence alignment handler of pyabPOA, it accepts the following arguments:
+This constructs a multiple sequence alignment handler of pyabpoa, it accepts the following arguments:
 * **aln_mode**: alignment mode. 'g': global, 'l': local, 'e': extension; default: 'g'
 * **match**: match score; default: 2
 * **gap_open1**: first gap opening penalty; default: 4
@@ -65,18 +65,18 @@ This constructs a multiple sequence alignment handler of pyabPOA, it accepts the
 * **min_freq**: minimum frequency of each consensus to output for diploid datal default: 0.3
 
 ```
-pyabPOA.msa_aligner.msa(seqs, out_cons, out_msa, out_pog=None)
+pyabpoa.msa_aligner.msa(seqs, out_cons, out_msa, out_pog=None)
 ```
 This method performs mutliple sequence alignment and generates
 * **consensus sequence** if `out_cons` is set as `True`
 * **row-column multiple sequence alignment in PIR format** if `out_msa` is set as `True`
 * **plot of alignment graph** if `out_pog` is set as a file name with suffix as `.png` or `.pdf`
 
-### Class pyabPOA.msa_result
+### Class pyabpoa.msa_result
 ```
-pyabPOA.msa_result(seq_n, cons_n, cons_len, ...)
+pyabpoa.msa_result(seq_n, cons_n, cons_len, ...)
 ```
-This class describes the information of the generated consensus sequence and row-column multiple sequence alignment. The returned result of `pyabPOA.msa_aligner.msa()` is an object of this class and it has the following properties:
+This class describes the information of the generated consensus sequence and row-column multiple sequence alignment. The returned result of `pyabpoa.msa_aligner.msa()` is an object of this class and it has the following properties:
 * **seq_n**: number of input sequences
 * **cons_n**: number of generated consensus sequences
 * **cons_len**: an array of consensus sequence length
@@ -84,4 +84,4 @@ This class describes the information of the generated consensus sequence and row
 * **msa_len**: size of each row in the row-column multiple sequence alignment
 * **msa_seq**: an array containing `seq_n` rows of the row-column multiple sequence alignment
 
-`pyabPOA.msa_result()` also has a function of `print_msa`. It prints the row-column multiple sequence alignment.
+`pyabpoa.msa_result()` also has a function of `print_msa`. It prints the row-column multiple sequence alignment.

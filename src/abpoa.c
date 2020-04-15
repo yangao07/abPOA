@@ -11,7 +11,7 @@
 
 KSEQ_INIT(gzFile, gzread)
 
-char PROG[20] = "abPOA";
+char PROG[20] = "abpoa";
 #define _ba BOLD UNDERLINE "a" NONE
 #define _bb BOLD UNDERLINE "b" NONE
 #define _bP BOLD UNDERLINE "P" NONE

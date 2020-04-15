@@ -1,0 +1,12 @@
+include src/abpoa.h
+include src/abpoa_align.h
+include src/abpoa_graph.h
+include src/kdq.h
+include src/kseq.h
+include src/simd_abpoa_align.h
+include src/simd_instruction.h
+include src/utils.h
+include python/cabpoa.pxd
+include python/pyabpoa.c
+include python/pyabpoa.pyx
+include python/README.md

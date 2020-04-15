@@ -53,14 +53,16 @@ tags
 cscope.*
 
 # python
+dist/*
+pyabpoa.egg-info/*
 python/build/*
 python/dist/*
 python/example.png
 python/pyabpoa.c
-python/pyabPOA.egg-info/*
+python/pyabpoa.egg-info/*
+python/src/*
 
 # eval file
-msa_abPOA*
-msa_abPOA.c
-s2g_abPOA*
-s2g_abPOA.c
+evaluation/msa_abPOA
+evaluation/msa_spoa
+

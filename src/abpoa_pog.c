@@ -30,7 +30,7 @@
 // base (index, rank, node_id)
 // A (1, 1, 2) A: base 1: index 1: rank 2: node_id
 int abpoa_dump_pog(abpoa_t *ab, abpoa_para_t *abpt) {
-    char PROG[20] = "abPOA"; int font_size=24;
+    char PROG[20] = "abpoa"; int font_size=24;
 
     abpoa_graph_t *graph = ab->abg;
     if (graph->is_topological_sorted == 0) abpoa_topological_sort(ab, abpt);

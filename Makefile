@@ -41,22 +41,27 @@ SIMD_FLAG     = -march=native
 
 ifneq ($(sse2),)
 	SIMD_FLAG=$(FLAG_SSE2)
+	py_SIMD_FLAG = SSE2=1
 else ifneq ($(sse41),)
 	SIMD_FLAG=$(FLAG_SSE41)
+	py_SIMD_FLAG = SSE41=1
 else ifneq ($(avx2),)
 	SIMD_FLAG=$(FLAG_AVX2)
+	py_SIMD_FLAG = AVX2=1
 else ifneq ($(avx512f),)
 	SIMD_FLAG=$(FLAG_AVX512F)
+	py_SIMD_FLAG = AVX512f=1
 else ifneq ($(avx512bw),)
 	SIMD_FLAG=$(FLAG_AVX512BW)
+	py_SIMD_FLAG = AVX512BW=1
 endif
 
 .c.o:
 		$(CC) -c $(CFLAGS) $< -o $@
 
-BIN      = $(BIN_DIR)/abPOA
+BIN      = $(BIN_DIR)/abpoa
 ifneq ($(gdb),)
-	BIN  = $(BIN_DIR)/gdb_abPOA
+	BIN  = $(BIN_DIR)/gdb_abpoa
 endif
 ABPOALIB = $(LIB_DIR)/libabpoa.a
 # TODO add example
@@ -64,7 +69,7 @@ EXAMPLE  = example
 
 
 all:       $(BIN) 
-abPOA:     $(BIN)
+abpoa:     $(BIN)
 libabpoa:  $(ABPOALIB)
 example:   $(EXAMPLE)
 
@@ -89,5 +94,16 @@ $(SRC_DIR)/simd_check.o:$(SRC_DIR)/simd_check.c $(SRC_DIR)/simd_instruction.h
 $(SRC_DIR)/simd_abpoa_align.o:$(SRC_DIR)/simd_abpoa_align.c $(SRC_DIR)/abpoa_graph.h $(SRC_DIR)/abpoa_align.h $(SRC_DIR)/simd_instruction.h $(SRC_DIR)/utils.h
 	$(CC) -c $(CFLAGS) $(SIMD_FLAG) $< -o $@
 
+install_py: python/cabpoa.pxd python/pyabpoa.pyx python/README.md
+	${py_SIMD_FLAG} python setup.py install
+	
+sdist: install_py
+	${py_SIMD_FLAG} python setup.py sdist #bdist_wheel
+
+publish_pypi: clean_py sdist
+	twine upload dist/*
+
 clean:
 	rm -f $(SRC_DIR)/*.[oa] $(LIB_DIR)/*.[oa] $(BIN)
+clean_py:
+	rm -rf build/ dist/ pyabpoa.egg-info/ python/pyabpoa.c
