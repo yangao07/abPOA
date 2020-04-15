@@ -6,7 +6,7 @@ pyabpoa provides an easy-to-use interface to [abPOA](https://github.com/yangao07
 
 ### Install pyabpoa with pip
 
-pyabpoa can be installed pip:
+pyabpoa can be installed with pip:
 
 ```
 pip install pyabpoa

@@ -26,7 +26,7 @@ make; ./bin/abpoa ./test_data/seq.fa > cons.fa
 
 - [Introduction](#introduction)
 - [Installation](#install)
-  - [Installing abPOA and pyabpoa via conda or pip](#conda)
+  - [Installing abPOA](#conda)
   - [Building abPOA from source files](#build)
   - [Pre-built binary executable file for Linux/Unix](#binary)
 - [General usage](#usage)
@@ -53,12 +53,10 @@ It right now supports SSE2/SSE41/AVX2 vectorization and more advanced instructio
 
 ## <a name="install"></a>Installation
 
-### <a name="conda"></a>Installing abPOA and [pyabpoa](python/README.md) via conda or pip
+### <a name="conda"></a>Installing abPOA via conda
 On Linux/Unix and Mac OS, abPOA can be installed via
 ```
 conda install -c bioconda abpoa   # install abPOA program
-conda install -c bioconda pyabpoa # install pyabpoa module
-pip install pyabpoa               # install pyabpoa module
 ```
 
 ### <a name="build"></a>Building abPOA from source files
@@ -177,7 +175,7 @@ The numbers inside the nodes are the node IDs. The numbers on the edges are the 
 ## <a name="dev"></a>For development
 abPOA is not only a standalone tool for MSA and consensus calling, it can also work as a programming library. [example.c](example.c) shows how to use the C APIs of abPOA to perform MSA and generate a consensus from a set of sequences. Basically, the library file `libabpoa.a` and two header files [abpoa.h](include/abpoa.h) and [simd_instruction.h](include/simd_instruction.h) are needed to make abPOA work in your program.
 
-abPOA also provides Python bindings of all the C APIs. Refer to [python/README.md](python) for more details.
+abPOA also provides Python bindings of all the C APIs. Refer to [python/README.md](python/README.md) for more details.
 
 ## <a name="contact"></a>Contact
 Yan Gao yangao07@hit.edu.cn
