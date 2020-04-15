@@ -17,14 +17,14 @@ pip install pyabpoa
 Alternatively, you can install pyabpoa from source:
 ```
 git clone https://github.com/yangao07/abPOA.git
-cd abPOA/python
-make install 
+cd abPOA
+make install_py
 ```
 
 ### Getting started
 After installation, you can run the toy example script to test it:
 ```
-python ./example.py
+python ./python/example.py
 ```
 
 ## Usage
