@@ -142,20 +142,20 @@ Options:
 ```
 
 ## <a name="input"></a>Input
-abpoa works with FASTA, FASTQ, gzip'd FASTA(.fa.gz) and gzip'd FASTQ(.fq.gz) formats. The input file is expected to contains multiple reads which will be processed as a whole set. 
+abPOA works with FASTA, FASTQ, gzip'd FASTA(.fa.gz) and gzip'd FASTQ(.fq.gz) formats. The input file is expected to contains multiple reads which will be processed as a whole set. 
 
-abpoa also can take a list of file names as input with option `-l`, where each line is the path of one sequence file containing multiple sequences.
+abPOA also can take a list of file names as input with option `-l`, where each line is the path of one sequence file containing multiple sequences.
 
 ## <a name="output"></a>Output
 ### <a name="cons"></a>Consensus sequence 
-abpoa outputs consensus sequence in FASTA format with the name field as "Consensus_sequence".
+abPOA outputs consensus sequence in FASTA format with the name field as "Consensus_sequence".
 For example:
 ```
 >Consensus_sequence
 ACGTGTACACGTTGAC
 ```
 ### <a name="msa"></a>Row-column multiple sequence alignment
-abpoa outputs the row-column multiple sequence alignment of input sequences in PIR format with a FASTA header. For example:
+abPOA outputs the row-column multiple sequence alignment of input sequences in PIR format with a FASTA header. For example:
 ```
 >Multiple_sequence_alignment
 ACGTGTACA-GTTGAC
