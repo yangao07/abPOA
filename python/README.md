@@ -4,12 +4,11 @@ pyabpoa provides an easy-to-use interface to [abPOA](https://github.com/yangao07
 
 ## Installation
 
-### Install pyabpoa with conda or pip
+### Install pyabpoa with pip
 
-pyabpoa can be installed with conda or pip:
+pyabpoa can be installed pip:
 
 ```
-conda install -c bioconda pyabpoa
 pip install pyabpoa
 ```
 
