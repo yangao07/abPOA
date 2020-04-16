@@ -36,7 +36,7 @@ else:
 src_dir='src/'
 inc_dir='src/'
 
-src=[module_src, src_dir+'abpoa_align.c', src_dir+'abpoa_graph.c', src_dir+'simd_abpoa_align.c', src_dir+'utils.c', src_dir+'simd_check.c', src_dir+'abpoa_pog.c']
+src=[module_src, src_dir+'abpoa_align.c', src_dir+'abpoa_graph.c', src_dir+'simd_abpoa_align.c', src_dir+'utils.c', src_dir+'simd_check.c', src_dir+'abpoa_plot.c']
 
 long_description = open('python/README.md').read()
 

@@ -69,7 +69,7 @@ int abpoa_usage(void)
     err_printf("    -b --extra-b  INT       first part of extra band [%d]\n", ABPOA_EXTRA_B);
     err_printf("                            set b as < 0 to disable adaptive banded DP\n");
     err_printf("    -f --extra-f  FLOAT     second part of extra band: f * L, L is the length of input sequence [%.2f]\n", ABPOA_EXTRA_F);
-    err_printf("                            width of extra bind is b + f * L\n");
+    err_printf("                            width of extra band is b + f * L\n");
     // err_printf("    -z --zdrop    INT       Z-drop score in extension alignment [-1]\n");
     // err_printf("                            set as <= 0 to disable Z-drop extension\n");
     // err_printf("    -e --bonus    INT       end bonus score in extension alignment [-1]\n");
@@ -83,7 +83,7 @@ int abpoa_usage(void)
     err_printf("                            - %d: consensus (FASTA format)\n", ABPOA_OUT_CONS);
     err_printf("                            - %d: MSA (PIR format)\n", ABPOA_OUT_MSA);
     err_printf("                            - %d: both 0 & 1\n", ABPOA_OUT_BOTH);
-    err_printf("    -g --out-pog  FILE      dump partial order graph to FILE (.pdf/.png) [Null]\n\n");
+    err_printf("    -g --out-pog  FILE      dump final alignment graph to FILE (.pdf/.png) [Null]\n\n");
     err_printf("    -a --cons-alg INT       algorithm for consensus calling [0]\n");
     // err_printf("                            %d: heaviest bundling, %d: heaviest column\n", ABPOA_HB, ABPOA_HC);
     err_printf("                            - %d: heaviest bundling\n", ABPOA_HB);

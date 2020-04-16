@@ -114,7 +114,7 @@ Options:
                               0: global, 1: local, 2: extension
     -M --match    INT       match score [2]
     -X --mismatch INT       mismatch penalty [4]
-    -O --gap-open INT(,INT) gap open penalty (O1,O2) [4,24]
+    -O --gap-open INT(,INT) gap opening penalty (O1,O2) [4,24]
     -E --gap-ext  INT(,INT) gap extension penalty (E1,E2) [2,1]
                             abPOA provides 3 gap penalty modes, penalty of a g-long gap:
                             - convex (default): min{O1+g*E1, O2+g*E2}
@@ -124,7 +124,7 @@ Options:
     -b --extra-b  INT       first part of extra band [10]
                             set b as < 0 to disable adaptive banded DP
     -f --extra-f  FLOAT     second part of extra band: f * L, L is the length of input sequence [0.01]
-                            width of extra bind is b + f * L
+                            width of extra band is b + f * L
   Input/Output:
     -l --in-list            input file is a list of sequence file [False]
                             each line is one sequence file
@@ -133,7 +133,7 @@ Options:
                             - 0: consensus (FASTA format)
                             - 1: MSA (PIR format)
                             - 2: both 0 & 1
-    -g --out-pog  FILE      dump partial order graph to FILE (.pdf/.png) [Null]
+    -g --out-pog  FILE      dump final alignment graph to FILE (.pdf/.png) [Null]
 
     -h --help               print this help usage information
     -v --version            show version number
