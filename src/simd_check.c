@@ -222,12 +222,13 @@ int simd_check(void) {
 
 #ifdef __CHECK_SIMD_MAIN__
 int main(void) {
-    char simd_label[5][20] = {"No SIMD", "SSE4.1 (128 bits)", "AVX2 (256 bits)", "AVX512F (512 bits)", "AVX512BW (512 bits)"};
+    char simd_label[6][20] = {"No SIMD", "SSE2 (128 bits)", "SSE4.1 (128 bits)", "AVX2 (256 bits)", "AVX512F (512 bits)", "AVX512BW (512 bits)"};
     int simd_flag = simd_check(), t=0;
-    if (simd_flag & SIMD_AVX512BW) printf("__AVX512BW__\n"), t = 4;
-    else if (simd_flag & SIMD_AVX512F) printf("__AVX512F__\n"), t = 3;
-    else if (simd_flag & SIMD_AVX2) printf("__AVX2__\n"), t = 2;
-    else if (simd_flag & SIMD_SSE41) printf("__SSE4_1__\n"), t = 1;
+    if (simd_flag & SIMD_AVX512BW) printf("__AVX512BW__\n"), t = 5;
+    else if (simd_flag & SIMD_AVX512F) printf("__AVX512F__\n"), t = 4;
+    else if (simd_flag & SIMD_AVX2) printf("__AVX2__\n"), t = 3;
+    else if (simd_flag & SIMD_SSE41) printf("__SSE4_1__\n"), t = 2;
+    else if (simd_flag & SIMD_SSE2) printf("__SSE2__\n"), t = 1;
     else printf("NO SIMD\n"), t = 0;
 
     char msg[100], i;

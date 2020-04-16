@@ -28,6 +28,10 @@ else:
         simd_flag='-msse2'
     elif os.getenv('AVX2', False):
         simd_flag='-mavx2'
+    elif os.getenv('AVX512F', False):
+        simd_flag='-mavx512f'
+    elif os.getenv('AVX512BW', False):
+        simd_flag='-mavx512bw'
 
 src_dir='src/'
 inc_dir='src/'
@@ -43,7 +47,7 @@ setup(
     long_description = long_description,
     long_description_content_type="text/markdown",
     version = "1.0.0a1",
-    url = "https://github.com/yangao07/abpoa",
+    url = "https://github.com/yangao07/abPOA",
     author = "Yan Gao",
     author_email = "yangao07@hit.edu.cn",
     license = "GLP",

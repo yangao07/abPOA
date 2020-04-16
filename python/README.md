@@ -20,13 +20,8 @@ cd abPOA
 make install_py
 ```
 
-### Getting started
-After installation, you can run the toy example script to test it:
-```
-python ./python/example.py
-```
-
-## Usage
+## Examples
+The following code illustrates how to use pyabpoa.
 ```
 import pyabpoa as pa
 a = pa.msa_aligner()
@@ -44,6 +39,11 @@ for seq in res.cons_seq:
 
 res.print_msa() # print row-column multiple sequence alignment in PIR format
 ```
+You can also try the example script:
+```
+python ./python/example.py
+```
+
 
 ## APIs
 

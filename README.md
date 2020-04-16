@@ -1,8 +1,8 @@
 # abPOA: adaptive banded Partial Order Alignment
 [![Github All Releases](https://img.shields.io/github/downloads/yangao07/abPOA/total.svg?label=Download)](https://github.com/yangao07/abPOA/releases)
+[![Latest Release](https://img.shields.io/github/release/yangao07/abPOA.svg?label=Release)](https://github.com/yangao07/abPOA/releases/latest)
 [![BioConda Install](https://img.shields.io/conda/dn/bioconda/abpoa.svg?style=flag&label=BioConda%20install)](https://anaconda.org/bioconda/abpoa)
 [![PyPI](https://img.shields.io/pypi/v/pyabpoa.svg?style=flat)](https://pypi.python.org/pypi/pyabpoa)
-[![Latest Release](https://img.shields.io/github/release/yangao07/abPOA.svg?label=Release)](https://github.com/yangao07/abPOA/releases/latest)
 [![Build Status](https://img.shields.io/travis/yangao07/abPOA/master.svg?label=Master)](https://travis-ci.org/yangao07/abPOA)
 [![License](https://img.shields.io/badge/License-GPL-black.svg)](https://github.com/yangao07/abPOA/blob/master/LICENSE)
 [![GitHub Issues](https://img.shields.io/github/issues/yangao07/abPOA.svg?label=Issues)](https://github.com/yangao07/abPOA/issues)
@@ -49,7 +49,7 @@ abPOA can perform multiple sequence alignment (MSA) of a set of sequence and gen
 
 The adaptive banded DP and the SIMD vecorization significantly accelerate the time-consuming POA procedure. 
 abPOA supports flexible scoring schemes that allow linear, affine and convex gap penalties. 
-It right now supports SSE2/SSE41/AVX2 vectorization and more advanced instructions will be supported in the future.
+It right now supports SSE2/SSE4.1/AVX2/AVX512F/AVX512BW vectorization and more advanced instructions will be supported in the future.
 
 
 ## <a name="install"></a>Installation
@@ -143,7 +143,7 @@ Options:
 ## <a name="input"></a>Input
 abPOA works with FASTA, FASTQ, gzip'd FASTA(.fa.gz) and gzip'd FASTQ(.fq.gz) formats. The input file is expected to contains multiple reads which will be processed as a whole set. 
 
-abPOA also can take a list of file names as input with option `-l`, where each line is the path of one sequence file containing multiple sequences.
+abPOA also can take a list of file names as the input file with option `-l`, where each line is the path to one file containing multiple sequences.
 
 ## <a name="output"></a>Output
 ### <a name="cons"></a>Consensus sequence 

@@ -215,7 +215,7 @@ static inline SIMDi SIMDShiftRight(SIMDi x, int n) { // x=a|b|c|d
 
 // start of AVX512F
 
-// XXX AVX512F has no  following instructions (AVX512F HAS), so AVX512F is not working for 8/16 bits tasks
+// XXX AVX512F has no  following instructions (AVX512BW HAS), so AVX512F is not working for 8/16 bits tasks
 // addi8/16, subi8/16, alignri8, bslli_epi128, bslrli_epi128,
 // comeqi8/16, cmpneqi8/16, cmpgti8/16, cmpgei8/16, cmplti8/16, cmplei8
 // maxi8/16, blendi8/i16, slli_epi16,srli_epi16 
