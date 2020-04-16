@@ -42,7 +42,7 @@ setup(
     description = "pyabpoa: SIMD-based partial order alignment using adaptive band",
     long_description = long_description,
     long_description_content_type="text/markdown",
-    version = "1.0.0-a",
+    version = "1.0.0a1",
     url = "https://github.com/yangao07/abpoa",
     author = "Yan Gao",
     author_email = "yangao07@hit.edu.cn",
