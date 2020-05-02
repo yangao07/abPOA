@@ -111,7 +111,7 @@ abpoa_graph_t *abpoa_init_graph(void) {
     graph->cons_l = graph->cons_m = 0; graph->cons_seq = NULL;
     graph->is_topological_sorted = graph->is_called_cons = 0;
     graph->node_id_to_index = NULL; graph->index_to_node_id = NULL; graph->node_id_to_msa_rank = NULL;
-    graph->node_id_to_max_pos_left = NULL; graph->node_id_to_max_pos_right = NULL; graph->node_id_to_min_remain = NULL; graph->node_id_to_max_remain = NULL;
+    graph->node_id_to_max_pos_left = NULL; graph->node_id_to_max_pos_right = NULL; graph->node_id_to_max_remain = NULL;
     return graph;
 }
 
@@ -126,7 +126,6 @@ void abpoa_free_graph(abpoa_graph_t *graph, abpoa_para_t *abpt) {
 
         if (graph->node_id_to_max_pos_left) free(graph->node_id_to_max_pos_left);
         if (graph->node_id_to_max_pos_right) free(graph->node_id_to_max_pos_right);
-        if (graph->node_id_to_min_remain) free(graph->node_id_to_min_remain);
         if (graph->node_id_to_max_remain) free(graph->node_id_to_max_remain);
     }
     free(graph);
@@ -192,39 +191,48 @@ next_out_node:;
 }
 
 void abpoa_BFS_set_node_remain(abpoa_graph_t *graph, int src_id, int sink_id) {
-    int *id, cur_id, i, in_id;
+    int *id, cur_id, i, out_id, in_id;
 
     int *out_degree = (int*)_err_malloc(graph->node_n * sizeof(int));
     for (i = 0; i < graph->node_n; ++i) {
         out_degree[i] = graph->node[i].out_edge_n;
         graph->node_id_to_max_remain[i] = 0;
-        graph->node_id_to_min_remain[i] = graph->node_n;
     }
 
     kdq_int_t *q = kdq_init_int();
 
     // Breadth-First-Search
     kdq_push_int(q, sink_id); // node[q.id].in_degree equals 0
-    graph->node_id_to_max_remain[sink_id] = graph->node_id_to_min_remain[sink_id] = -1; // XXX not 0
+    graph->node_id_to_max_remain[sink_id] = -1; // XXX not 0
     while ((id = kdq_shift_int(q)) != 0) {
         cur_id = *id;
 
+        // all out_id of cur_id have beed visited
+        // max weight out_id
+        if (cur_id != sink_id) {
+            int max_w=-1, max_id=-1;
+            for (i = 0; i < graph->node[cur_id].out_edge_n; ++i) {
+                out_id = graph->node[cur_id].out_id[i];
+                if (graph->node[cur_id].out_weight[i] > max_w) {
+                    max_w = graph->node[cur_id].out_weight[i];
+                    max_id = out_id;
+                }
+            }
+            graph->node_id_to_max_remain[cur_id] = graph->node_id_to_max_remain[max_id] + 1;
+            // fprintf(stderr, "%d -> %d\n", graph->node_id_to_index[cur_id], graph->node_id_to_max_remain[cur_id]);
+        }
         if (cur_id == src_id) {
             kdq_destroy_int(q); free(out_degree);
             return;
         }
         for (i = 0; i < graph->node[cur_id].in_edge_n; ++i) {
             in_id = graph->node[cur_id].in_id[i];
-            int max_remain = graph->node_id_to_max_remain[cur_id] + 1, min_remain = graph->node_id_to_min_remain[cur_id] + 1;
-
-            if (max_remain > graph->node_id_to_max_remain[in_id]) graph->node_id_to_max_remain[in_id] = max_remain;
-            if (min_remain < graph->node_id_to_min_remain[in_id]) graph->node_id_to_min_remain[in_id] = min_remain;
-
             if (--out_degree[in_id] == 0) kdq_push_int(q, in_id);
         }
     }
     err_fatal_simple("Failed to set node remain.");
 }
+
 // 1. index_to_node_id
 // 2. node_id_to_index
 // 3. node_id_to_rank
@@ -245,10 +253,8 @@ void abpoa_topological_sort(abpoa_t *ab, abpoa_para_t *abpt) {
         if (abpt->wb >= 0) {
             graph->node_id_to_max_pos_left = (int*)_err_realloc(graph->node_id_to_max_pos_left, graph->index_rank_m * sizeof(int));
             graph->node_id_to_max_pos_right = (int*)_err_realloc(graph->node_id_to_max_pos_right, graph->index_rank_m * sizeof(int));
-            graph->node_id_to_min_remain = (int*)_err_realloc(graph->node_id_to_min_remain, graph->index_rank_m * sizeof(int));
             graph->node_id_to_max_remain = (int*)_err_realloc(graph->node_id_to_max_remain, graph->index_rank_m * sizeof(int));
         } else if (abpt->zdrop > 0) {
-            graph->node_id_to_min_remain = (int*)_err_realloc(graph->node_id_to_min_remain, graph->index_rank_m * sizeof(int));
             graph->node_id_to_max_remain = (int*)_err_realloc(graph->node_id_to_max_remain, graph->index_rank_m * sizeof(int));
         }
     }
@@ -997,7 +1003,7 @@ int abpoa_add_graph_alignment(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *seq, int
 
 // reset allocated memery everytime init the graph
 // * node
-// * index_to_node_id/node_id_to_index/node_id_to_max/min_remain, max_pos_left/right
+// * index_to_node_id/node_id_to_index/node_id_to_max_remain, max_pos_left/right
 void abpoa_reset_graph(abpoa_t *ab, abpoa_para_t *abpt, int qlen) {
     int i, k, node_m;
     ab->abg->cons_l = 0; ab->abg->is_topological_sorted = ab->abg->is_called_cons = 0;
@@ -1022,10 +1028,8 @@ void abpoa_reset_graph(abpoa_t *ab, abpoa_para_t *abpt, int qlen) {
         if (abpt->wb >= 0) {
             ab->abg->node_id_to_max_pos_left = (int*)_err_realloc(ab->abg->node_id_to_max_pos_left, node_m * sizeof(int));
             ab->abg->node_id_to_max_pos_right = (int*)_err_realloc(ab->abg->node_id_to_max_pos_right, node_m * sizeof(int));
-            ab->abg->node_id_to_min_remain = (int*)_err_realloc(ab->abg->node_id_to_min_remain, node_m * sizeof(int));
             ab->abg->node_id_to_max_remain = (int*)_err_realloc(ab->abg->node_id_to_max_remain, node_m * sizeof(int));
         } else if (abpt->zdrop > 0) {
-            ab->abg->node_id_to_min_remain = (int*)_err_realloc(ab->abg->node_id_to_min_remain, node_m * sizeof(int));
             ab->abg->node_id_to_max_remain = (int*)_err_realloc(ab->abg->node_id_to_max_remain, node_m * sizeof(int));
         }
     }

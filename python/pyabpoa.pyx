@@ -100,6 +100,7 @@ cdef class msa_aligner:
         self.nt4_seq_dict[1] = 'C'
         self.nt4_seq_dict[2] = 'G'
         self.nt4_seq_dict[3] = 'T'
+        self.nt4_seq_dict[4] = 'N'
 
     def __dealloc__(self):
         free(self.abpt.mat)
@@ -137,6 +138,7 @@ cdef class msa_aligner:
 
         abpoa_reset_graph(self.ab, &self.abpt, len(seqs[0]))
         for read_i, seq in enumerate(seqs):
+            print(read_i)
             seq_l = len(seq)
             bseq = <uint8_t*>malloc(seq_l * cython.sizeof(uint8_t))
             for i in range(seq_l):

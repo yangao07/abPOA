@@ -44,11 +44,6 @@ static inline int abpoa_graph_node_id_to_max_remain(abpoa_graph_t *graph, int no
     return graph->node_id_to_max_remain[node_id];
 }
 
-static inline int abpoa_graph_node_id_to_min_remain(abpoa_graph_t *graph, int node_id) {
-    if (node_id < 0 || node_id >= graph->node_n) err_fatal(__func__, "Wrong node id: %d\n", node_id);
-    return graph->node_id_to_min_remain[node_id];
-}
-
 static inline int abpoa_graph_index_to_node_id(abpoa_graph_t *graph, int index_i) {
     if (index_i < 0 || index_i >= graph->node_n) err_fatal(__func__, "Wrong index: %d\n", index_i);
     return graph->index_to_node_id[index_i];

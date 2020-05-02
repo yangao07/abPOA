@@ -1,5 +1,5 @@
 /* To compile: 
- * gcc -O3 racon_abPOA.c -I ../include -L ../lib -labpoa -lz -o racon_abPOA 
+   gcc -O3 racon_abPOA.c -I ../include -L ../lib -labpoa -lz -o racon_abPOA 
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -166,7 +166,7 @@ int main (int argc, char * const argv[]) {
         }
     }
     abpoa_free(ab, abpt);
-    fprintf(stderr, "%.2f\t", runtime);
+    fprintf(stderr, "%.2f ", runtime);
 
     free(seq_lens); free(bseqs);
     abpoa_free_para(abpt); fclose(fp_seq);

@@ -84,7 +84,7 @@ typedef struct {
 typedef struct {
     abpoa_node_t *node; int node_n, node_m, index_rank_m; 
     int *index_to_node_id;
-    int *node_id_to_index, *node_id_to_max_pos_left, *node_id_to_max_pos_right, *node_id_to_min_remain, *node_id_to_max_remain, *node_id_to_msa_rank;
+    int *node_id_to_index, *node_id_to_max_pos_left, *node_id_to_max_pos_right, *node_id_to_max_remain, *node_id_to_msa_rank;
     int cons_l, cons_m; uint8_t *cons_seq;
     uint8_t is_topological_sorted:1, is_called_cons:1, is_set_msa_rank:1;
 } abpoa_graph_t;

@@ -1,5 +1,5 @@
 /* To compile: 
- * gcc -O3 msa_abPOA.c -I ./include -L ./lib -labpoa -lz -o msa_abPOA 
+   gcc -O3 msa_abPOA.c -I ../include -L ../lib -labpoa -lz -o msa_abPOA 
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -125,7 +125,7 @@ int main (int argc, char * const argv[]) {
     struct timeval start_time, end_time;
     double runtime = 0;
 
-    int i;
+    int i,j = 0;
     abpoa_t *ab = abpoa_init();
     while(1) {
         int seq_i = 0;
@@ -156,7 +156,7 @@ int main (int argc, char * const argv[]) {
         if(feof(fp_seq)) break;
     }
     abpoa_free(ab, abpt);
-    fprintf(stderr, "%.2f\t", runtime);
+    fprintf(stderr, "%.2f ", runtime);
 
     free(seq_lens); free(bseqs);
     abpoa_free_para(abpt); fclose(fp_seq);

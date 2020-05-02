@@ -80,7 +80,6 @@ cdef extern from "abpoa.h":
         int *node_id_to_index 
         int *node_id_to_min_rank
         int *node_id_to_max_rank
-        int *node_id_to_min_remain
         int *node_id_to_max_remain
         int *node_id_to_msa_rank
         int cons_l, cons_m

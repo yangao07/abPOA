@@ -36,11 +36,11 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
 #endif
 
 #define print_simd(s, str, score_t) {                                   \
-    int _i; score_t *_a = (score_t*)s;                                  \
-    printf("%s\t", str);                                                \
+    int _i; score_t *_a = (score_t*)(s);                                \
+    fprintf(stderr, "%s\t", str);                                       \
     for (_i = 0; _i < SIMDTotalBytes / (int)sizeof(score_t); ++_i) {    \
-        printf("%d\t", _a[_i]);                                         \
-    } printf("\n");                                                     \
+        fprintf(stderr, "%d\t", _a[_i]);                                \
+    } fprintf(stderr, "\n");                                            \
 }
 
 #define simd_abpoa_print_ag_matrix(score_t) {                   \
@@ -54,13 +54,13 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
     }	                                                        \
 }
 
-#define debug_simd_abpoa_print_cg_matrix_row(str, score_t, index_i) {                           \
-    score_t *_dp_h = (score_t*)dp_h, *_dp_e1 = (score_t*)dp_e1;                                 \
-    score_t *_dp_e2 = (score_t*)dp_e2, *_dp_f1 = (score_t*)dp_f1, *_dp_f2 = (score_t*)dp_f2;    \
-    printf("%s\tindex: %d\t", str, index_i);	                                                \
-    for (i = dp_beg[index_i]; i <= (dp_end[index_i]/16+1)*16-1; ++i) {	                        \
-        printf("%d:(%d,%d,%d,%d,%d)\t", i, _dp_h[i], _dp_e1[i],_dp_e2[i], _dp_f1[i],_dp_f2[i]); \
-    } printf("\n");	                                                                            \
+#define debug_simd_abpoa_print_cg_matrix_row(str, score_t, index_i) {                                   \
+    score_t *_dp_h = (score_t*)dp_h, *_dp_e1 = (score_t*)dp_e1;                                         \
+    score_t *_dp_e2 = (score_t*)dp_e2, *_dp_f1 = (score_t*)dp_f1, *_dp_f2 = (score_t*)dp_f2;            \
+    fprintf(stderr, "%s\tindex: %d\t", str, index_i);	                                                \
+    for (i = dp_beg[index_i]; i <= (dp_end[index_i]/16+1)*16-1; ++i) {	                                \
+        fprintf(stderr, "%d:(%d,%d,%d,%d,%d)\t", i, _dp_h[i], _dp_e1[i],_dp_e2[i], _dp_f1[i],_dp_f2[i]);\
+    } fprintf(stderr, "\n");	                                                                        \
 }
 
 #define simd_abpoa_print_lg_matrix_row(id, score_t, index_i) {          \
@@ -234,16 +234,18 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
             if (cur_op & ABPOA_M_OP) {                                                                      \
                 if (_dp_h[j] == _dp_f1[j]) {                                                                \
                     if (_dp_h[j-1] - gap_oe1 == _dp_f1[j]) cur_op = ABPOA_M_OP, hit = 1;                    \
-                    else cur_op = ABPOA_F1_OP, hit = 1;                                                     \
+                    else if (_dp_f1[j-1] - gap_ext1 == _dp_f1[j]) cur_op = ABPOA_F1_OP, hit = 1;            \
+                    else err_fatal_simple("Error in ag_backtrack. (1)");                                    \
                 }                                                                                           \
             } else {                                                                                        \
                 if (_dp_h[j-1] - gap_oe1 == _dp_f1[j]) cur_op = ABPOA_M_OP, hit = 1;                        \
-                else cur_op = ABPOA_F1_OP, hit = 1;                                                         \
+                else if (_dp_f1[j-1] - gap_ext1 == _dp_f1[j]) cur_op = ABPOA_F1_OP, hit = 1;                \
+                else err_fatal_simple("Error in ag_backtrack. (2)");                                        \
             }                                                                                               \
             cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, 1, id, j-1); --j;                       \
             ++res->n_aln_bases;                                                                             \
         }                                                                                                   \
-        if (hit == 0) exit(1);                                                                              \
+        if (hit == 0) err_fatal_simple("Error in ag_backtrack. (3)");                                       \
     }                                                                                                       \
     if (j > 0) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CSOFT_CLIP, j, -1, j-1);                   \
     /* reverse cigar */                                                                                     \
@@ -345,11 +347,13 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
                 if (cur_op & ABPOA_M_OP) {                                                                  \
                     if (_dp_h[j] == _dp_f1[j]) {                                                            \
                         if (_dp_h[j-1] - gap_oe1 == _dp_f1[j]) cur_op = ABPOA_M_OP, hit = 1;                \
-                        else cur_op = ABPOA_F1_OP, hit = 1;                                                 \
+                        else if (_dp_f1[j-1] - gap_ext1 == _dp_f1[j]) cur_op = ABPOA_F1_OP, hit = 1;        \
+                        else err_fatal_simple("Error in cg_backtrack. (1)");                                \
                     }                                                                                       \
                 } else {                                                                                    \
                     if (_dp_h[j-1] - gap_oe1 == _dp_f1[j]) cur_op = ABPOA_M_OP, hit = 1;                    \
-                    else cur_op = ABPOA_F1_OP, hit =1;                                                      \
+                    else if (_dp_f1[j-1] - gap_ext1 == _dp_f1[j]) cur_op = ABPOA_F1_OP, hit =1;             \
+                    else err_fatal_simple("Error in cg_backtrack. (2)");                                    \
                 }                                                                                           \
             }                                                                                               \
             if (hit == 0 && cur_op & ABPOA_F2_OP) {                                                         \
@@ -357,17 +361,20 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
                 if (cur_op & ABPOA_M_OP) {                                                                  \
                     if (_dp_h[j] == _dp_f2[j]) {                                                            \
                         if (_dp_h[j-1] - gap_oe2 == _dp_f2[j]) cur_op = ABPOA_M_OP, hit = 1;                \
-                        else cur_op = ABPOA_F2_OP, hit =1;                                                  \
+                        else if (_dp_f2[j-1] - gap_ext2 == _dp_f2[j]) cur_op = ABPOA_F2_OP, hit =1;         \
+                        else err_fatal_simple("Error in cg_backtrack. (3)");                                \
                     }                                                                                       \
                 } else {                                                                                    \
                     if (_dp_h[j-1] - gap_oe2 == _dp_f2[j]) cur_op = ABPOA_M_OP, hit = 1;                    \
-                    else cur_op = ABPOA_F2_OP, hit =1;                                                      \
+                    else if (_dp_f2[j-1] - gap_ext2 == _dp_f2[j]) cur_op = ABPOA_F2_OP, hit =1;             \
+                    else err_fatal_simple("Error in cg_backtrack. (4)");                                    \
                 }                                                                                           \
             }                                                                                               \
             cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, 1, id, j-1); --j;                       \
             ++res->n_aln_bases;                                                                             \
             hit = 1;                                                                                        \
         }                                                                                                   \
+        if (hit == 0) err_fatal_simple("Error in cg_backtrack. (5)");                                       \
      /* fprintf(stderr, "%d, %d, %d\n", i, j, cur_op); */                                                   \
     }                                                                                                       \
     if (j > 0) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CSOFT_CLIP, j, -1, j-1);                   \
@@ -975,13 +982,15 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
 }
 
 #define simd_abpoa_global_get_max(score_t, DP_M, dp_sn) {	            \
-    int in_id, in_index;	                                            \
+    int end, in_id, in_index;	                                        \
     for (i = 0; i < graph->node[ABPOA_SINK_NODE_ID].in_edge_n; ++i) {   \
         in_id = graph->node[ABPOA_SINK_NODE_ID].in_id[i];	            \
         in_index = abpoa_graph_node_id_to_index(graph, in_id);	        \
         dp_h = DP_M + in_index * dp_sn;	                                \
         _dp_h = (score_t*)dp_h;	                                        \
-        set_global_max_score(_dp_h[qlen], in_index, qlen);              \
+        if (qlen > dp_end[in_index]) end = dp_end[in_index];            \
+        else end = qlen;                                                \
+        set_global_max_score(_dp_h[end], in_index, qlen);               \
     }	                                                                \
 }
 
@@ -1111,7 +1120,7 @@ void abpoa_free_simd_matrix(abpoa_simd_matrix_t *abm) {
 }
 
 // realloc memory everytime the graph is updated (nodes are updated already)
-// * index_to_node_id/node_id_to_index/node_id_to_max/min_remain, max_pos_left/right
+// * index_to_node_id/node_id_to_index/node_id_to_max_remain, max_pos_left/right
 // * qp, DP_HE/H (if ag/lg), dp_f, qi (if ada/extend)
 // * dp_beg/end, dp_beg/end_sn if band
 // * pre_n, pre_index
@@ -1219,16 +1228,18 @@ void abpoa_ada_max_i(int max_i, abpoa_graph_t *graph, int node_id) {
     }                                                                                                           
 }
 
-void abpoa_global_get_max(abpoa_graph_t *graph, SIMDi *DP_H_HE, int dp_sn, int qlen, int16_t *best_score, int *best_i, int *best_j) {
+void abpoa_global_get_max(abpoa_graph_t *graph, SIMDi *DP_H_HE, int dp_sn, int qlen, int *dp_end, int16_t *best_score, int *best_i, int *best_j) {
     int in_id, in_index, i;	                                                        
     for (i = 0; i < graph->node[ABPOA_SINK_NODE_ID].in_edge_n; ++i) {	            
         in_id = graph->node[ABPOA_SINK_NODE_ID].in_id[i];	                        
         in_index = abpoa_graph_node_id_to_index(graph, in_id);	                    
         SIMDi *dp_h = DP_H_HE + in_index * dp_sn;	                                        
         int16_t *_dp_h = (int16_t*)dp_h;	                                                    
-        // set_max_score(*best_score, *best_i, *best_j, _dp_h[qlen], in_index, qlen);    
-        if (_dp_h[qlen] > *best_score) {                                     
-            *best_score = _dp_h[qlen]; *best_i = in_index; *best_j = qlen;               
+        int end;
+        if (qlen > dp_end[in_index]) end = dp_end[in_index];
+        else end = qlen;
+        if (_dp_h[end] > *best_score) {                                     
+            *best_score = _dp_h[end]; *best_i = in_index; *best_j = end;               
         }                                                             
     }	                                                                            
 }
@@ -1279,7 +1290,7 @@ int abpoa_cg_dp(SIMDi *q, SIMDi *dp_h, SIMDi *dp_e1, SIMDi *dp_e2, SIMDi *dp_f1,
         dp_e1[sn_i] = pre_dp_e1[sn_i];                                                                    
         dp_e2[sn_i] = pre_dp_e2[sn_i];                                                                    
     }
-    // if (index_i == 182) debug_simd_abpoa_print_cg_matrix_row("1", int16_t, index_i);
+    // if (index_i == 13095) debug_simd_abpoa_print_cg_matrix_row("1", int16_t, index_i);
     // new init end
     /* get max m and e */
     for (i = 1; i < pre_n[index_i]; ++i) {
@@ -1302,12 +1313,12 @@ int abpoa_cg_dp(SIMDi *q, SIMDi *dp_h, SIMDi *dp_e1, SIMDi *dp_e2, SIMDi *dp_f1,
             dp_e2[sn_i] = SIMDMaxi16(pre_dp_e2[sn_i], dp_e2[sn_i]);
         }
     }
-    // debug_simd_abpoa_print_cg_matrix_row("2", int16_t, index_i);
+    // if (index_i == 13095) debug_simd_abpoa_print_cg_matrix_row("2", int16_t, index_i);
     /* compare M, E, and F */
     for (sn_i = beg_sn; sn_i <= end_sn; ++sn_i) { /* SIMD parallelization */
         dp_h[sn_i] =  SIMDMaxi16(SIMDMaxi16(SIMDAddi16(dp_h[sn_i], q[sn_i]), dp_e1[sn_i]), dp_e2[sn_i]);
     }
-    // debug_simd_abpoa_print_cg_matrix_row("3", int16_t, index_i);
+    // if (index_i == 13095) debug_simd_abpoa_print_cg_matrix_row("3", int16_t, index_i);
     /* new F start */
     first = SIMDShiftRight(SIMDShiftLeft(dp_h[beg_sn], SIMDTotalBytes-SIMDShiftOneNi16), SIMDTotalBytes-SIMDShiftOneNi16); 
     SIMDi first2 = first; int set_num;
@@ -1318,20 +1329,20 @@ int abpoa_cg_dp(SIMDi *q, SIMDi *dp_h, SIMDi *dp_e1, SIMDi *dp_e2, SIMDi *dp_f1,
             set_num = sn_i == max_pre_end_sn+1 ? 2 : 1;
         } else set_num = pn;
         /* F = (H << 1 | x) - OE */
-        // debug_simd_abpoa_print_cg_matrix_row("4.1", int16_t, index_i);
+        // if (index_i == 13095) debug_simd_abpoa_print_cg_matrix_row("4.1", int16_t, index_i);
         dp_f1[sn_i] = SIMDSubi16(SIMDOri(SIMDShiftLeft(dp_h[sn_i], SIMDShiftOneNi16), first), GAP_OE1);
         dp_f2[sn_i] = SIMDSubi16(SIMDOri(SIMDShiftLeft(dp_h[sn_i], SIMDShiftOneNi16), first2), GAP_OE2);
         /* F = max{F, (F-e)<<1}, F = max{F, (F-2e)<<2} ... */
-        // debug_simd_abpoa_print_cg_matrix_row("4.2", int16_t, index_i);
+        // if (index_i == 13095) debug_simd_abpoa_print_cg_matrix_row("4.2", int16_t, index_i);
         SIMD_SET_F(dp_f1[sn_i], log_n, set_num, PRE_MIN, PRE_MASK, SUF_MIN, GAP_E1S, SIMDMaxi16, SIMDAddi16, SIMDSubi16, SIMDShiftOneNi16);
         SIMD_SET_F(dp_f2[sn_i], log_n, set_num, PRE_MIN, PRE_MASK, SUF_MIN, GAP_E2S, SIMDMaxi16, SIMDAddi16, SIMDSubi16, SIMDShiftOneNi16);
         /* x = max{H, F+o} */
-        // debug_simd_abpoa_print_cg_matrix_row("4.3", int16_t, index_i);
+        // if (index_i == 13095) debug_simd_abpoa_print_cg_matrix_row("4.3", int16_t, index_i);
         first = SIMDShiftRight(SIMDMaxi16(dp_h[sn_i], SIMDAddi16(dp_f1[sn_i], GAP_O1)), SIMDTotalBytes-SIMDShiftOneNi16);
         first2 = SIMDShiftRight(SIMDMaxi16(dp_h[sn_i], SIMDAddi16(dp_f2[sn_i], GAP_O2)), SIMDTotalBytes-SIMDShiftOneNi16);
         /* H = max{H, F}    */
         dp_h[sn_i] = SIMDMaxi16(SIMDMaxi16(dp_h[sn_i], dp_f1[sn_i]), dp_f2[sn_i]);
-        // debug_simd_abpoa_print_cg_matrix_row("4.4", int16_t, index_i);
+        // if (index_i == 13095) debug_simd_abpoa_print_cg_matrix_row("4.4", int16_t, index_i);
         /* e for next cell */
         dp_e1[sn_i] = SIMDMaxi16(SIMDSubi16(dp_e1[sn_i], GAP_E1), SIMDSubi16(dp_h[sn_i], GAP_OE1));
         dp_e2[sn_i] = SIMDMaxi16(SIMDSubi16(dp_e2[sn_i], GAP_E2), SIMDSubi16(dp_h[sn_i], GAP_OE2));
@@ -1531,7 +1542,7 @@ int abpoa_cg_global_align_sequence_to_graph_core(abpoa_t *ab, int qlen, uint8_t 
     }
     // printf("dp_sn: %d\n", tot_dp_sn);
     // printf("dp_sn: %d, node_n: %d, seq_n: %d\n", tot_dp_sn, graph->node_n, qlen);   
-    abpoa_global_get_max(graph, DP_H2E2F, 5*dp_sn, qlen,  &best_score, &best_i, &best_j);
+    abpoa_global_get_max(graph, DP_H2E2F, 5*dp_sn, qlen, dp_end, &best_score, &best_i, &best_j);
     // simd_abpoa_print_cg_matrix(int16_t); fprintf(stderr, "best_score: (%d, %d) -> %d\n", best_i, best_j, best_score);        
     abpoa_cg_backtrack(DP_H2E2F, pre_index, pre_n, dp_beg, dp_end, dp_sn, abpt->m, mat, gap_ext1, gap_ext2, gap_oe1, gap_oe2, 0, 0, best_i, best_j, qlen, graph, abpt, query, res);
     for (i = 0; i < graph->node_n; ++i) free(pre_index[i]); free(pre_index); free(pre_n);
@@ -1544,12 +1555,13 @@ int simd_abpoa_align_sequence_to_graph(abpoa_t *ab, abpoa_para_t *abpt, uint8_t 
     if (abpt->simd_flag == 0) err_fatal_simple("No SIMD instruction available.");
 
 #ifdef __DEBUG__
-    _simd_p16.inf_min = MAX_OF_THREE(INT16_MIN + abpt->mismatch, INT16_MIN + abpt->gap_open1 + abpt->gap_ext1, INT16_MIN + abpt->gap_open2 + abpt->gap_ext2);
+    _simd_p16.inf_min = MAX_OF_TWO(abpt->gap_ext1, abpt->gap_ext2) * 63 +MAX_OF_THREE(INT16_MIN + abpt->mismatch, INT16_MIN + abpt->gap_open1 + abpt->gap_ext1, INT16_MIN + abpt->gap_open2 + abpt->gap_ext2);
     if (simd_abpoa_realloc(ab, qlen, abpt, _simd_p16)) return 0;
     if (abpt->gap_mode == ABPOA_CONVEX_GAP) return abpoa_cg_global_align_sequence_to_graph_core(ab, qlen, query, abpt, _simd_p16, res);
     else return 0;
 #else
-    int max_score, bits, mem_ret=0, gap_oe1 = abpt->gap_open1+abpt->gap_ext1, gap_oe2 = abpt->gap_open2+abpt->gap_ext2;
+    int max_score, bits, mem_ret=0, gap_ext1 = abpt->gap_ext1, gap_ext2 = abpt->gap_ext2;
+    int gap_oe1 = abpt->gap_open1+gap_ext1, gap_oe2 = abpt->gap_open2+gap_ext2;
     if (abpt->simd_flag & SIMD_AVX512F && !(abpt->simd_flag & SIMD_AVX512BW)) 
         max_score = INT16_MAX + 1; // AVX512F has no 8/16 bits operations
     else {
@@ -1557,15 +1569,15 @@ int simd_abpoa_align_sequence_to_graph(abpoa_t *ab, abpoa_para_t *abpt, uint8_t 
         max_score = MAX_OF_TWO(qlen * abpt->match, len * abpt->gap_ext1 + abpt->gap_open1);
     }
     if (max_score <= INT8_MAX - abpt->mismatch - gap_oe1 - gap_oe2) {
-        _simd_p8.inf_min = MAX_OF_THREE(INT8_MIN + abpt->mismatch, INT8_MIN + gap_oe1, INT8_MIN + gap_oe2);
+        _simd_p8.inf_min = MAX_OF_THREE(INT8_MIN + abpt->mismatch, INT8_MIN + gap_oe1, INT8_MIN + gap_oe2) + 63 * MAX_OF_TWO(gap_ext1, gap_ext2);
         mem_ret = simd_abpoa_realloc(ab, qlen, abpt, _simd_p8);
         bits = 8;
     } else if (max_score <= INT16_MAX-abpt->mismatch - gap_oe1 - gap_oe2) {
-        _simd_p16.inf_min = MAX_OF_THREE(INT16_MIN + abpt->mismatch, INT16_MIN + gap_oe1, INT16_MIN + gap_oe2);
+        _simd_p16.inf_min = MAX_OF_THREE(INT16_MIN + abpt->mismatch, INT16_MIN + gap_oe1, INT16_MIN + gap_oe2) + 63 * MAX_OF_TWO(gap_ext1, gap_ext2);
         mem_ret = simd_abpoa_realloc(ab, qlen, abpt, _simd_p16);
         bits = 16;
     } else { 
-        _simd_p32.inf_min = MAX_OF_THREE(INT32_MIN + abpt->mismatch, INT32_MIN + gap_oe1, INT32_MIN + gap_oe2);
+        _simd_p32.inf_min = MAX_OF_THREE(INT32_MIN + abpt->mismatch, INT32_MIN + gap_oe1, INT32_MIN + gap_oe2) + 63 * MAX_OF_TWO(gap_ext1, gap_ext2);
         mem_ret = simd_abpoa_realloc(ab, qlen, abpt, _simd_p32);
         bits = 32;
     }

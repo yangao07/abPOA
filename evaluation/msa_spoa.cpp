@@ -133,7 +133,7 @@ int main(int argc, char** argv) {
         runtime += (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_usec - start_time.tv_usec) * 1e-6;
 
     }
-    fprintf(stderr, "%.2f\t", runtime);
+    fprintf(stderr, "%.2f ", runtime);
 
     fp_seq.close();
     return 0;

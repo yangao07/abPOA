@@ -25,10 +25,10 @@
 #define DIPLOID_MIN_FREQ    0.3
 
 // start and end of each band:
-//   range: (min_of_two(max_left, qlen-max_remain), max_of_two(max_right, qlen-min_remain))
+//   range: (min_of_two(max_left, qlen-remain), max_of_two(max_right, qlen-remain))
 //   with extra band width: (range_min-w, range_max+w)
-#define GET_AD_DP_BEGIN(graph, w, i, qlen) MAX_OF_TWO(0,    MIN_OF_TWO(abpoa_graph_node_id_to_max_pos_left(graph, i), qlen - abpoa_graph_node_id_to_max_remain(graph, i))-w)
-#define GET_AD_DP_END(graph, w, i, qlen)   MIN_OF_TWO(qlen, MAX_OF_TWO(abpoa_graph_node_id_to_max_pos_right(graph, i), qlen - abpoa_graph_node_id_to_min_remain(graph, i))+w)
+#define GET_AD_DP_BEGIN(graph, w, i, qlen) MAX_OF_TWO(0,    MIN_OF_TWO(abpoa_graph_node_id_to_max_pos_left(graph, i),  qlen - abpoa_graph_node_id_to_max_remain(graph, i))-w)
+#define GET_AD_DP_END(graph, w, i, qlen)   MIN_OF_TWO(qlen, MAX_OF_TWO(abpoa_graph_node_id_to_max_pos_right(graph, i), qlen - abpoa_graph_node_id_to_max_remain(graph, i))+w)
 
 #ifdef __cplusplus
 extern "C" {
