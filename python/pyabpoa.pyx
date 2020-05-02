@@ -138,7 +138,6 @@ cdef class msa_aligner:
 
         abpoa_reset_graph(self.ab, &self.abpt, len(seqs[0]))
         for read_i, seq in enumerate(seqs):
-            print(read_i)
             seq_l = len(seq)
             bseq = <uint8_t*>malloc(seq_l * cython.sizeof(uint8_t))
             for i in range(seq_l):
