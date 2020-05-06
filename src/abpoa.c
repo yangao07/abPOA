@@ -11,6 +11,7 @@
 
 KSEQ_INIT(gzFile, gzread)
 
+char NAME[20] = "abPOA";
 char PROG[20] = "abpoa";
 #define _ba BOLD UNDERLINE "a" NONE
 #define _bb BOLD UNDERLINE "b" NONE
@@ -52,7 +53,7 @@ int abpoa_usage(void)
     err_printf("\n");
     err_printf("%s: %s\n\n", PROG, DESCRIPTION);
     // err_printf("Version: %s\n", VERSION);
-    err_printf("Usage: %s [option] <in.fa/fq> > cons.fa/msa.out\n\n", PROG);
+    err_printf("Usage: %s [options] <in.fa/fq> > cons.fa/msa.out\n\n", PROG);
     err_printf("Options:\n");
     err_printf("  Alignment:\n");
     err_printf("    -m --aln-mode INT       alignment mode [%d]\n", ABPOA_GLOBAL_MODE);
@@ -61,22 +62,24 @@ int abpoa_usage(void)
     err_printf("    -X --mismatch INT       mismatch penalty [%d]\n", ABPOA_MISMATCH);
     err_printf("    -O --gap-open INT(,INT) gap opening penalty (O1,O2) [%d,%d]\n", ABPOA_GAP_OPEN1, ABPOA_GAP_OPEN2);
     err_printf("    -E --gap-ext  INT(,INT) gap extension penalty (E1,E2) [%d,%d]\n", ABPOA_GAP_EXT1, ABPOA_GAP_EXT2);
-    err_printf("                            %s provides 3 gap penalty modes, penalty of a g-long gap:\n", PROG);
+    err_printf("                            %s provides three gap penalty modes, cost of a g-long gap:\n", NAME);
     err_printf("                            - convex (default): min{O1+g*E1, O2+g*E2}\n");
     err_printf("                            - affine (set O2 as 0): O1+g*E1\n");
     err_printf("                            - linear (set O1 as 0): g*E1\n");
     err_printf("  Adaptive banded DP:\n");
-    err_printf("    -b --extra-b  INT       first part of extra band [%d]\n", ABPOA_EXTRA_B);
+    err_printf("    -b --extra-b  INT       first adaptive banding parameter [%d]\n", ABPOA_EXTRA_B);
     err_printf("                            set b as < 0 to disable adaptive banded DP\n");
-    err_printf("    -f --extra-f  FLOAT     second part of extra band: f * L, L is the length of input sequence [%.2f]\n", ABPOA_EXTRA_F);
-    err_printf("                            width of extra band is b + f * L\n");
+    err_printf("    -f --extra-f  FLOAT     second adaptive banding parameter [%.2f]\n", ABPOA_EXTRA_F);
+    err_printf("                            the number of extra bases added on both sites of the band is\n");
+    err_printf("                            b+f*L, where L is the length of the aligned sequence\n");
     // err_printf("    -z --zdrop    INT       Z-drop score in extension alignment [-1]\n");
     // err_printf("                            set as <= 0 to disable Z-drop extension\n");
     // err_printf("    -e --bonus    INT       end bonus score in extension alignment [-1]\n");
     // err_printf("                            set as <= 0 to disable end bounus\n");
     err_printf("  Input/Output:\n");
-    err_printf("    -l --in-list            input file is a list of sequence file [False]\n");
-    err_printf("                            each line is one sequence file\n");
+    err_printf("    -l --in-list            input file is a list of sequence file names [False]\n");
+    err_printf("                            each line is one sequence file containing a set of sequences\n");
+    err_printf("                            which will be aligned by abPOA to generate a consensus sequence\n");
     err_printf("    -o --output   FILE      ouput to FILE [stdout]\n");
     err_printf("    -r --result   INT       output result mode [%d]\n", ABPOA_OUT_CONS);
     // err_printf("                            %d: consensus (FASTA format), %d: MSA (PIR format), %d: both 0 & 1\n", ABPOA_OUT_CONS, ABPOA_OUT_MSA, ABPOA_OUT_BOTH);
@@ -84,16 +87,20 @@ int abpoa_usage(void)
     err_printf("                            - %d: MSA (PIR format)\n", ABPOA_OUT_MSA);
     err_printf("                            - %d: both 0 & 1\n", ABPOA_OUT_BOTH);
     err_printf("    -g --out-pog  FILE      dump final alignment graph to FILE (.pdf/.png) [Null]\n\n");
-    err_printf("    -a --cons-alg INT       algorithm for consensus calling [0]\n");
-    // err_printf("                            %d: heaviest bundling, %d: heaviest column\n", ABPOA_HB, ABPOA_HC);
-    err_printf("                            - %d: heaviest bundling\n", ABPOA_HB);
-    err_printf("                            - %d: heaviest in column\n", ABPOA_HC);
-    err_printf("    -d --diploid            input is diploid [False]\n");
-    err_printf("                            -a/--cons-alg is forced to be %d when input is diploid\n", ABPOA_HC);
-    err_printf("    -q --min-freq FLOAT     min frequency of each consensus for diploid input [%.2f]\n\n", DIPLOID_MIN_FREQ);
 
     err_printf("    -h --help               print this help usage information\n");
     err_printf("    -v --version            show version number\n");
+
+    err_printf("  Parameters under development:\n");
+    err_printf("    -a --cons-alg INT       algorithm to use for consensus calling [%d]\n", ABPOA_HB);
+    // err_printf("                            %d: heaviest bundling, %d: heaviest column\n", ABPOA_HB, ABPOA_HC);
+    err_printf("                            - %d: heaviest bundling\n", ABPOA_HB);
+    err_printf("                            - %d: heaviest in column\n", ABPOA_HC);
+    err_printf("    -d --diploid            input data is diploid [False]\n");
+    err_printf("                            -a/--cons-alg will be set as %d when input is diploid\n", ABPOA_HC);
+    err_printf("                            and at most two consensus sequences will be generated\n");
+    err_printf("    -q --min-freq FLOAT     min frequency of each consensus for diploid input [%.2f]\n", DIPLOID_MIN_FREQ);
+
     err_printf("\n");
     return 1;
 }
