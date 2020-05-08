@@ -189,7 +189,7 @@ The numbers inside the nodes are the node IDs. The numbers on the edges are the 
 ## <a name="dev"></a>For development
 abPOA is not only a stand-alone tool for MSA and consensus calling, it can also work as a programming library. [example.c](example.c) shows how to use the C APIs of abPOA to take a set of sequences as input and perform MSA and consensus calling. Basically, the library file `libabpoa.a` and two header files [abpoa.h](include/abpoa.h) and [simd_instruction.h](include/simd_instruction.h) are needed to make the abPOA library work in your program.
 
-abPOA also provides Python bindings of all the C APIs. Refer to [python/README.md](python/README.md) for more details.
+abPOA also provides Python bindings to all the primary C APIs. Refer to [python/README.md](python/README.md) for more details.
 
 ## <a name="contact"></a>Contact
 Yan Gao yangao07@hit.edu.cn

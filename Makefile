@@ -20,8 +20,14 @@ ifneq ($(pg),)
 endif
 
 LIB     = -lm -lz -lpthread
-BIN_DIR = ./bin
-LIB_DIR = ./lib
+ifneq ($(PREFIX),)
+	OUT_PRE_DIR = $(PREFIX)
+else
+	OUT_PRE_DIR = .
+endif
+
+BIN_DIR = $(OUT_PRE_DIR)/bin
+LIB_DIR = $(OUT_PRE_DIR)/lib
 INC_DIR = ./include
 SRC_DIR = ./src
 

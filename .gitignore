@@ -65,6 +65,5 @@ python/src/*
 # eval file
 evaluation/msa_abPOA
 evaluation/msa_spoa
-evaluation/racon_abPOA
-evaluation/racon_spoa
-
+#evaluation/racon_abPOA
+#evaluation/racon_spoa
