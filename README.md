@@ -12,8 +12,8 @@
 ## Getting started
 Download the [latest release](https://github.com/yangao07/abPOA/releases):
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.0.1/abPOA-v1.0.1.tar.gz
-tar -zxvf abPOA-v1.0.1.tar.gz && cd abPOA-v1.0.1
+wget https://github.com/yangao07/abPOA/releases/download/v1.0.2/abPOA-v1.0.2.tar.gz
+tar -zxvf abPOA-v1.0.2.tar.gz && cd abPOA-v1.0.2
 ```
 Install via conda and run with test data:
 ```
@@ -68,12 +68,12 @@ conda install -c bioconda abpoa   # install abPOA program
 ```
 
 ### <a name="build"></a>Building abPOA from source files
-You can also build abPOA from source files.
+You can also build abPOA from source files. Make sure you have gcc (>=6.4.0) and zlib installed before compiling.
 It is recommended to download the [latest release](https://github.com/yangao07/abPOA/releases).
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.0.1/abPOA-v1.0.1.tar.gz
-tar -zxvf abPOA-v1.0.1.tar.gz
-cd abPOA-v1.0.1; make
+wget https://github.com/yangao07/abPOA/releases/download/v1.0.2/abPOA-v1.0.2.tar.gz
+tar -zxvf abPOA-v1.0.2.tar.gz
+cd abPOA-v1.0.2; make
 ```
 Or, you can use `git clone` command to download the source code.
 This gives you the latest version of abPOA, which might be still under development.
@@ -85,8 +85,8 @@ cd abPOA; make
 ### <a name="binary"></a>Pre-built binary executable file for Linux/Unix 
 If you meet any compiling issue, please try the pre-built binary file:
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.0.1/abPOA-v1.0.1_x64-linux.tar.gz
-tar -zxvf abPOA-v1.0.1_x64-linux.tar.gz
+wget https://github.com/yangao07/abPOA/releases/download/v1.0.2/abPOA-v1.0.2_x64-linux.tar.gz
+tar -zxvf abPOA-v1.0.2_x64-linux.tar.gz
 ```
 
 ## <a name="usage"></a>General usage
@@ -179,7 +179,10 @@ The `-` in the sequence stands for alignment gap.
 
 ### <a name="plot"></a>Plot of alignment graph
 
-abPOA can generate a plot of the final partial order alignment graph with the help of `DOT` programs. For example:
+abPOA can generate a plot of the final partial order alignment graph with the help of `graphviz dot`. 
+Make sure you have `dot` installed beforing using abPOA to generate the plot:
+`sudo apt-get install graphviz` on Linux/Unix systems.
+For example:
 
 ![pog](https://github.com/yangao07/abPOA/blob/master/pog.png)
 
