@@ -6,7 +6,7 @@
 [![Published in bioRxiv](https://img.shields.io/badge/Preprint-bioRxiv-red.svg)](https://doi.org/10.1101/2020.05.07.083196)
 [![GitHub Issues](https://img.shields.io/github/issues/yangao07/abPOA.svg?label=Issues)](https://github.com/yangao07/abPOA/issues)
 [![Build Status](https://img.shields.io/travis/yangao07/abPOA/master.svg?label=Master)](https://travis-ci.org/yangao07/abPOA)
-[![License](https://img.shields.io/badge/License-GPL-black.svg)](https://github.com/yangao07/abPOA/blob/master/LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-black.svg)](https://github.com/yangao07/abPOA/blob/master/LICENSE)
 <!-- [![PyPI](https://img.shields.io/pypi/v/pyabpoa.svg?style=flat)](https://pypi.python.org/pypi/pyabpoa) -->
 
 ## Getting started
@@ -15,14 +15,14 @@ Download the [latest release](https://github.com/yangao07/abPOA/releases):
 wget https://github.com/yangao07/abPOA/releases/download/v1.0.2/abPOA-v1.0.2.tar.gz
 tar -zxvf abPOA-v1.0.2.tar.gz && cd abPOA-v1.0.2
 ```
-Install via conda and run with test data:
+Make from source and run with test data:
+```
+make; ./bin/abpoa ./test_data/seq.fa > cons.fa
+```
+Or, install via conda and run with test data:
 ```
 conda install -c bioconda abpoa
 abpoa ./test_data/seq.fa > cons.fa
-```
-Or, make from source and run with test data:
-```
-make; ./bin/abpoa ./test_data/seq.fa > cons.fa
 ```
 ## Table of Contents
 
