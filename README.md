@@ -69,7 +69,8 @@ conda install -c bioconda abpoa   # install abPOA program
 ```
 
 ### <a name="build"></a>Building abPOA from source files
-You can also build abPOA from source files. Make sure you have gcc (>=6.4.0) and zlib installed before compiling.
+You can also build abPOA from source files. 
+Make sure you have gcc (>=6.4.0) and zlib installed before compiling.
 It is recommended to download the [latest release](https://github.com/yangao07/abPOA/releases).
 ```
 wget https://github.com/yangao07/abPOA/releases/download/v1.0.2/abPOA-v1.0.2.tar.gz
@@ -181,14 +182,15 @@ The `-` in the sequence stands for alignment gap.
 ### <a name="plot"></a>Plot of alignment graph
 
 abPOA can generate a plot of the final partial order alignment graph with the help of `graphviz dot`. 
-Make sure you have `dot` installed beforing using abPOA to generate the plot:
-`sudo apt-get install graphviz` on Linux/Unix systems.
 For example:
 
 ![pog](https://github.com/yangao07/abPOA/blob/master/pog.png)
 
 The numbers inside the nodes are the node IDs. The numbers on the edges are the edge weights.
 `S` and `E` are the auxiliary start and end nodes that have no sequence bases.
+
+Make sure you have `dot` installed beforing using abPOA to generate the plot.
+For Linux/Unix systems: `sudo apt-get install graphviz`.
 
 ## <a name="dev"></a>For development
 abPOA is not only a stand-alone tool for MSA and consensus calling, it can also work as a programming library. [example.c](example.c) shows how to use the C APIs of abPOA to take a set of sequences as input and perform MSA and consensus calling. Basically, the library file `libabpoa.a` and two header files [abpoa.h](include/abpoa.h) and [simd_instruction.h](include/simd_instruction.h) are needed to make the abPOA library work in your program.
