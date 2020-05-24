@@ -28,7 +28,7 @@ abpoa ./test_data/seq.fa > cons.fa
 
 - [Introduction](#introduction)
 - [Installation](#install)
-  - [Installing abPOA](#conda)
+  - [Installing abPOA via conda](#conda)
   - [Building abPOA from source files](#build)
   - [Pre-built binary executable file for Linux/Unix](#binary)
 - [General usage](#usage)

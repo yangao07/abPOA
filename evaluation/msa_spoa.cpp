@@ -60,7 +60,7 @@ void help() {
         "            default: 10\n"
         "            number of sequences in each set\n"
         "        -h \n"
-        "            prints the usage\n"
+        "            prints the usage\n";
 }
 
 int main(int argc, char** argv) {
@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
     std::int8_t o2 = -24;
     std::int8_t e2 = -1;
 
-    char opt; int n_seqs = 0;
+    char opt, *s; int n_seqs = 0;
     while ((opt = getopt(argc, argv, "l:m:x:o:n:e:q:c:s:h")) != -1) {
         switch (opt) {
             case 'm': m = atoi(optarg); break;
