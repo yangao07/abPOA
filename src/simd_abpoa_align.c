@@ -1116,10 +1116,10 @@ int simd_abpoa_realloc(abpoa_t *ab, int qlen, abpoa_para_t *abpt, SIMD_para_t sp
     if (abpt->wb >= 0 || abpt->align_mode == ABPOA_EXTEND_MODE) // qi
         s_msize += sn * size;
 
-    if (s_msize > UINT32_MAX) {
-        err_func_format_printf(__func__, "Warning: Graph is too large or query is too long.\n");
-        return 1;
-    }
+    // if (s_msize > UINT32_MAX) {
+        // err_func_format_printf(__func__, "Warning: Graph is too large or query is too long.\n");
+        // return 1;
+    // }
     // fprintf(stderr, "%lld, %lld, %lld\n", (long long)node_n, (long long)ab->abm->s_msize, (long long)s_msize);
     if (s_msize > ab->abm->s_msize) {
         if (ab->abm->s_mem) SIMDFree(ab->abm->s_mem);

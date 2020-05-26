@@ -104,8 +104,11 @@ int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seqs, int *seq_lens, uint8_
         abpoa_add_graph_alignment(ab, abpt, seqs[i], seq_lens[i], res.n_cigar, res.graph_cigar, i, n_seqs);
         if (res.n_cigar) free(res.graph_cigar);
     }
-    if (abpt->out_cons)
+    if (abpt->out_cons) {
         abpoa_generate_consensus(ab, abpt, tot_n, out_fp, cons_seq, cons_l, cons_n);
+        if (ab->abg->is_called_cons == 0)
+            err_printf("Warning: no consensus sequence generated.\n");
+    }
     if (abpt->out_msa) {
         abpoa_generate_rc_msa(ab, tot_n, out_fp, msa_seq, msa_l);
     }
