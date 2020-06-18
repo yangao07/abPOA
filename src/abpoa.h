@@ -63,7 +63,7 @@ typedef struct {
     int zdrop, end_bonus; // from minimap2
     int simd_flag; // available SIMD instruction
     // alignment mode
-    uint8_t ret_cigar:1, rev_cigar:1, out_msa:1, out_cons:1, is_diploid:1, use_read_ids:1;
+    uint8_t ret_cigar:1, rev_cigar:1, out_msa:1, out_msa_header:1, out_cons:1, is_diploid:1, use_read_ids:1;
     char *out_pog;
     int align_mode, gap_mode, cons_agrm;
     double min_freq; // for multiploid data
@@ -155,7 +155,7 @@ void abpoa_topological_sort(abpoa_t *ab, abpoa_para_t *abpt);
 int abpoa_generate_consensus(abpoa_t *ab, abpoa_para_t *abpt, int seq_n, FILE *out_fp, uint8_t ***cons_seq, int **cons_l, int *cons_n);
 
 // generate column multiple sequence alignment from graph
-void abpoa_generate_rc_msa(abpoa_t *ab, int seq_n, FILE *out_fp, uint8_t ***msa_seq, int *msa_l);
+void abpoa_generate_rc_msa(abpoa_t *ab, char **read_names, int seq_n, FILE *out_fp, uint8_t ***msa_seq, int *msa_l);
 
 // generate DOT graph plot and dump graph into PDF/PNG format file
 int abpoa_dump_pog(abpoa_t *ab, abpoa_para_t *abpt);

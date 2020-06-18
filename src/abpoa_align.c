@@ -37,6 +37,7 @@ abpoa_para_t *abpoa_init_para(void) {
     abpt->rev_cigar = 0;  // reverse cigar
     abpt->out_cons = 1;   // output consensus sequence in msa
     abpt->out_msa = 0;    // output msa
+    abpt->out_msa_header = 0; // output read ID in msa output
     abpt->is_diploid = 0; // diploid data
     abpt->min_freq = DIPLOID_MIN_FREQ; 
     abpt->cons_agrm = ABPOA_HB;   // consensus calling algorithm 
@@ -110,7 +111,7 @@ int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seqs, int *seq_lens, uint8_
             err_printf("Warning: no consensus sequence generated.\n");
     }
     if (abpt->out_msa) {
-        abpoa_generate_rc_msa(ab, tot_n, out_fp, msa_seq, msa_l);
+        abpoa_generate_rc_msa(ab, NULL, tot_n, out_fp, msa_seq, msa_l);
     }
     return 1;
 }

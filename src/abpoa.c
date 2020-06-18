@@ -19,7 +19,7 @@ char PROG[20] = "abpoa";
 #define _bO BOLD UNDERLINE "O" NONE
 #define _bA BOLD UNDERLINE "A" NONE
 char DESCRIPTION[100] = _ba "daptive " _bb "anded " _bP "artial " _bO "rder " _bA "lignment";
-char VERSION[20] = "1.0.3";
+char VERSION[20] = "1.0.4";
 char CONTACT[30] = "yangao07@hit.edu.cn";
 
 const struct option abpoa_long_opt [] = {
@@ -37,6 +37,7 @@ const struct option abpoa_long_opt [] = {
 
     { "in-list", 0, NULL, 'l' },
     { "output", 1, NULL, 'o' },
+    { "msa-header", 0, NULL, 'A' },
     { "result", 1, NULL, 'r' },
     { "out-pog", 1, NULL, 'g' },
     { "cons-alg", 1, NULL, 'a' },
@@ -88,6 +89,7 @@ int abpoa_usage(void)
     err_printf("                            - %d: consensus (FASTA format)\n", ABPOA_OUT_CONS);
     err_printf("                            - %d: MSA (PIR format)\n", ABPOA_OUT_MSA);
     err_printf("                            - %d: both 0 & 1\n", ABPOA_OUT_BOTH);
+    err_printf("    -A --msa-header         add read ID as header of each sequence in MSA output [False]\n");
     err_printf("    -g --out-pog  FILE      dump final alignment graph to FILE (.pdf/.png) [Null]\n\n");
 
     err_printf("    -h --help               print this help usage information\n");
@@ -125,12 +127,20 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
     n_seqs = 0,  tot_n = 0, read_id = 0; \
     /* reset graph for a new input file */  \
     abpoa_reset_graph(ab, abpt, bseq_m);    \
+    char **read_names = NULL; int read_names_m = 0;  \
     while ((n_seqs = abpoa_read_seq(read_seq, CHUNK_READ_N)) != 0) {    \
+        if (abpt->out_msa && abpt->out_msa_header) { \
+            if (tot_n + n_seqs > read_names_m) {    \
+                read_names_m = tot_n + n_seqs; \
+                read_names = (char**)_err_realloc(read_names, read_names_m * sizeof(char*));    \
+            }   \
+        } \
         for (i = 0; i < n_seqs; ++i) {  \
             kseq_t *seq = read_seq + i; \
             int seq_l = seq->seq.l; \
             if (seq_l <= 0) err_fatal("read_seq", "Unexpected read length: %d (%s)", seq_l, seq->name.s);   \
             char *seq1 = seq->seq.s;    \
+            if (abpt->out_msa && abpt->out_msa_header) read_names[tot_n + i] = strdup(seq->name.s);    \
             /* printf("seq(%d): %s\n", seq_l, seq1); */   \
             if (seq_l > bseq_m) {   \
                 bseq_m = seq_l; kroundup32(bseq_m); \
@@ -150,12 +160,10 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
     }   \
     /* generate multiple sequence alignment */  \
     if (abpt->out_msa) {  \
-        uint8_t **msa_seq; int msa_l;   \
-        /* abpoa_generate_rc_msa(ab, tot_n, stdout, NULL, NULL);   */ \
-        abpoa_generate_rc_msa(ab, tot_n, stdout, &msa_seq, &msa_l);   \
-        if (msa_l) {    \
-            for (i = 0; i < tot_n; ++i) free(msa_seq[i]); free(msa_seq);    \
-        }   \
+        if (abpt->out_msa_header) { \
+            abpoa_generate_rc_msa(ab, read_names, tot_n, stdout, NULL, NULL);   \
+            for (i = 0; i < read_names_m; ++i) free(read_names[i]); free(read_names);   \
+        } else abpoa_generate_rc_msa(ab, NULL, tot_n, stdout, NULL, NULL);   \
     }   \
     /* generate dot plot */     \
     if (abpt->out_pog) {    \
@@ -189,7 +197,7 @@ int abpoa_main(const char *list_fn, int in_list, abpoa_para_t *abpt){
 
 int main(int argc, char **argv) {
     int c, m, in_list=0; char *s; abpoa_para_t *abpt = abpoa_init_para();
-    while ((c = getopt_long(argc, argv, "m:M:X:O:E:b:f:z:e:lo:r:g:a:dq:hv", abpoa_long_opt, NULL)) >= 0) {
+    while ((c = getopt_long(argc, argv, "m:M:X:O:E:b:f:z:e:lo:Ar:g:a:dq:hv", abpoa_long_opt, NULL)) >= 0) {
         switch(c)
         {
             case 'm': m = atoi(optarg);
@@ -216,6 +224,7 @@ int main(int argc, char **argv) {
                       else if (atoi(optarg) == ABPOA_OUT_BOTH) abpt->out_cons = abpt->out_msa = 1;
                       else err_printf("Error: unknown output result mode: %s.\n", optarg);
                       break;
+            case 'A': abpt->out_msa_header = 1; break;
             case 'g': abpt->out_pog= optarg; break;
 
             case 'a': abpt->cons_agrm = atoi(optarg); break;

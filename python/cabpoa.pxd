@@ -53,7 +53,7 @@ cdef extern from "abpoa.h":
         int zdrop, end_bonus # from minimap2
         int simd_flag # available SIMD instruction
         # alignment mode
-        uint8_t ret_cigar, rev_cigar, out_msa, out_cons, is_diploid, use_read_ids # mode: 0: global, 1: local, 2: extend
+        uint8_t ret_cigar, rev_cigar, out_msa, out_msa_header, out_cons, is_diploid, use_read_ids # mode: 0: global, 1: local, 2: extend
         char *out_pog
         int align_mode, gap_mode, cons_agrm
         double min_freq # for diploid data
@@ -128,7 +128,7 @@ cdef extern from "abpoa.h":
     #     Note: cons_seq and cons_l need to be freed by user.
     int abpoa_generate_consensus(abpoa_t *ab, abpoa_para_t *abpt, int seq_n, FILE *out_fp, uint8_t ***cons_seq, int **cons_l, int *cons_n)
     # generate column multiple sequence alignment from graph
-    void abpoa_generate_rc_msa(abpoa_t *ab, int seq_n, FILE *out_fp, uint8_t ***msa_seq, int *msa_l)
+    void abpoa_generate_rc_msa(abpoa_t *ab, char **read_names, int seq_n, FILE *out_fp, uint8_t ***msa_seq, int *msa_l)
 
     # generate DOT graph plot 
     int abpoa_dump_pog(abpoa_t *ab, abpoa_para_t *abpt)

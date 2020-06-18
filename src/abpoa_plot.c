@@ -36,7 +36,8 @@ int abpoa_dump_pog(abpoa_t *ab, abpoa_para_t *abpt) {
     if (graph->is_topological_sorted == 0) abpoa_topological_sort(ab, abpt);
 
     // all settings
-    char node_color[5][10] = {"purple3", "red3", "seagreen4", "gold2", "gray"}; // ACGTN
+    // char node_color[5][10] = {"purple3", "red3", "seagreen4", "gold2", "gray"}; // ACGTN
+    char node_color[5][10] = {"pink1", "red1", "gold2", "seagreen4", "gray"}; // ACGTN
     // float dpi_size = 3000, graph_width = 100, graph_height = 6; 
     float node_width=1;
     char rankdir[5] = "LR", node_style[10]="filled", node_fixedsize[10]="true", node_shape[10]="circle";

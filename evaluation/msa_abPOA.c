@@ -149,7 +149,7 @@ int main (int argc, char * const argv[]) {
     double runtime = 0; int i; char *seq;
     abpoa_t *ab = abpoa_init();
     if (for_racon) {
-        n_seqs = 500;
+        n_seqs = 10000;
         seq_lens = (int*)malloc(sizeof(int) * n_seqs);
         bseqs = (uint8_t**)malloc(sizeof(uint8_t*) * n_seqs);
         int start, init=1, seq_i = 0;

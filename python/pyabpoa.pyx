@@ -164,7 +164,7 @@ cdef class msa_aligner:
                 free(cons_seq)
                 free(cons_len)
         if self.abpt.out_msa:
-            abpoa_generate_rc_msa(self.ab, seq_n, NULL, &msa_seq, &msa_l)
+            abpoa_generate_rc_msa(self.ab, NULL, seq_n, NULL, &msa_seq, &msa_l)
             for i in range(seq_n):
                 msa_seq1 = ''
                 for c in msa_seq[i][:msa_l]:

@@ -789,7 +789,7 @@ void abpoa_set_msa_seq(abpoa_node_t node, int rank, uint8_t **msa_seq) {
     }
 }
 
-void abpoa_generate_rc_msa(abpoa_t *ab, int seq_n, FILE *out_fp, uint8_t ***msa_seq, int *msa_l) {
+void abpoa_generate_rc_msa(abpoa_t *ab, char **read_names, int seq_n, FILE *out_fp, uint8_t ***msa_seq, int *msa_l) {
     abpoa_graph_t *graph = ab->abg;
     if (graph->node_n <= 2) return;
     abpoa_set_msa_rank(graph, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID);
@@ -804,7 +804,7 @@ void abpoa_generate_rc_msa(abpoa_t *ab, int seq_n, FILE *out_fp, uint8_t ***msa_
             _msa_seq[i][j] = 5;
     }
 
-    if (out_fp) fprintf(out_fp, ">Multiple_sequence_alignment\n");
+    if (out_fp && read_names == NULL) fprintf(out_fp, ">Multiple_sequence_alignment\n");
     for (i = 2; i < graph->node_n; ++i) {
         // get msa rank
         rank = abpoa_graph_node_id_to_msa_rank(graph, i);
@@ -817,6 +817,7 @@ void abpoa_generate_rc_msa(abpoa_t *ab, int seq_n, FILE *out_fp, uint8_t ***msa_
     }
     if (out_fp) {
         for (i = 0; i < seq_n; ++i) {
+            if (read_names != NULL) fprintf(out_fp, ">%s\n", read_names[i]);
             for (j = 0; j < _msa_l; ++j) fprintf(out_fp, "%c", "ACGTN-"[_msa_seq[i][j]]);
             fprintf(out_fp, "\n");
         }
