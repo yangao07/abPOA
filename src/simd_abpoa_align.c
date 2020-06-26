@@ -110,7 +110,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
     SIMDi *dp_h; score_t *_dp_h=NULL, *_pre_dp_h; abpoa_cigar_t *cigar = 0;                                 \
     i = best_i, j = best_j, _start_i = best_i, _start_j = best_j;                                           \
     id = abpoa_graph_index_to_node_id(graph, i);                                                            \
-    if (best_j < qlen) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CSOFT_CLIP, qlen-j, -1, qlen-1);   \
+    if (best_j < qlen) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, qlen-j, -1, qlen-1);   \
     dp_h = DP_H + i * dp_sn; _dp_h = (score_t*)dp_h;                                                        \
     while (i > 0 && j > 0) {                                                                                \
         if (abpt->align_mode == ABPOA_LOCAL_MODE && _dp_h[j] == 0) break;                                   \
@@ -147,7 +147,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
             ++res->n_aln_bases;                                                                             \
         }                                                                                                   \
     }                                                                                                       \
-    if (j > 0) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CSOFT_CLIP, j, -1, j-1);                   \
+    if (j > 0) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, j, -1, j-1);                   \
     /* reverse cigar */                                                                                     \
     res->graph_cigar = abpt->rev_cigar ? cigar : abpoa_reverse_cigar(n_c, cigar);                           \
     res->n_cigar = n_c;                                                                                     \
@@ -161,7 +161,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
     score_t *_dp_h, *_dp_e1, *_dp_f1, *_pre_dp_h, *_pre_dp_e1; abpoa_cigar_t *cigar = 0;                    \
     i = best_i, j = best_j; _start_i = best_i, _start_j = best_j;                                           \
     id = abpoa_graph_index_to_node_id(graph, i);                                                            \
-    if (best_j < qlen) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CSOFT_CLIP, qlen-j, -1, qlen-1);   \
+    if (best_j < qlen) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, qlen-j, -1, qlen-1);   \
     SIMDi *dp_h = DP_HEF + dp_sn * i * 3; _dp_h = (score_t*)dp_h;                                           \
     while (i > 0 && j > 0) {                                                                                \
         if (_dp_h[j] == 0) break;                                                                           \
@@ -233,7 +233,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
         }                                                                                                   \
         if (hit == 0) err_fatal_simple("Error in ag_backtrack. (3)");                                       \
     }                                                                                                       \
-    if (j > 0) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CSOFT_CLIP, j, -1, j-1);                   \
+    if (j > 0) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, j, -1, j-1);                   \
     /* reverse cigar */                                                                                     \
     res->graph_cigar = abpt->rev_cigar ? cigar : abpoa_reverse_cigar(n_c, cigar);                           \
     res->n_cigar = n_c;                                                                                     \
@@ -248,7 +248,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
     abpoa_cigar_t *cigar = 0;                                                                               \
     i = best_i, j = best_j, _start_i = best_i, _start_j = best_j;                                           \
     id = abpoa_graph_index_to_node_id(graph, i);                                                            \
-    if (best_j < qlen) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CSOFT_CLIP, qlen-j, -1, qlen-1);   \
+    if (best_j < qlen) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, qlen-j, -1, qlen-1);   \
     SIMDi *dp_h = DP_H2E2F + dp_sn * i * 5; _dp_h = (score_t*)dp_h;                                         \
     while (i > 0 && j > 0) {                                                                                \
         if (abpt->align_mode == ABPOA_LOCAL_MODE && _dp_h[j] == 0) break;                                   \
@@ -363,7 +363,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
         if (hit == 0) err_fatal_simple("Error in cg_backtrack. (5)");                                       \
      /* fprintf(stderr, "%d, %d, %d\n", i, j, cur_op); */                                                   \
     }                                                                                                       \
-    if (j > 0) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CSOFT_CLIP, j, -1, j-1);                   \
+    if (j > 0) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, j, -1, j-1);                   \
     /* reverse cigar */                                                                                     \
     res->graph_cigar = abpt->rev_cigar ? cigar : abpoa_reverse_cigar(n_c, cigar);                           \
     res->n_cigar = n_c;                                                                                     \
@@ -1339,7 +1339,7 @@ void abpoa_cg_backtrack(SIMDi *DP_H2E2F, int **pre_index, int *pre_n, int *dp_be
     int32_t *_dp_h=NULL, *_dp_e1, *_dp_e2, *_pre_dp_h, *_pre_dp_e1, *_pre_dp_e2, *_dp_f1, *_dp_f2; abpoa_cigar_t *cigar = 0;
     i = best_i, j = best_j, _start_i = best_i, _start_j = best_j;
     id = abpoa_graph_index_to_node_id(graph, i);
-    if (best_j < qlen) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CSOFT_CLIP, qlen-j, -1, qlen-1);
+    if (best_j < qlen) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, qlen-j, -1, qlen-1);
     dp_h = DP_H2E2F + dp_sn * (i * 5); _dp_h = (int32_t*)dp_h;
     while (i > start_i && j > start_j) {
         _start_i = i, _start_j = j;
@@ -1448,7 +1448,7 @@ void abpoa_cg_backtrack(SIMDi *DP_H2E2F, int **pre_index, int *pre_n, int *dp_be
         if (hit == 0) exit(1);
         fprintf(stderr, "%d, %d, %d\n", i, j, cur_op);
     }
-    if (j > start_j) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CSOFT_CLIP, j-start_j, -1, j-1);
+    if (j > start_j) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, j-start_j, -1, j-1);
     /* reverse cigar */
     res->graph_cigar = abpt->rev_cigar ? cigar : abpoa_reverse_cigar(n_c, cigar);
     res->n_cigar = n_c;

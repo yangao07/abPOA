@@ -32,8 +32,8 @@
 int abpoa_dump_pog(abpoa_t *ab, abpoa_para_t *abpt) {
     char PROG[20] = "abpoa"; int font_size=24;
 
-    abpoa_graph_t *graph = ab->abg;
-    if (graph->is_topological_sorted == 0) abpoa_topological_sort(ab, abpt);
+    abpoa_graph_t *abg = ab->abg;
+    if (abg->is_topological_sorted == 0) abpoa_topological_sort(abg, abpt);
 
     // all settings
     // char node_color[5][10] = {"purple3", "red3", "seagreen4", "gold2", "gray"}; // ACGTN
@@ -44,18 +44,18 @@ int abpoa_dump_pog(abpoa_t *ab, abpoa_para_t *abpt) {
     int show_aligned_mismatch = 1;
 
     int i, j, id, index, out_id; char base;
-    char **node_label = (char**)_err_malloc(graph->node_n * sizeof(char*));
-    for (i = 0; i < graph->node_n; ++i) node_label[i] = (char*)_err_malloc(sizeof(char) * 128);
+    char **node_label = (char**)_err_malloc(abg->node_n * sizeof(char*));
+    for (i = 0; i < abg->node_n; ++i) node_label[i] = (char*)_err_malloc(sizeof(char) * 128);
  
     char *dot_fn = (char*)malloc(strlen(abpt->out_pog) + 10);
     strcpy(dot_fn, abpt->out_pog);
     FILE *fp = xopen(strcat(dot_fn, ".dot"), "w");
-    fprintf(fp, "// %s graph dot file.\n// %d nodes.\n", PROG, graph->node_n);
+    fprintf(fp, "// %s graph dot file.\n// %d nodes.\n", PROG, abg->node_n);
     // fprintf(fp, "digraph ABPOA_graph {\n\tgraph [dpi=%f]; size=\"%f,%f\";\n\trankdir=\"%s\";\n\tnode [width=%f, style=%s, fixedsize=%s, shape=%s];\n", dpi_size, graph_width, graph_height, rankdir, node_width, node_style, node_fixedsize, node_shape);
     fprintf(fp, "digraph ABPOA_graph {\n\tgraph [rankdir=\"%s\"];\n\tnode [width=%f, style=%s, fixedsize=%s, shape=%s];\n", rankdir, node_width, node_style, node_fixedsize, node_shape);
 
-    for (i = 0; i < graph->node_n; ++i) {
-        id = abpoa_graph_index_to_node_id(graph, i);
+    for (i = 0; i < abg->node_n; ++i) {
+        id = abpoa_graph_index_to_node_id(abg, i);
         index = i;
         if (id == ABPOA_SRC_NODE_ID) {
             base = 'S';
@@ -70,34 +70,34 @@ int abpoa_dump_pog(abpoa_t *ab, abpoa_para_t *abpt) {
             sprintf(node_label[id], "\"%c\n%d\"", base,index);
             fprintf(fp, "%s [color=%s, fontsize=%d]\n", node_label[id], node_color[4], font_size);
         } else {
-            base = "ACGTN"[graph->node[id].base];
+            base = "ACGTN"[abg->node[id].base];
             //sprintf(node_label[id], "\"%c\n(%d,%d,%d)\"", base, index, rank, id);
             // only show seq
             sprintf(node_label[id], "\"%c\n%d\"", base,index);
-            fprintf(fp, "%s [color=%s, fontsize=%d]\n", node_label[id], node_color[graph->node[id].base], font_size);
+            fprintf(fp, "%s [color=%s, fontsize=%d]\n", node_label[id], node_color[abg->node[id].base], font_size);
         }
     }
     int x_index = -1;
-    for (i = 0; i < graph->node_n; ++i) {
-        id = abpoa_graph_index_to_node_id(graph, i);
+    for (i = 0; i < abg->node_n; ++i) {
+        id = abpoa_graph_index_to_node_id(abg, i);
         // out_edge
-        for (j = 0; j < graph->node[id].out_edge_n; ++j) {
-            out_id = graph->node[id].out_id[j];
-            fprintf(fp, "\t%s -> %s [label=\"%d\", penwidth=%d]\n", node_label[id], node_label[out_id], graph->node[id].out_weight[j], graph->node[id].out_weight[j]);
+        for (j = 0; j < abg->node[id].out_edge_n; ++j) {
+            out_id = abg->node[id].out_id[j];
+            fprintf(fp, "\t%s -> %s [label=\"%d\", penwidth=%d]\n", node_label[id], node_label[out_id], abg->node[id].out_weight[j], abg->node[id].out_weight[j]);
         }
-        if (graph->node[id].aligned_node_n > 0) {
+        if (abg->node[id].aligned_node_n > 0) {
             fprintf(fp, "\t{rank=same; %s ", node_label[id]);
-            for (j = 0; j < graph->node[id].aligned_node_n; ++j)
-                fprintf(fp, "%s ", node_label[graph->node[id].aligned_node_id[j]]);
+            for (j = 0; j < abg->node[id].aligned_node_n; ++j)
+                fprintf(fp, "%s ", node_label[abg->node[id].aligned_node_id[j]]);
             fprintf(fp, "};\n");
             if (show_aligned_mismatch) {
                 if (i > x_index) {
                     x_index = i;
                     // mismatch dashed line
                     fprintf(fp, "\t{ edge [style=dashed, arrowhead=none]; %s ", node_label[id]);
-                    for (j = 0; j < graph->node[id].aligned_node_n; ++j) {
-                        fprintf(fp, "-> %s ", node_label[graph->node[id].aligned_node_id[j]]);
-                        index = abpoa_graph_node_id_to_index(graph, graph->node[id].aligned_node_id[j]);
+                    for (j = 0; j < abg->node[id].aligned_node_n; ++j) {
+                        fprintf(fp, "-> %s ", node_label[abg->node[id].aligned_node_id[j]]);
+                        index = abpoa_graph_node_id_to_index(abg, abg->node[id].aligned_node_id[j]);
                         x_index = index > x_index ? index : x_index;
                     }
                     fprintf(fp, "}\n");
@@ -107,7 +107,7 @@ int abpoa_dump_pog(abpoa_t *ab, abpoa_para_t *abpt) {
     }
     fprintf(fp, "}\n");
 
-    for (i = 0; i < graph->node_n; ++i) free(node_label[i]); free(node_label);
+    for (i = 0; i < abg->node_n; ++i) free(node_label[i]); free(node_label);
     err_fclose(fp);
 
     char cmd[1024];

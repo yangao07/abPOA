@@ -121,7 +121,7 @@ int abpoa_align_sequence_to_graph(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *quer
 // add a node to a graph
 // para:
 //   base: 0123 for ACGT
-int abpoa_add_graph_node(abpoa_t *ab, uint8_t base);
+int abpoa_add_graph_node(abpoa_graph_t *abg, uint8_t base);
 
 // add an edge to a graph
 // para:
@@ -130,7 +130,7 @@ int abpoa_add_graph_node(abpoa_t *ab, uint8_t base);
 //   add_read_id: set as 1 if read_id is used (to use row-column algorithm/generate MSA result/diploid consensus)
 //   read_id: is of sequence
 //   read_ids_n: size of read_id array, each one is 64-bit (1+(tot_read_n-1)/64)
-int abpoa_add_graph_edge(abpoa_t *ab, int from_id, int to_id, int check_edge, uint8_t add_read_id, int read_id, int read_ids_n);
+int abpoa_add_graph_edge(abpoa_graph_t *abg, int from_id, int to_id, int check_edge, uint8_t add_read_id, int read_id, int read_ids_n);
 
 // add an alignment to a graph
 // para:
@@ -141,8 +141,11 @@ int abpoa_add_graph_edge(abpoa_t *ab, int from_id, int to_id, int check_edge, ui
 //   tot_read_n: total number of sequence
 int abpoa_add_graph_alignment(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int qlen, int n_cigar, abpoa_cigar_t *abpoa_cigar, int read_id, int tot_read_n);
 
+void abpoa_BFS_set_node_index(abpoa_graph_t *abg, int src_id, int sink_id);
+void abpoa_BFS_set_node_remain(abpoa_graph_t *abg, int src_id, int sink_id);
+
 // topological sortting of graph
-void abpoa_topological_sort(abpoa_t *ab, abpoa_para_t *abpt);
+void abpoa_topological_sort(abpoa_graph_t *abg, abpoa_para_t *abpt);
 
 // generate consensus sequence from graph
 // para:

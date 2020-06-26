@@ -113,10 +113,10 @@ cdef extern from "abpoa.h":
     int abpoa_align_sequence_to_graph(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int qlen, abpoa_res_t *res)
 
     # add an alignment to a graph
-    int abpoa_add_graph_node(abpoa_t *ab, uint8_t base)
-    void abpoa_add_graph_edge(abpoa_t *ab, int from_id, int to_id, int check_edge, uint8_t add_read_id, int read_id, int read_ids_n)
+    int abpoa_add_graph_node(abpoa_graph_t *abg, uint8_t base)
+    void abpoa_add_graph_edge(abpoa_graph_t *abg, int from_id, int to_id, int check_edge, uint8_t add_read_id, int read_id, int read_ids_n)
     int abpoa_add_graph_alignment(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int qlen, int n_cigar, uint64_t *abpoa_cigar, int read_id, int tot_read_n)
-    void abpoa_topological_sort(abpoa_t *ab, abpoa_para_t *abpt)
+    void abpoa_topological_sort(abpoa_graph_t *abg, abpoa_para_t *abpt)
 
     # generate consensus sequence from graph
     # para:

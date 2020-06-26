@@ -142,6 +142,7 @@ Options:
                             - 0: consensus (FASTA format)
                             - 1: MSA (PIR format)
                             - 2: both 0 & 1
+    -A --msa-header         add read ID as header of each sequence in MSA output [False]
     -g --out-pog  FILE      dump final alignment graph to FILE (.pdf/.png) [Null]
 
     -h --help               print this help usage information
