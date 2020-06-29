@@ -74,7 +74,7 @@ void abpoa_post_set_para(abpoa_para_t *abpt) {
 
 void abpoa_free_para(abpoa_para_t *abpt) {
     if (abpt->mat != NULL) free(abpt->mat);
-    if (abpt->out_pog != NULL) free(abpt->out_pog);
+    // if (abpt->out_pog != NULL) free(abpt->out_pog);
     free(abpt);
 }
 
