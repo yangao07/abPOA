@@ -4,6 +4,7 @@
 *.obj
 *.elf
 .idea/*
+build/*
 
 # dot
 abpoa.dot
