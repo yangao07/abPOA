@@ -9,6 +9,7 @@
 #include <fstream>
 #include <string>
 #include <sys/time.h>
+#include <sys/resource.h>
 #include <time.h>
 #include <assert.h>
 #include <exception>
@@ -20,6 +21,24 @@
 using namespace std;
 using Alignment = std::vector<std::pair<std::int32_t, std::int32_t>>;
 
+double get_realtime()
+{
+	struct timeval tp;
+	struct timezone tzp;
+	gettimeofday(&tp, &tzp);
+	return tp.tv_sec*1e6 + tp.tv_usec;
+}
+
+long peakrss(void)
+{
+	struct rusage r;
+	getrusage(RUSAGE_SELF, &r);
+#ifdef __linux__
+	return r.ru_maxrss * 1024;
+#else
+	return r.ru_maxrss;
+#endif
+}
 // read fasta format
 string get_seq(ifstream& in_file)
 {
@@ -124,6 +143,7 @@ int main(int argc, char** argv) {
 
     struct timeval start_time, end_time;
     double runtime = 0; int seq_i; string seq;
+    double realtime = 0, real_start, real_end;
 
     if (for_racon) {
         seq_i = 0;
@@ -135,31 +155,34 @@ int main(int argc, char** argv) {
                 seq = get_seq_for_racon(fp_seq, &start);
                 if(seq == "" || start) break;
 
-                gettimeofday(&start_time, NULL);
+                gettimeofday(&start_time, NULL); real_start = get_realtime();
                 auto alignment = alignment_engine->align(seq, graph);
                 graph->add_alignment(alignment, seq);
-                gettimeofday(&end_time, NULL);
-                runtime += (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_usec - start_time.tv_usec) * 1e-6;
+                gettimeofday(&end_time, NULL); real_end = get_realtime();
+                runtime += (end_time.tv_sec - start_time.tv_sec)*1e6 + end_time.tv_usec - start_time.tv_usec;
+                realtime += (real_end-real_start);
                 seq_i++;
             }
             if (init) init = 0;
             else {
                 // cout << seq_i << endl;
 
-                gettimeofday(&start_time, NULL);
+                gettimeofday(&start_time, NULL); real_start = get_realtime();
                 std::string consensus = graph->generate_consensus();
                 std::cout << ">Consensus_sequence" << endl;
                 std::cout << consensus.c_str() << endl;
-                gettimeofday(&end_time, NULL);
-                runtime += (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_usec - start_time.tv_usec) * 1e-6;
+                gettimeofday(&end_time, NULL); real_end = get_realtime();
+                runtime += (end_time.tv_sec - start_time.tv_sec)*1e6 + end_time.tv_usec - start_time.tv_usec;
+                realtime += (real_end-real_start);
                 if (seq_i == 0 || fp_seq.eof()) break;
             }
             if (start) {
-                gettimeofday(&start_time, NULL);
+                gettimeofday(&start_time, NULL); real_start = get_realtime();
                 auto alignment = alignment_engine->align(seq, graph);
                 graph->add_alignment(alignment, seq);
-                gettimeofday(&end_time, NULL);
-                runtime += (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_usec - start_time.tv_usec) * 1e-6;
+                gettimeofday(&end_time, NULL); real_end = get_realtime();
+                runtime += (end_time.tv_sec - start_time.tv_sec)*1e6 + end_time.tv_usec - start_time.tv_usec;
+                realtime += (real_end-real_start);
                 seq_i = 1;
             }
         }
@@ -172,26 +195,28 @@ int main(int argc, char** argv) {
                 seq = get_seq(fp_seq);
                 if(seq == "") break;
 
-                gettimeofday(&start_time, NULL);
+                gettimeofday(&start_time, NULL); real_start = get_realtime();
                 auto alignment = alignment_engine->align(seq, graph);
                 graph->add_alignment(alignment, seq);
-                gettimeofday(&end_time, NULL);
-                runtime += (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_usec - start_time.tv_usec) * 1e-6;
+                gettimeofday(&end_time, NULL); real_end = get_realtime();
+                runtime += (end_time.tv_sec - start_time.tv_sec)*1e6 + end_time.tv_usec - start_time.tv_usec;
+                realtime += (real_end-real_start);
 
                 if (++seq_i == n_seqs) break;
             }
 
             if (seq_i == 0 || fp_seq.eof()) break;
 
-            gettimeofday(&start_time, NULL);
+            gettimeofday(&start_time, NULL); real_start = get_realtime();
             std::string consensus = graph->generate_consensus();
             std::cout << ">Consensus_sequence" << endl;
             std::cout << consensus.c_str() << endl;
-            gettimeofday(&end_time, NULL);
-            runtime += (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_usec - start_time.tv_usec) * 1e-6;
+            gettimeofday(&end_time, NULL); real_end = get_realtime();
+            runtime += (end_time.tv_sec - start_time.tv_sec)*1e6 + end_time.tv_usec - start_time.tv_usec;
+            realtime += (real_end-real_start);
         }
     }
-    fprintf(stderr, "%.2f ", runtime);
+    fprintf(stderr, "%.2f %.2f %.3f ", runtime*1e-6, realtime*1e-6, peakrss()/1024.0/1024.0);
 
     fp_seq.close();
     return 0;

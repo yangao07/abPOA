@@ -63,8 +63,8 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
     } fprintf(stderr, "\n");	                                                                        \
 }
 
-#define simd_abpoa_print_cg_matrix(score_t) {                                                               \
-    for (j = 0; j <= matrix_row_n-2; ++j) {	                                                                \
+#define simd_abpoa_print_cg_matrix(score_t, beg_index, end_index) {                                                               \
+    for (j = beg_index; j < end_index; ++j) {	                                                                \
         fprintf(stderr, "index: %d\t", j);	                                                                \
         dp_h=DP_H2E2F+j*5*dp_sn; dp_e1=dp_h+dp_sn; dp_e2=dp_e1+dp_sn; dp_f1=dp_e2+dp_sn; dp_f2=dp_f1+dp_sn; \
         score_t *_dp_h=(score_t*)dp_h, *_dp_e1=(score_t*)dp_e1, *_dp_e2=(score_t*)dp_e2;                    \
@@ -112,7 +112,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
     id = abpoa_graph_index_to_node_id(graph, i);                                                            \
     if (best_j < qlen) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, qlen-j, -1, qlen-1);   \
     dp_h = DP_H + i * dp_sn; _dp_h = (score_t*)dp_h;                                                        \
-    while (i > 0 && j > 0) {                                                                                \
+    while (i > beg_index && j > 0) {                                                                                \
         if (abpt->align_mode == ABPOA_LOCAL_MODE && _dp_h[j] == 0) break;                                   \
         _start_i = i, _start_j = j;                                                                         \
         int *pre_index_i = pre_index[i];                                                                    \
@@ -163,7 +163,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
     id = abpoa_graph_index_to_node_id(graph, i);                                                            \
     if (best_j < qlen) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, qlen-j, -1, qlen-1);   \
     SIMDi *dp_h = DP_HEF + dp_sn * i * 3; _dp_h = (score_t*)dp_h;                                           \
-    while (i > 0 && j > 0) {                                                                                \
+    while (i > beg_index && j > 0) {                                                                                \
         if (_dp_h[j] == 0) break;                                                                           \
         _start_i = i, _start_j = j;                                                                         \
         int *pre_index_i = pre_index[i];                                                                    \
@@ -233,7 +233,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
         }                                                                                                   \
         if (hit == 0) err_fatal_simple("Error in ag_backtrack. (3)");                                       \
     }                                                                                                       \
-    if (j > 0) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, j, -1, j-1);                   \
+    if (j > 0) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, j, -1, j-1);                         \
     /* reverse cigar */                                                                                     \
     res->graph_cigar = abpt->rev_cigar ? cigar : abpoa_reverse_cigar(n_c, cigar);                           \
     res->n_cigar = n_c;                                                                                     \
@@ -248,9 +248,9 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
     abpoa_cigar_t *cigar = 0;                                                                               \
     i = best_i, j = best_j, _start_i = best_i, _start_j = best_j;                                           \
     id = abpoa_graph_index_to_node_id(graph, i);                                                            \
-    if (best_j < qlen) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, qlen-j, -1, qlen-1);   \
+    if (best_j < qlen) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, qlen-j, -1, qlen-1);         \
     SIMDi *dp_h = DP_H2E2F + dp_sn * i * 5; _dp_h = (score_t*)dp_h;                                         \
-    while (i > 0 && j > 0) {                                                                                \
+    while (i > beg_index && j > 0) {                                                                        \
         if (abpt->align_mode == ABPOA_LOCAL_MODE && _dp_h[j] == 0) break;                                   \
         _start_i = i, _start_j = j;                                                                         \
         int *pre_index_i = pre_index[i];                                                                    \
@@ -495,54 +495,54 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
 #define simd_abpoa_lg_first_row {                                                                   \
     /* fill the first row */	                                                                    \
     if (abpt->wb >= 0) {                                                                            \
-        graph->node_id_to_max_pos_left[0] = graph->node_id_to_max_pos_right[0] = 0;	                \
-        for (i = 0; i < graph->node[0].out_edge_n; ++i) { /* set min/max rank for next_id */	    \
-            int out_id = graph->node[0].out_id[i];	                                                \
+        graph->node_id_to_max_pos_left[beg_index] = graph->node_id_to_max_pos_right[beg_index] = 0;	\
+        for (i = 0; i < graph->node[beg_node_id].out_edge_n; ++i) { /* set max pos for out_id */    \
+            int out_id = graph->node[beg_node_id].out_id[i];	                                    \
             graph->node_id_to_max_pos_left[out_id] = graph->node_id_to_max_pos_right[out_id] = 1;	\
         }                                                                                           \
-        dp_beg[0] = 0, dp_end[0] = GET_AD_DP_END(graph, w, 0, qlen) / pn;                           \
+        dp_beg[beg_index] = 0, dp_end[beg_index] = GET_AD_DP_END(graph, w, beg_node_id, qlen) / pn; \
     } else {                                                                                        \
-        dp_beg[0] = 0, dp_end[0] = qlen;	                                                        \
+        dp_beg[beg_index] = 0, dp_end[beg_index] = qlen;	                                        \
     }                                                                                               \
-    dp_beg_sn[0] = (dp_beg[0])/pn; dp_end_sn[0] = (dp_end[0])/pn;                                   \
-    dp_beg[0] = dp_beg_sn[0] * pn; dp_end[0] = (dp_end_sn[0]+1)*pn-1;                               \
-    dp_h = DP_H;_end_sn = MIN_OF_TWO(dp_end_sn[0]+1, dp_sn-1);	                                    \
+    dp_beg_sn[beg_index] = (dp_beg[beg_index])/pn; dp_end_sn[beg_index] = (dp_end[beg_index])/pn;   \
+    dp_beg[beg_index] = dp_beg_sn[beg_index] * pn; dp_end[beg_index] = (dp_end_sn[beg_index]+1)*pn-1;\
+    dp_h = DP_H + beg_index * dp_sn;_end_sn = MIN_OF_TWO(dp_end_sn[beg_index]+1, dp_sn-1);	        \
 }
 
 #define simd_abpoa_ag_first_row {                                                                   \
     /* fill the first row */                                                                        \
     if (abpt->wb >= 0) {                                                                            \
-        graph->node_id_to_max_pos_left[0] = graph->node_id_to_max_pos_right[0] = 0;                 \
-        for (i = 0; i < graph->node[0].out_edge_n; ++i) { /* set min/max rank for next_id */        \
-            int out_id = graph->node[0].out_id[i];                                                  \
+        graph->node_id_to_max_pos_left[beg_index] = graph->node_id_to_max_pos_right[beg_index] = 0; \
+        for (i = 0; i < graph->node[beg_node_id].out_edge_n; ++i) { /* set max pos for out_id */    \
+            int out_id = graph->node[beg_node_id].out_id[i];                                        \
             graph->node_id_to_max_pos_left[out_id] = graph->node_id_to_max_pos_right[out_id] = 1;   \
         }                                                                                           \
-        dp_beg[0] = 0, dp_end[0] = GET_AD_DP_END(graph, w, 0, qlen) / pn;                           \
+        dp_beg[beg_index] = 0, dp_end[beg_index] = GET_AD_DP_END(graph, w, beg_node_id, qlen) / pn; \
     } else {                                                                                        \
-        dp_beg[0] = 0, dp_end[0] = qlen;                                                            \
+        dp_beg[beg_index] = 0, dp_end[beg_index] = qlen;                                            \
     }                                                                                               \
-    dp_beg_sn[0] = (dp_beg[0])/pn; dp_end_sn[0] = (dp_end[0])/pn;                                   \
-    dp_beg[0] = dp_beg_sn[0] * pn; dp_end[0] = (dp_end_sn[0]+1)*pn-1;                               \
-    dp_h = DP_HEF; dp_e1 = dp_h + dp_sn; dp_f1 = dp_e1 + dp_sn;                                     \
-    _end_sn = MIN_OF_TWO(dp_end_sn[0]+1, dp_sn-1);                                                  \
+    dp_beg_sn[beg_index] = (dp_beg[beg_index])/pn; dp_end_sn[beg_index] = (dp_end[beg_index])/pn;   \
+    dp_beg[beg_index] = dp_beg_sn[beg_index] * pn; dp_end[beg_index] = (dp_end_sn[beg_index]+1)*pn-1;\
+    dp_h = DP_HEF + beg_index*3*dp_sn; dp_e1 = dp_h + dp_sn; dp_f1 = dp_e1 + dp_sn;                 \
+    _end_sn = MIN_OF_TWO(dp_end_sn[beg_index]+1, dp_sn-1);                                          \
 }
 
 #define simd_abpoa_cg_first_row {                                                                   \
     /* fill the first row */                                                                        \
     if (abpt->wb >= 0) {                                                                            \
-        graph->node_id_to_max_pos_left[0] = graph->node_id_to_max_pos_right[0] = 0;                 \
-        for (i = 0; i < graph->node[0].out_edge_n; ++i) { /* set min/max rank for next_id */        \
-            int out_id = graph->node[0].out_id[i];                                                  \
+        graph->node_id_to_max_pos_left[beg_index] = graph->node_id_to_max_pos_right[beg_index] = 0; \
+        for (i = 0; i < graph->node[beg_node_id].out_edge_n; ++i) { /* set max pos for out_id */    \
+            int out_id = graph->node[beg_node_id].out_id[i];                                        \
             graph->node_id_to_max_pos_left[out_id] = graph->node_id_to_max_pos_right[out_id] = 1;   \
         }                                                                                           \
-        dp_beg[0] = 0, dp_end[0] = GET_AD_DP_END(graph, w, 0, qlen) / pn;                           \
+        dp_beg[beg_index] = 0, dp_end[beg_index] = GET_AD_DP_END(graph, w, beg_node_id, qlen) / pn; \
     } else {                                                                                        \
-        dp_beg[0] = 0, dp_end[0] = qlen;                                                            \
+        dp_beg[beg_index] = 0, dp_end[beg_index] = qlen;                                            \
     }                                                                                               \
-    dp_beg_sn[0] = (dp_beg[0])/pn; dp_end_sn[0] = (dp_end[0])/pn;                                   \
-    dp_beg[0] = dp_beg_sn[0] * pn; dp_end[0] = (dp_end_sn[0]+1)*pn-1;                               \
-    dp_h=DP_H2E2F; dp_e1=dp_h+dp_sn; dp_e2=dp_e1+dp_sn; dp_f1=dp_e2+dp_sn; dp_f2=dp_f1+dp_sn;       \
-    _end_sn = MIN_OF_TWO(dp_end_sn[0]+1, dp_sn-1);                                                  \
+    dp_beg_sn[beg_index] = (dp_beg[beg_index])/pn; dp_end_sn[beg_index] = (dp_end[beg_index])/pn;   \
+    dp_beg[beg_index] = dp_beg_sn[beg_index] * pn; dp_end[beg_index] = (dp_end_sn[beg_index]+1)*pn-1;\
+    dp_h=DP_H2E2F+beg_index*5*dp_sn; dp_e1=dp_h+dp_sn; dp_e2=dp_e1+dp_sn; dp_f1=dp_e2+dp_sn; dp_f2=dp_f1+dp_sn;\
+    _end_sn = MIN_OF_TWO(dp_end_sn[beg_index]+1, dp_sn-1);                                          \
 }
 
 #define simd_abpoa_lg_first_dp(score_t) {                                   \
@@ -552,10 +552,10 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
             dp_h[i] = zero;                                                 \
     } else {                                                                \
         _dp_h = (score_t*)dp_h;	                                            \
-        for (i = dp_end[0]/pn; i <= _end_sn; ++i) {	                        \
+        for (i = dp_end[beg_index]/pn; i <= _end_sn; ++i) {	                \
             dp_h[i] = SIMD_INF_MIN;	                                        \
         }	                                                                \
-        for (i = 0; i <= dp_end[0]; ++i) { /* no SIMD parallelization */	\
+        for (i = 0; i <= dp_end[beg_index]; ++i) { /* no SIMD parallelization */	\
             _dp_h[i] = -gap_ext1 * i;	                                    \
         }	                                                                \
     }                                                                       \
@@ -569,11 +569,11 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
         }                                                                   \
     } else {                                                                \
         _dp_h=(score_t*)dp_h,_dp_e1=(score_t*)dp_e1,_dp_f1=(score_t*)dp_f1; \
-        for (i = dp_end[0]/pn; i <= _end_sn; ++i) {                         \
+        for (i = dp_end[beg_index]/pn; i <= _end_sn; ++i) {                 \
             dp_h[i] = SIMD_INF_MIN; dp_e1[i] = SIMD_INF_MIN;                \
         }                                                                   \
         _dp_h[0] = 0; _dp_e1[0] = -(gap_oe1), _dp_f1[0] = inf_min;          \
-        for (i = 1; i <= dp_end[0]; ++i) { /* no SIMD parallelization */    \
+        for (i = 1; i <= dp_end[beg_index]; ++i) { /* no SIMD parallelization */\
             _dp_f1[i] = -gap_open1 - gap_ext1 * i;                          \
             _dp_h[i] = -gap_open1 - gap_ext1 * i;                           \
         }                                                                   \
@@ -592,7 +592,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
         }                                                                               \
         _dp_h[0] = 0; _dp_e1[0] = -(gap_oe1); _dp_e2[0] = -(gap_oe2);                   \
         _dp_f1[0] = _dp_f2[0] = inf_min;                                                \
-        for (i = 1; i <= dp_end[0]; ++i) { /* no SIMD parallelization */                \
+        for (i = 1; i <= dp_end[beg_index]; ++i) { /* no SIMD parallelization */        \
             _dp_f1[i] = -gap_open1 - gap_ext1 * i;                                      \
             _dp_f2[i] = -gap_open2 - gap_ext2 * i;                                      \
             _dp_h[i] = MAX_OF_TWO(_dp_f1[i], _dp_f2[i]);                                \
@@ -964,8 +964,8 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
 
 #define simd_abpoa_global_get_max(score_t, DP_M, dp_sn) {	            \
     int end, in_id, in_index;	                                        \
-    for (i = 0; i < graph->node[ABPOA_SINK_NODE_ID].in_edge_n; ++i) {   \
-        in_id = graph->node[ABPOA_SINK_NODE_ID].in_id[i];	            \
+    for (i = 0; i < graph->node[end_node_id].in_edge_n; ++i) {   \
+        in_id = graph->node[end_node_id].in_id[i];	            \
         in_index = abpoa_graph_node_id_to_index(graph, in_id);	        \
         dp_h = DP_M + in_index * dp_sn;	                                \
         _dp_h = (score_t*)dp_h;	                                        \
@@ -1007,7 +1007,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
         SIMDSetOne, SIMDMax, SIMDAdd, SIMDSub, SIMDShiftOneN, SIMDSetIfGreater, SIMDGetIfGreater) { \
     simd_abpoa_lg_var(score_t, sp, SIMDSetOne, SIMDShiftOneN, SIMDAdd);                             \
     simd_abpoa_lg_first_dp(score_t);                                                                \
-    for (index_i = 1; index_i < matrix_row_n-1; ++index_i) {                                        \
+    for (index_i = beg_index+1; index_i < end_index; ++index_i) {                                   \
         simd_abpoa_lg_dp(score_t, SIMDShiftOneN, SIMDMax, SIMDAdd, SIMDSub);                        \
         if (abpt->align_mode == ABPOA_LOCAL_MODE) {                                                 \
             simd_abpoa_max_in_row(score_t, SIMDSetIfGreater, SIMDGetIfGreater);                     \
@@ -1036,7 +1036,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
     SIMDSetOne, SIMDMax, SIMDAdd, SIMDSub, SIMDShiftOneN, SIMDSetIfGreater, SIMDGetIfGreater, SIMDSetIfEqual) { \
     simd_abpoa_ag_var(score_t, sp, SIMDSetOne, SIMDShiftOneN, SIMDAdd);                                         \
     simd_abpoa_ag_first_dp(score_t);                                                                            \
-    for (index_i = 1; index_i < matrix_row_n-1; ++index_i) {                                                    \
+    for (index_i = beg_index+1; index_i < end_index; ++index_i) {                                                    \
         simd_abpoa_ag_dp(score_t, SIMDShiftOneN, SIMDMax, SIMDAdd, SIMDSub, SIMDGetIfGreater, SIMDSetIfGreater, SIMDSetIfEqual);\
         if (abpt->align_mode == ABPOA_LOCAL_MODE) {                                                             \
             simd_abpoa_max_in_row(score_t, SIMDSetIfGreater, SIMDGetIfGreater);                                 \
@@ -1063,7 +1063,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
     SIMDSetOne, SIMDMax, SIMDAdd, SIMDSub, SIMDShiftOneN, SIMDSetIfGreater, SIMDGetIfGreater, SIMDSetIfEqual) { \
     simd_abpoa_cg_var(score_t, sp, SIMDSetOne, SIMDShiftOneN, SIMDAdd);                                         \
     simd_abpoa_cg_first_dp(score_t);                                                                            \
-    for (index_i = 1; index_i < matrix_row_n-1; ++index_i) {                                                    \
+    for (index_i = beg_index+1; index_i < end_index; ++index_i) {                                               \
         simd_abpoa_cg_dp(score_t, SIMDShiftOneN, SIMDMax, SIMDAdd, SIMDSub, SIMDGetIfGreater, SIMDSetIfGreater, SIMDSetIfEqual);\
         if (abpt->align_mode == ABPOA_LOCAL_MODE) {                                                             \
             simd_abpoa_max_in_row(score_t, SIMDSetIfGreater, SIMDGetIfGreater);                                 \
@@ -1154,29 +1154,29 @@ void abpoa_init_var(abpoa_para_t *abpt, uint8_t *query, int qlen, SIMDi *qp, SIM
     }
 }
 
-void abpoa_cg_first_dp(abpoa_para_t *abpt, abpoa_graph_t *graph, int *dp_beg, int *dp_end, int *dp_beg_sn, int *dp_end_sn, int pn, int qlen, int w, int dp_sn, SIMDi *DP_H2E2F, SIMDi SIMD_INF_MIN, int32_t inf_min, int gap_open1, int gap_ext1, int gap_open2, int gap_ext2, int gap_oe1, int gap_oe2) {
+void abpoa_cg_first_dp(abpoa_para_t *abpt, abpoa_graph_t *graph, int beg_node_id, int beg_index, int *dp_beg, int *dp_end, int *dp_beg_sn, int *dp_end_sn, int pn, int qlen, int w, int dp_sn, SIMDi *DP_H2E2F, SIMDi SIMD_INF_MIN, int32_t inf_min, int gap_open1, int gap_ext1, int gap_open2, int gap_ext2, int gap_oe1, int gap_oe2) {
     int i, _end_sn;
     if (abpt->wb >= 0) {
-        graph->node_id_to_max_pos_left[0] = graph->node_id_to_max_pos_right[0] = 0;
-        for (i = 0; i < graph->node[0].out_edge_n; ++i) { /* set min/max rank for next_id */
-            int out_id = graph->node[0].out_id[i];
+        graph->node_id_to_max_pos_left[beg_index] = graph->node_id_to_max_pos_right[beg_index] = 0;
+        for (i = 0; i < graph->node[beg_node_id].out_edge_n; ++i) { /* set min/max rank for next_id */
+            int out_id = graph->node[beg_node_id].out_id[i];
             graph->node_id_to_max_pos_left[out_id] = graph->node_id_to_max_pos_right[out_id] = 1;
         }
-        dp_beg[0] = 0, dp_end[0] = w; // GET_AD_DP_BEGIN(graph, w, 0, qlen), dp_end[0] = GET_AD_DP_END(graph, w, 0, qlen);
+        dp_beg[beg_index] = 0, dp_end[beg_index] = w; // GET_AD_DP_BEGIN(graph, w, 0, qlen), dp_end[0] = GET_AD_DP_END(graph, w, 0, qlen);
     } else {
-        dp_beg[0] = 0, dp_end[0] = qlen;
+        dp_beg[beg_index] = 0, dp_end[beg_index] = qlen;
     }
-    dp_beg_sn[0] = (dp_beg[0])/pn; dp_end_sn[0] = (dp_end[0])/pn;
-    dp_beg[0] = dp_beg_sn[0] * pn; dp_end[0] = (dp_end_sn[0]+1)*pn-1;
-    SIMDi *dp_h = DP_H2E2F; SIMDi *dp_e1 = dp_h + dp_sn; SIMDi *dp_e2 = dp_e1 + dp_sn, *dp_f1 = dp_e2 + dp_sn, *dp_f2 = dp_f1 + dp_sn;
-    _end_sn = MIN_OF_TWO(dp_end_sn[0]+1, dp_sn-1);
+    dp_beg_sn[beg_index] = (dp_beg[beg_index])/pn; dp_end_sn[beg_index] = (dp_end[beg_index])/pn;
+    dp_beg[beg_index] = dp_beg_sn[beg_index] * pn; dp_end[beg_index] = (dp_end_sn[beg_index]+1)*pn-1;
+    SIMDi *dp_h = DP_H2E2F + (beg_index * 5) * dp_sn; SIMDi *dp_e1 = dp_h + dp_sn; SIMDi *dp_e2 = dp_e1 + dp_sn, *dp_f1 = dp_e2 + dp_sn, *dp_f2 = dp_f1 + dp_sn;
+    _end_sn = MIN_OF_TWO(dp_end_sn[beg_index]+1, dp_sn-1);
 
     for (i = 0; i <= _end_sn; ++i) {
         dp_h[i] = SIMD_INF_MIN; dp_e1[i] = SIMD_INF_MIN; dp_e2[i] = SIMD_INF_MIN;   
     }                                                                               
     int32_t *_dp_h = (int32_t*)dp_h, *_dp_e1 = (int32_t*)dp_e1, *_dp_e2 = (int32_t*)dp_e2, *_dp_f1 = (int32_t*)dp_f1, *_dp_f2 = (int32_t*)dp_f2;
     _dp_h[0] = 0; _dp_e1[0] = -(gap_oe1); _dp_e2[0] = -(gap_oe2); _dp_f1[0] = _dp_f2[0] = inf_min;
-    for (i = 1; i <= dp_end[0]; ++i) { /* no SIMD parallelization */
+    for (i = 1; i <= dp_end[beg_index]; ++i) { /* no SIMD parallelization */
         _dp_f1[i] = -(gap_open1 + gap_ext1 * i);
         _dp_f2[i] = -(gap_open2 + gap_ext2 * i);
         _dp_h[i] = MAX_OF_TWO(_dp_f1[i], _dp_f2[i]); // -MIN_OF_TWO(gap_open1+gap_ext1*i, gap_open2+gap_ext2*i);
@@ -1210,10 +1210,10 @@ void abpoa_ada_max_i(int max_i, abpoa_graph_t *graph, int node_id) {
     }
 }
 
-void abpoa_global_get_max(abpoa_graph_t *graph, SIMDi *DP_H_HE, int dp_sn, int qlen, int *dp_end, int32_t *best_score, int *best_i, int *best_j) {
+void abpoa_global_get_max(abpoa_graph_t *graph, int end_node_id, SIMDi *DP_H_HE, int dp_sn, int qlen, int *dp_end, int32_t *best_score, int *best_i, int *best_j) {
     int in_id, in_index, i;
-    for (i = 0; i < graph->node[ABPOA_SINK_NODE_ID].in_edge_n; ++i) {
-        in_id = graph->node[ABPOA_SINK_NODE_ID].in_id[i];
+    for (i = 0; i < graph->node[end_node_id].in_edge_n; ++i) {
+        in_id = graph->node[end_node_id].in_id[i];
         in_index = abpoa_graph_node_id_to_index(graph, in_id);
         SIMDi *dp_h = DP_H_HE + in_index * dp_sn;
         int32_t *_dp_h = (int32_t*)dp_h;
@@ -1446,7 +1446,7 @@ void abpoa_cg_backtrack(SIMDi *DP_H2E2F, int **pre_index, int *pre_n, int *dp_be
             hit = 1;
         } 
         if (hit == 0) exit(1);
-        fprintf(stderr, "%d, %d, %d\n", i, j, cur_op);
+        // fprintf(stderr, "%d, %d, %d\n", i, j, cur_op);
     }
     if (j > start_j) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, j-start_j, -1, j-1);
     /* reverse cigar */
@@ -1457,7 +1457,7 @@ void abpoa_cg_backtrack(SIMDi *DP_H2E2F, int **pre_index, int *pre_n, int *dp_be
     /*abpoa_print_cigar(n_c, *graph_cigar, graph);*/
 }
 
-int abpoa_cg_global_align_sequence_to_graph_core(abpoa_t *ab, int qlen, uint8_t *query, abpoa_para_t *abpt, SIMD_para_t sp, abpoa_res_t *res) {
+int abpoa_cg_global_align_sequence_to_graph_core(abpoa_t *ab, int beg_node_id, int end_node_id, int qlen, uint8_t *query, abpoa_para_t *abpt, SIMD_para_t sp, abpoa_res_t *res) {
     int tot_dp_sn = 0;
     abpoa_graph_t *graph = ab->abg; abpoa_simd_matrix_t *abm = ab->abm;
     int matrix_row_n = graph->node_n, matrix_col_n = qlen + 1;
@@ -1510,9 +1510,10 @@ int abpoa_cg_global_align_sequence_to_graph_core(abpoa_t *ab, int qlen, uint8_t 
         for (j = 0; j < pre_n[i]; ++j)
             pre_index[i][j] = abpoa_graph_node_id_to_index(graph, graph->node[node_id].in_id[j]);
     }
-    abpoa_cg_first_dp(abpt, graph, dp_beg, dp_end, dp_beg_sn, dp_end_sn, pn, qlen, w, dp_sn, DP_H2E2F, SIMD_INF_MIN, inf_min, gap_open1, gap_ext1, gap_open2, gap_ext2, gap_oe1, gap_oe2);
+    int beg_index = graph->node_id_to_index[beg_node_id], end_index = graph->node_id_to_index[end_node_id];
+    abpoa_cg_first_dp(abpt, graph, beg_node_id, beg_index, dp_beg, dp_end, dp_beg_sn, dp_end_sn, pn, qlen, w, dp_sn, DP_H2E2F, SIMD_INF_MIN, inf_min, gap_open1, gap_ext1, gap_open2, gap_ext2, gap_oe1, gap_oe2);
 
-    for (index_i = 1; index_i < matrix_row_n-1; ++index_i) {
+    for (index_i = beg_index+1; index_i < end_index; ++index_i) {
         node_id = abpoa_graph_index_to_node_id(graph, index_i);
         SIMDi *q = qp + graph->node[node_id].base * qp_sn;
         dp_h = DP_H2E2F + (index_i*5) * dp_sn; dp_e1 = dp_h + dp_sn; dp_e2 = dp_e1 + dp_sn; dp_f1 = dp_e2 + dp_sn; dp_f2 = dp_f1 + dp_sn; 
@@ -1525,23 +1526,25 @@ int abpoa_cg_global_align_sequence_to_graph_core(abpoa_t *ab, int qlen, uint8_t 
     }
     // printf("dp_sn: %d\n", tot_dp_sn);
     // printf("dp_sn: %d, node_n: %d, seq_n: %d\n", tot_dp_sn, graph->node_n, qlen);   
-    abpoa_global_get_max(graph, DP_H2E2F, 5*dp_sn, qlen, dp_end, &best_score, &best_i, &best_j);
-    simd_abpoa_print_cg_matrix(int32_t); 
-    fprintf(stderr, "best_score: (%d, %d) -> %d\n", best_i, best_j, best_score);        
-    abpoa_cg_backtrack(DP_H2E2F, pre_index, pre_n, dp_beg, dp_end, dp_sn, abpt->m, mat, gap_ext1, gap_ext2, gap_oe1, gap_oe2, 0, 0, best_i, best_j, qlen, graph, abpt, query, res);
+    abpoa_global_get_max(graph, end_node_id, DP_H2E2F, 5*dp_sn, qlen, dp_end, &best_score, &best_i, &best_j);
+    // simd_abpoa_print_cg_matrix(int32_t, beg_index, end_index); 
+    // fprintf(stderr, "best_score: (%d, %d) -> %d\n", best_i, best_j, best_score);        
+    abpoa_cg_backtrack(DP_H2E2F, pre_index, pre_n, dp_beg, dp_end, dp_sn, abpt->m, mat, gap_ext1, gap_ext2, gap_oe1, gap_oe2, beg_index, 0, best_i, best_j, qlen, graph, abpt, query, res);
     for (i = 0; i < graph->node_n; ++i) free(pre_index[i]); free(pre_index); free(pre_n);
     SIMDFree(PRE_MASK); SIMDFree(SUF_MIN); SIMDFree(PRE_MIN);
     SIMDFree(GAP_E1S); SIMDFree(GAP_E2S);
     return best_score;
 }
 
-int simd_abpoa_align_sequence_to_graph(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int qlen, abpoa_res_t *res) {
+// align query to subgraph between beg_node_id and end_node_id (both are excluded)
+// generally: beg/end are the SRC/SINK_node
+int simd_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *query, int qlen, abpoa_res_t *res) {
     if (abpt->simd_flag == 0) err_fatal_simple("No SIMD instruction available.");
 
 #ifdef __DEBUG__
     _simd_p32.inf_min = MAX_OF_TWO(abpt->gap_ext1, abpt->gap_ext2) * 31 +MAX_OF_THREE(INT32_MIN + abpt->mismatch, INT32_MIN + abpt->gap_open1 + abpt->gap_ext1, INT32_MIN + abpt->gap_open2 + abpt->gap_ext2);
     if (simd_abpoa_realloc(ab, qlen, abpt, _simd_p32)) return 0;
-    if (abpt->gap_mode == ABPOA_CONVEX_GAP) return abpoa_cg_global_align_sequence_to_graph_core(ab, qlen, query, abpt, _simd_p32, res);
+    if (abpt->gap_mode == ABPOA_CONVEX_GAP) return abpoa_cg_global_align_sequence_to_graph_core(ab, beg_node_id, end_node_id, qlen, query, abpt, _simd_p32, res);
     else return 0;
 #else
     int max_score, bits, mem_ret=0, gap_ext1 = abpt->gap_ext1, gap_ext2 = abpt->gap_ext2;
@@ -1563,6 +1566,7 @@ int simd_abpoa_align_sequence_to_graph(abpoa_t *ab, abpoa_para_t *abpt, uint8_t 
     }
     if (mem_ret) return 0;
 
+    int beg_index = ab->abg->node_id_to_index[beg_node_id], end_index = ab->abg->node_id_to_index[end_node_id];
     if (bits == 16) {
         if (abpt->gap_mode == ABPOA_LINEAR_GAP) {
             simd_abpoa_lg_align_sequence_to_graph_core(int16_t, ab, query, qlen, abpt, res, _simd_p16,  \
@@ -1588,4 +1592,8 @@ int simd_abpoa_align_sequence_to_graph(abpoa_t *ab, abpoa_para_t *abpt, uint8_t 
     }
 #endif
     return 0;
+}
+
+int simd_abpoa_align_sequence_to_graph(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int qlen, abpoa_res_t *res) {
+    return simd_abpoa_align_sequence_to_subgraph(ab, abpt, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, query, qlen, res);
 }

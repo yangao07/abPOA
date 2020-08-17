@@ -156,14 +156,14 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
     }   \
     /* generate consensus from graph */ \
     if (abpt->out_cons) {   \
-        abpoa_generate_consensus(ab, abpt, tot_n, stdout, NULL, NULL, NULL); \
+        abpoa_generate_consensus(ab, abpt, tot_n, stdout, NULL, NULL, NULL, NULL); \
     }   \
     /* generate multiple sequence alignment */  \
     if (abpt->out_msa) {  \
         if (abpt->out_msa_header) { \
-            abpoa_generate_rc_msa(ab, read_names, tot_n, stdout, NULL, NULL);   \
+            abpoa_generate_rc_msa(ab, abpt, read_names, tot_n, stdout, NULL, NULL);   \
             for (i = 0; i < read_names_m; ++i) free(read_names[i]); free(read_names);   \
-        } else abpoa_generate_rc_msa(ab, NULL, tot_n, stdout, NULL, NULL);   \
+        } else abpoa_generate_rc_msa(ab, abpt, NULL, tot_n, stdout, NULL, NULL);   \
     }   \
     /* generate dot plot */     \
     if (abpt->out_pog) {    \
@@ -225,7 +225,7 @@ int main(int argc, char **argv) {
                       else err_printf("Error: unknown output result mode: %s.\n", optarg);
                       break;
             case 'A': abpt->out_msa_header = 1; break;
-            case 'g': abpt->out_pog= optarg; break;
+            case 'g': abpt->out_pog= strdup(optarg); break;
 
             case 'a': abpt->cons_agrm = atoi(optarg); break;
             case 'd': abpt->is_diploid = 1; break; 

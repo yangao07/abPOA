@@ -18,8 +18,8 @@
 extern "C" {
 #endif
 
-void set_65536_table(void);
-void set_bit_table16(void);
+void set_65536_table(abpoa_para_t *abpt);
+void set_bit_table16(abpoa_para_t *abpt);
 
 abpoa_graph_t *abpoa_init_graph(void);
 void abpoa_free_graph(abpoa_graph_t *graph, abpoa_para_t *abpt);

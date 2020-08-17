@@ -350,7 +350,7 @@ double realtime()
 	struct timeval tp;
 	struct timezone tzp;
 	gettimeofday(&tp, &tzp);
-	return tp.tv_sec + tp.tv_usec * 1e-6;
+	return tp.tv_sec*1e6 + tp.tv_usec; // * 1e-6;
 }
 
 long peakrss(void)

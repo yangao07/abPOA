@@ -83,7 +83,7 @@ int abpoa_dump_pog(abpoa_t *ab, abpoa_para_t *abpt) {
         // out_edge
         for (j = 0; j < abg->node[id].out_edge_n; ++j) {
             out_id = abg->node[id].out_id[j];
-            fprintf(fp, "\t%s -> %s [label=\"%d\", penwidth=%d]\n", node_label[id], node_label[out_id], abg->node[id].out_weight[j], abg->node[id].out_weight[j]);
+            fprintf(fp, "\t%s -> %s [label=\"%d\", penwidth=%d]\n", node_label[id], node_label[out_id], abg->node[id].out_weight[j], abg->node[id].out_weight[j]+1);
         }
         if (abg->node[id].aligned_node_n > 0) {
             fprintf(fp, "\t{rank=same; %s ", node_label[id]);
