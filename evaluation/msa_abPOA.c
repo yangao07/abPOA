@@ -104,6 +104,9 @@ void help() {
         "        -b <int>\n"
         "            default: 10\n"
         "            1st part of extra-band-width, set as negative to disable adaptive banded DP\n"
+        "        -f <float>\n"
+        "            default: 0.01\n"
+        "            2nd part of extra-band-width.\n"
         "        -m <int>\n"
         "            default: 2\n"
         "            score for matching bases\n"
@@ -137,7 +140,7 @@ int main (int argc, char * const argv[]) {
     int n_seqs = 0, *seq_lens; uint8_t **bseqs;
     char opt; char *s;
     int for_racon = 0;
-    while ((opt = getopt(argc, argv, "l:m:x:o:e:s:n:rhb:")) != -1) {
+    while ((opt = getopt(argc, argv, "l:m:x:o:e:s:n:rhb:f:")) != -1) {
         switch (opt) {
             case 'l': abpt->align_mode = atoi(optarg); break;
             case 'm': abpt->match = atoi(optarg); break;
@@ -148,6 +151,7 @@ int main (int argc, char * const argv[]) {
             case 'n': n_seqs = atoi(optarg); break;
             case 'r': for_racon = 1; break;
             case 'b': abpt->wb = atoi(optarg); break;
+            case 'f': abpt->wf = atof(optarg); break;
             case 'h': help(); return 0;
             default: help(); return 1;
         }

@@ -169,7 +169,7 @@ For example:
 ACGTGTACACGTTGAC
 ```
 ### <a name="msa"></a>Row-column multiple sequence alignment
-abPOA cano also output the row-column multiple sequence alignment (RC-MSA) of all the aligned sequences in PIR format
+abPOA can also output the row-column multiple sequence alignment (RC-MSA) of all the aligned sequences in PIR format
 with an additional FASTA header `>Multiple_sequence_alignment`. For example:
 ```
 >Multiple_sequence_alignment

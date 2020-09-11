@@ -1,0 +1,32 @@
+2013-09-01  Takamasa Imai  <imai@cb.k.u-tokyo.ac.jp>
+
+    Release Version 1.0.3.
+
+    * Added function:
+        In order to reproduce the output of PBSIM, "--seed" option was added.
+        This option fixes the seed of the pseudorandom number.
+
+2012-10-04  Yukiteru Ono  <ono.yukiteru@imsbio.co.jp>
+
+    Release Version 1.0.2.
+
+    * Added function:
+        Samples (specified by --sample-fastq) were able to be reused.
+        --sample-profile-id was added and
+        --fastq was renamed to --sample-fastq.
+    * Changed:
+        Multi-FASTA files were able to be acceptable for --sample-fastq.
+    * Changed:
+        The range of coverage depth (specified by --depth) was changed
+        to be from 0 to the maximum integer size, and any float number
+        is acceptable. 
+
+2012-06-29  Yukiteru Ono  <ono.yukiteru@imsbio.co.jp>
+
+    Release Version 1.0.1.
+
+    * Changed:
+        The output format of read positions in the reference sequence
+        was changed to MAF.
+    * Fixed bug:
+        The swapping between --accuracy-max and --accuracy-min was fixed.
