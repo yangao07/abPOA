@@ -195,11 +195,11 @@ The `-` in the sequence stands for alignment gap.
 
 ### <a name="gfa"></a>Full graph information
 abPOA can output the final alignment graph in GFA format.
-Each `S` line represents one node and each `L` line represents one edge between two nodes.
+Each segment line (`S` line) represents one node and each link line (`L` line) represents one edge between two nodes.
 The original input sequences and the generated consensus sequence are described as paths in `P` lines.
 
 abPOA outputs two graph-related numbers in the header line (`H` line):
-`NN` and `NL`, which denote the total number of nodes and edges in the GFA file, respectively.
+`NS` and `NL`, which denote the total number of nodes and edges in the GFA file, respectively.
 
 Please refer to the [GFA specification](https://github.com/GFA-spec/GFA-spec/blob/master/GFA1.md) for more details of the GFA format.
 

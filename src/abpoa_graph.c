@@ -875,7 +875,7 @@ void abpoa_generate_gfa(abpoa_t *ab, abpoa_para_t *abpt, char **read_names, int 
     // output comment and header
     int nl = 0;
     for (i = 2; i < abg->node_n; ++i) nl += abg->node[i].in_edge_n;
-    fprintf(out_fp, "H\tVN:Z:1.0\tNN:i:%d\tNL:i:%d\n", abg->node_n-2, nl - abg->node[ABPOA_SRC_NODE_ID].out_edge_n);
+    fprintf(out_fp, "H\tVN:Z:1.0\tNS:i:%d\tNL:i:%d\n", abg->node_n-2, nl - abg->node[ABPOA_SRC_NODE_ID].out_edge_n);
 
     kdq_int_t *q = kdq_init_int();
 
