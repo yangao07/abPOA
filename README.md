@@ -34,12 +34,14 @@ abpoa ./test_data/seq.fa > cons.fa
 - [General usage](#usage)
   - [To generate consensus sequence](#gen_cons)
   - [To generate row-column multiple sequence alignment](#gen_msa)
+  - [To generate full graph information in GFA format](#gen_gfa)
   - [To generate a plot of the alignment graph](#gen_plot)
 - [Commands and options](#cmd)
 - [Input](#input)
 - [Output](#output)
   - [Consensus sequence](#cons)
   - [Row-column multiple sequence alignment](#msa)
+  - [Full graph information](#gfa)
   - [Plot of alignment graph](#plot)
 - [For development](#dev)
 - [Contact](#contact)
@@ -104,6 +106,16 @@ abpoa seq.fa > cons.fa
 abpoa seq.fa -r2 > cons.out
 ```
 
+### <a name="gen_gfa"></a>To generate full graph information in [GFA](https://github.com/GFA-spec/GFA-spec/blob/master/GFA1.md) format
+
+```
+abpoa seq.fa -r3 > abpoa.gfa
+```
+To include the generated consensus sequence as a path in the GFA file:
+```
+abpoa seq.fa -r4 > abpoa.gfa
+```
+
 ### <a name="gen_plot"></a>To generate a plot of the alignment graph
 
 ```
@@ -113,7 +125,7 @@ See [Plot of alignment graph](#plot) for more details about the plot file.
 
 ## <a name="cmd"></a>Commands and options
 ```
-Usage: abpoa [options] <in.fa/fq> > cons.fa/msa.out
+Usage: abpoa [options] <in.fa/fq> > cons.fa/msa.out/abpoa.gfa
 
 Options:
   Alignment:
@@ -142,12 +154,13 @@ Options:
                             - 0: consensus (FASTA format)
                             - 1: MSA (PIR format)
                             - 2: both 0 & 1
+                            - 3: graph (GFA format)
+                            - 4: graph with consensus path (GFA format)
     -A --msa-header         add read ID as header of each sequence in MSA output [False]
     -g --out-pog  FILE      dump final alignment graph to FILE (.pdf/.png) [Null]
 
     -h --help               print this help usage information
     -v --version            show version number
-
 ```
 
 ## <a name="input"></a>Input
@@ -179,6 +192,16 @@ A-GTGT-CACGTTGAC
 ACGTGTACA--TTGAC
 ```
 The `-` in the sequence stands for alignment gap. 
+
+### <a name="gfa"></a>Full graph information
+abPOA can output the final alignment graph in GFA format.
+Each `S` line represents one node and each `L` line represents one edge between two nodes.
+The original input sequences and the generated consensus sequence are described as paths in `P` lines.
+
+abPOA outputs two graph-related numbers in the header line (`H` line):
+`NN` and `NL`, which denote the total number of nodes and edges in the GFA file, respectively.
+
+Please refer to the [GFA specification](https://github.com/GFA-spec/GFA-spec/blob/master/GFA1.md) for more details of the GFA format.
 
 ### <a name="plot"></a>Plot of alignment graph
 

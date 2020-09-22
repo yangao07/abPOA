@@ -43,8 +43,8 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
     } fprintf(stderr, "\n");                                            \
 }
 
-#define simd_abpoa_print_ag_matrix(score_t) {                   \
-    for (j = 0; j <= matrix_row_n-2; ++j) {	                    \
+#define simd_abpoa_print_ag_matrix(score_t, beg_index, end_index) {                   \
+    for (j = beg_index; j < end_index; ++j) {	                    \
         printf("index: %d\t", j);	                            \
         dp_h = DP_HEF + j * 3 * dp_sn; dp_e1 = dp_h + dp_sn;	\
         _dp_h = (score_t*)dp_h, _dp_e1 = (score_t*)dp_e1;	    \
@@ -75,8 +75,8 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
     }	                                                                                                    \
 }
 
-#define simd_abpoa_print_lg_matrix(score_t) {       \
-    for (j = 0; j <= graph->node_n-2; ++j) {	    \
+#define simd_abpoa_print_lg_matrix(score_t, beg_index, end_index) {       \
+    for (j = beg_index; j < end_index; ++j) {	    \
         printf("index: %d\t", j);	                \
         dp_h = DP_H + j * dp_sn;	                \
         _dp_h = (score_t*)dp_h;	                    \
@@ -1025,7 +1025,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
         }                                                                                           \
     }                                                                                               \
     if (abpt->align_mode == ABPOA_GLOBAL_MODE) simd_abpoa_global_get_max(score_t, DP_H, dp_sn);     \
- /* simd_abpoa_print_lg_matrix(score_t); */                                                         \
+ /* simd_abpoa_print_lg_matrix(score_t, beg_index, end_index); */                                                         \
  /* printf("best_score: (%d, %d) -> %d\n", best_i, best_j, best_score); */                          \
     if (abpt->ret_cigar) simd_abpoa_lg_backtrack(score_t);                                          \
     simd_abpoa_free_var; SIMDFree(GAP_E1S);                                                         \
@@ -1053,7 +1053,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
         }                                                                                                       \
     }                                                                                                           \
     if (abpt->align_mode == ABPOA_GLOBAL_MODE) simd_abpoa_global_get_max(score_t, DP_HEF, 3*dp_sn);             \
- /* simd_abpoa_print_ag_matrix(score_t); printf("best_score: (%d, %d) -> %d\n", best_i, best_j, best_score); */ \
+ /* simd_abpoa_print_ag_matrix(score_t, beg_index, end_index); printf("best_score: (%d, %d) -> %d\n", best_i, best_j, best_score); */ \
     if (abpt->ret_cigar) simd_abpoa_ag_backtrack(score_t);                                                      \
     simd_abpoa_free_var; SIMDFree(GAP_E1S);                                                                     \
 }
@@ -1081,7 +1081,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
     }                                                                                                           \
  /* printf("dp_sn: %d\n", tot_dp_sn); */                                                                        \
     if (abpt->align_mode == ABPOA_GLOBAL_MODE) simd_abpoa_global_get_max(score_t, DP_H2E2F, 5*dp_sn);           \
- /* simd_abpoa_print_cg_matrix(score_t);fprintf(stderr,"best_score: (%d, %d) -> %d\n",best_i,best_j,best_score); */ \
+ /* simd_abpoa_print_cg_matrix(score_t, beg_index, end_index);fprintf(stderr,"best_score: (%d, %d) -> %d\n",best_i,best_j,best_score); */ \
     if (abpt->ret_cigar) simd_abpoa_cg_backtrack(score_t);                                                      \
     simd_abpoa_free_var; SIMDFree(GAP_E1S); SIMDFree(GAP_E2S);                                                  \
 }

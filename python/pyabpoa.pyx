@@ -51,7 +51,7 @@ cdef class msa_aligner:
     cdef seq_nt4_dict, nt4_seq_dict
 
     def __cinit__(self, aln_mode='g', match=2, mismatch=4, gap_open1=4, gap_open2=24, gap_ext1=2, gap_ext2=1,
-            extra_b=10, extra_f=0.01, end_bonus=-1,zdrop=-1, cons_agrm=ABPOA_HB, is_diploid=0, min_freq=0.3):
+            extra_b=10, extra_f=0.01, end_bonus=-1, zdrop=-1, cons_agrm=ABPOA_HB, is_diploid=0, min_freq=0.3):
         self.ab = abpoa_init()
 
         if aln_mode == 'g':
@@ -150,7 +150,7 @@ cdef class msa_aligner:
             if res.n_cigar: free(res.graph_cigar)
 
         if self.abpt.out_cons:
-            abpoa_generate_consensus(self.ab, &self.abpt, tot_n, NULL, &cons_seq, &cons_len, &cons_n)
+            abpoa_generate_consensus(self.ab, &self.abpt, tot_n, NULL, &cons_seq, NULL, &cons_len, &cons_n)
             for i in range(cons_n):
                 _cons_len.append(cons_len[i])
                 cons_seq1 = ''
@@ -164,7 +164,7 @@ cdef class msa_aligner:
                 free(cons_seq)
                 free(cons_len)
         if self.abpt.out_msa:
-            abpoa_generate_rc_msa(self.ab, NULL, seq_n, NULL, &msa_seq, &msa_l)
+            abpoa_generate_rc_msa(self.ab, &self.abpt, NULL, seq_n, NULL, &msa_seq, &msa_l)
             for i in range(seq_n):
                 msa_seq1 = ''
                 for c in msa_seq[i][:msa_l]:

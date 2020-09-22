@@ -81,7 +81,7 @@ int main(void) {
     fprintf(stdout, "=== output to stdout ===\n");
 
     // perform abpoa-msa
-    abpoa_msa(ab, abpt, n_seqs, seq_lens, bseqs, stdout, NULL, NULL, NULL, NULL, NULL, NULL);
+    abpoa_msa(ab, abpt, n_seqs, NULL, seq_lens, bseqs, stdout, NULL, NULL, NULL, NULL, NULL, NULL);
 
     abpoa_reset_graph(ab, abpt, seq_lens[0]); // reset graph before re-use
 
@@ -90,7 +90,7 @@ int main(void) {
     uint8_t **msa_seq; int msa_l=0;
 
     // perform abpoa-msa
-    abpoa_msa(ab, abpt, n_seqs, seq_lens, bseqs, NULL, &cons_seq, &cons_cov, &cons_l, &cons_n, &msa_seq, &msa_l);
+    abpoa_msa(ab, abpt, n_seqs, NULL, seq_lens, bseqs, NULL, &cons_seq, &cons_cov, &cons_l, &cons_n, &msa_seq, &msa_l);
 
     fprintf(stdout, "=== output to variables ===\n");
     for (i = 0; i < cons_n; ++i) {

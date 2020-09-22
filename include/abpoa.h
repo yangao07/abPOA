@@ -31,7 +31,9 @@
 
 #define ABPOA_OUT_CONS 0
 #define ABPOA_OUT_MSA 1
-#define ABPOA_OUT_BOTH 2
+#define ABPOA_OUT_CONS_MSA 2
+#define ABPOA_OUT_GFA 3
+#define ABPOA_OUT_CONS_GFA 4
 
 #define ABPOA_HB 0
 #define ABPOA_HC 1
@@ -61,7 +63,7 @@ typedef struct {
     int zdrop, end_bonus; // from minimap2
     int simd_flag; // available SIMD instruction
     // alignment mode
-    uint8_t ret_cigar:1, rev_cigar:1, out_msa:1, out_msa_header:1, out_cons:1, is_diploid:1, use_read_ids:1;
+    uint8_t ret_cigar:1, rev_cigar:1, out_msa:1, out_msa_header:1, out_cons:1, out_gfa:1, is_diploid:1, use_read_ids:1;
     char *out_pog;
     int align_mode, gap_mode, cons_agrm;
     double min_freq; // for multiploid data
@@ -73,7 +75,7 @@ typedef struct {
 typedef struct {
     int node_id;
     int in_edge_n, in_edge_m, *in_id;
-    int out_edge_n, out_edge_m, *out_id, *out_weight;
+    int out_edge_n, out_edge_m, *out_id, *out_weight, max_out_id;
     uint64_t *read_ids; int read_ids_n; // for multiploid
 
     int aligned_node_n, aligned_node_m, *aligned_node_id; // mismatch; aligned node will have same rank
@@ -86,7 +88,7 @@ typedef struct {
     abpoa_node_t *node; int node_n, node_m, index_rank_m; 
     int *index_to_node_id;
     int *node_id_to_index, *node_id_to_max_pos_left, *node_id_to_max_pos_right, *node_id_to_max_remain, *node_id_to_msa_rank;
-    int cons_l, cons_m; uint8_t *cons_seq;
+    // int cons_l, cons_m; uint8_t *cons_seq;
     uint8_t is_topological_sorted:1, is_called_cons:1, is_set_msa_rank:1;
     double cal_R_time; // for evaluation
 } abpoa_graph_t;
@@ -111,7 +113,7 @@ abpoa_t *abpoa_init(void);
 void abpoa_free(abpoa_t *ab, abpoa_para_t *abpt);
 
 // perform msa
-int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seqs, int *seq_lens, uint8_t **seqs, FILE *out_fp, uint8_t ***cons_seq, int ***cons_cov, int **cons_l, int *cons_n, uint8_t ***msa_seq, int *msa_l);
+int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seqs, char **seq_names, int *seq_lens, uint8_t **seqs, FILE *out_fp, uint8_t ***cons_seq, int ***cons_cov, int **cons_l, int *cons_n, uint8_t ***msa_seq, int *msa_l);
 
 // clean alignment graph
 void abpoa_reset_graph(abpoa_t *ab, abpoa_para_t *abpt, int qlen);
@@ -165,6 +167,8 @@ int abpoa_generate_consensus(abpoa_t *ab, abpoa_para_t *abpt, int seq_n, FILE *o
 
 // generate column multiple sequence alignment from graph
 void abpoa_generate_rc_msa(abpoa_t *ab, abpoa_para_t *abpt, char **read_names, int seq_n, FILE *out_fp, uint8_t ***msa_seq, int *msa_l);
+
+void abpoa_generate_gfa(abpoa_t *ab, abpoa_para_t *abpt, char **read_names, int seq_n, FILE *out_fp);
 
 // generate DOT graph plot and dump graph into PDF/PNG format file
 int abpoa_dump_pog(abpoa_t *ab, abpoa_para_t *abpt);

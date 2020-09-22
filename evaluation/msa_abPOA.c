@@ -195,7 +195,7 @@ int main (int argc, char * const argv[]) {
                 // do msa
                 // printf("%d\n", seq_i);
                 gettimeofday(&start_time, NULL); real_start = get_realtime();
-                abpoa_msa(ab, abpt, seq_i, seq_lens, bseqs, stdout, NULL, NULL, NULL, NULL, NULL);
+                abpoa_msa(ab, abpt, seq_i, NULL, seq_lens, bseqs, stdout, NULL, NULL, NULL, NULL, NULL, NULL);
                 gettimeofday(&end_time, NULL); real_end = get_realtime();
                 runtime = runtime + (end_time.tv_sec - start_time.tv_sec)*1e6 + end_time.tv_usec - start_time.tv_usec;
                 realtime += (real_end - real_start);
@@ -236,7 +236,7 @@ int main (int argc, char * const argv[]) {
             if (seq_i == 0) break;
 
             gettimeofday(&start_time, NULL); real_start = get_realtime();
-            abpoa_msa(ab, abpt, n_seqs, seq_lens, bseqs, stdout, NULL, NULL, NULL, NULL, NULL);
+            abpoa_msa(ab, abpt, n_seqs, NULL, seq_lens, bseqs, stdout, NULL, NULL, NULL, NULL, NULL, NULL);
             gettimeofday(&end_time, NULL); real_end = get_realtime();
             runtime = runtime + (end_time.tv_sec - start_time.tv_sec)*1e6 + end_time.tv_usec - start_time.tv_usec;
             realtime += (real_end - real_start);
