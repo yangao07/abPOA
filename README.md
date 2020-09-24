@@ -139,6 +139,9 @@ Options:
                             - convex (default): min{O1+g*E1, O2+g*E2}
                             - affine (set O2 as 0): O1+g*E1
                             - linear (set O1 as 0): g*E1
+    -s --amb-strand         ambiguous strand mode [False]
+                            for each input sequence, try the reverse complementary sequence if 
+                            alignment score is too low, and keep the strand with a higher score
   Adaptive banded DP:
     -b --extra-b  INT       first adaptive banding parameter [10]
                             set b as < 0 to disable adaptive banded DP

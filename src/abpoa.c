@@ -70,6 +70,9 @@ int abpoa_usage(void)
     err_printf("                            - convex (default): min{O1+g*E1, O2+g*E2}\n");
     err_printf("                            - affine (set O2 as 0): O1+g*E1\n");
     err_printf("                            - linear (set O1 as 0): g*E1\n");
+    err_printf("    -s --amb-strand         ambiguous strand mode [False]\n");
+    err_printf("                            for each input sequence, try the reverse complementary sequence if\n");
+    err_printf("                            alignment score is too low, and keep the strand with a higher score\n");
     err_printf("  Adaptive banded DP:\n");
     err_printf("    -b --extra-b  INT       first adaptive banding parameter [%d]\n", ABPOA_EXTRA_B);
     err_printf("                            set b as < 0 to disable adaptive banded DP\n");
@@ -84,8 +87,6 @@ int abpoa_usage(void)
     err_printf("    -l --in-list            input file is a list of sequence file names [False]\n");
     err_printf("                            each line is one sequence file containing a set of sequences\n");
     err_printf("                            which will be aligned by abPOA to generate a consensus sequence\n");
-    err_printf("    -s --amb-strand         tyr the reverse complementary sequence if alignment score is too low [False]\n");
-    err_printf("                            keep the strand with better alignment score\n");
     err_printf("    -o --output   FILE      ouput to FILE [stdout]\n");
     err_printf("    -r --result   INT       output result mode [%d]\n", ABPOA_OUT_CONS);
     // err_printf("                            %d: consensus (FASTA format), %d: MSA (PIR format), %d: both 0 & 1\n", ABPOA_OUT_CONS, ABPOA_OUT_MSA, ABPOA_OUT_BOTH);
