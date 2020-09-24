@@ -850,7 +850,7 @@ void abpoa_generate_rc_msa(abpoa_t *ab, abpoa_para_t *abpt, char **read_names, u
     if (out_fp) {
         for (i = 0; i < seq_n; ++i) {
             if (read_names != NULL) {
-                if (is_rc[i]) fprintf(out_fp, ">%s_reverse_complementary\n", read_names[i]);
+                if (is_rc[i]) fprintf(out_fp, ">%s_reverse_complement\n", read_names[i]);
                 else fprintf(out_fp, ">%s\n", read_names[i]);
             }
             for (j = 0; j < _msa_l; ++j) fprintf(out_fp, "%c", "ACGTN-"[_msa_seq[i][j]]);
@@ -1168,7 +1168,7 @@ int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_i
     // normal graph, normal graph_cigar
     int i, j; int op, len, node_id, query_id, last_new = 0, last_id = beg_node_id, new_id, aligned_id;
     int w; //
-    if (res.is_rc) { // reverse complementary
+    if (res.is_rc) { // reverse complement
         uint8_t tmp1, tmp2;
         for (i = 0; i < (seq_l+1)/2; ++i) {
             tmp1 = seq[i], tmp2 = seq[seq_l-i-1];

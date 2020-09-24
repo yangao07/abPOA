@@ -1602,7 +1602,7 @@ int simd_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int b
         // forward strand
         simd_abpoa_align_sequence_to_subgraph1(ab, abpt, beg_node_id, end_node_id, query, qlen, res);
         if (res->best_score < qlen * abpt->match * .3333) { // TODO .3333
-            // reverse complementary
+            // reverse complement
             int i;
             uint8_t *rc_query = (uint8_t*)_err_malloc(sizeof(uint8_t) * qlen);
             for (i = 0; i < qlen; ++i) {

@@ -54,7 +54,7 @@ typedef struct {
     int n_cigar; abpoa_cigar_t *graph_cigar;
     int node_s, node_e, query_s, query_e; // for local and  extension mode
     int n_aln_bases, n_matched_bases;
-    int32_t best_score; uint8_t is_rc; // is_rc: best_score is from the reverse complementary sequence
+    int32_t best_score; uint8_t is_rc; // is_rc: best_score is from the reverse complement
 } abpoa_res_t;
 
 typedef struct {

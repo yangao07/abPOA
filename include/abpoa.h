@@ -54,6 +54,7 @@ typedef struct {
     int n_cigar; abpoa_cigar_t *graph_cigar;
     int node_s, node_e, query_s, query_e; // for local and  extension mode
     int n_aln_bases, n_matched_bases;
+    int32_t best_score; uint8_t is_rc; // is_rc: best_score is from the reverse complement
 } abpoa_res_t;
 
 typedef struct {
@@ -64,6 +65,7 @@ typedef struct {
     int simd_flag; // available SIMD instruction
     // alignment mode
     uint8_t ret_cigar:1, rev_cigar:1, out_msa:1, out_msa_header:1, out_cons:1, out_gfa:1, is_diploid:1, use_read_ids:1;
+    uint8_t amb_strand:1;
     char *out_pog;
     int align_mode, gap_mode, cons_agrm;
     double min_freq; // for multiploid data
@@ -88,7 +90,6 @@ typedef struct {
     abpoa_node_t *node; int node_n, node_m, index_rank_m; 
     int *index_to_node_id;
     int *node_id_to_index, *node_id_to_max_pos_left, *node_id_to_max_pos_right, *node_id_to_max_remain, *node_id_to_msa_rank;
-    // int cons_l, cons_m; uint8_t *cons_seq;
     uint8_t is_topological_sorted:1, is_called_cons:1, is_set_msa_rank:1;
     double cal_R_time; // for evaluation
 } abpoa_graph_t;
@@ -146,8 +147,8 @@ int abpoa_add_graph_edge(abpoa_graph_t *abg, int from_id, int to_id, int check_e
 //   n_cigar/abpoa_cigar: from alignment result (abpoa_res_t)
 //   read_id: id of sequence
 //   tot_read_n: total number of sequence
-int abpoa_add_graph_alignment(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int qlen, int n_cigar, abpoa_cigar_t *abpoa_cigar, int read_id, int tot_read_n);
-int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *query, int qlen, int n_cigar, abpoa_cigar_t *abpoa_cigar, int read_id, int tot_read_n);
+int abpoa_add_graph_alignment(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int qlen, abpoa_res_t res, int read_id, int tot_read_n);
+int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *query, int qlen, abpoa_res_t res, int read_id, int tot_read_n);
 
 void abpoa_BFS_set_node_index(abpoa_graph_t *abg, int src_id, int sink_id);
 void abpoa_BFS_set_node_remain(abpoa_graph_t *abg, int src_id, int sink_id);
@@ -166,9 +167,10 @@ void abpoa_topological_sort(abpoa_graph_t *abg, abpoa_para_t *abpt);
 int abpoa_generate_consensus(abpoa_t *ab, abpoa_para_t *abpt, int seq_n, FILE *out_fp, uint8_t ***cons_seq, int ***cons_cov, int **cons_l, int *cons_n);
 
 // generate column multiple sequence alignment from graph
-void abpoa_generate_rc_msa(abpoa_t *ab, abpoa_para_t *abpt, char **read_names, int seq_n, FILE *out_fp, uint8_t ***msa_seq, int *msa_l);
+void abpoa_generate_rc_msa(abpoa_t *ab, abpoa_para_t *abpt, char **read_names, uint8_t *is_rc, int seq_n, FILE *out_fp, uint8_t ***msa_seq, int *msa_l);
 
-void abpoa_generate_gfa(abpoa_t *ab, abpoa_para_t *abpt, char **read_names, int seq_n, FILE *out_fp);
+// generate graph in GFA format to _out_fp_
+void abpoa_generate_gfa(abpoa_t *ab, abpoa_para_t *abpt, char **read_names, uint8_t *is_rc, int seq_n, FILE *out_fp);
 
 // generate DOT graph plot and dump graph into PDF/PNG format file
 int abpoa_dump_pog(abpoa_t *ab, abpoa_para_t *abpt);
