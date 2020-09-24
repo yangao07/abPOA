@@ -821,7 +821,7 @@ void abpoa_set_msa_seq(abpoa_para_t *abpt, abpoa_node_t node, int rank, uint8_t 
     }
 }
 
-void abpoa_generate_rc_msa(abpoa_t *ab, abpoa_para_t *abpt, char **read_names, int seq_n, FILE *out_fp, uint8_t ***msa_seq, int *msa_l) {
+void abpoa_generate_rc_msa(abpoa_t *ab, abpoa_para_t *abpt, char **read_names, uint8_t *is_rc, int seq_n, FILE *out_fp, uint8_t ***msa_seq, int *msa_l) {
     abpoa_graph_t *abg = ab->abg;
     if (abg->node_n <= 2) return;
     abpoa_set_msa_rank(abg, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID);
@@ -849,7 +849,10 @@ void abpoa_generate_rc_msa(abpoa_t *ab, abpoa_para_t *abpt, char **read_names, i
     }
     if (out_fp) {
         for (i = 0; i < seq_n; ++i) {
-            if (read_names != NULL) fprintf(out_fp, ">%s\n", read_names[i]);
+            if (read_names != NULL) {
+                if (is_rc[i]) fprintf(out_fp, ">%s_reverse_complementary\n", read_names[i]);
+                else fprintf(out_fp, ">%s\n", read_names[i]);
+            }
             for (j = 0; j < _msa_l; ++j) fprintf(out_fp, "%c", "ACGTN-"[_msa_seq[i][j]]);
             fprintf(out_fp, "\n");
         }
@@ -861,7 +864,7 @@ void abpoa_generate_rc_msa(abpoa_t *ab, abpoa_para_t *abpt, char **read_names, i
     }
 }
 
-void abpoa_generate_gfa(abpoa_t *ab, abpoa_para_t *abpt, char **read_names, int seq_n, FILE *out_fp) {
+void abpoa_generate_gfa(abpoa_t *ab, abpoa_para_t *abpt, char **read_names, uint8_t *is_rc, int seq_n, FILE *out_fp) {
     abpoa_graph_t *abg = ab->abg;
     if (abg->node_n <= 2) return;
 
@@ -922,10 +925,18 @@ void abpoa_generate_gfa(abpoa_t *ab, abpoa_para_t *abpt, char **read_names, int 
     for (i = 0; i < seq_n; ++i) {
         if (read_names != NULL) fprintf(out_fp, "P\t%s\t", read_names[i]);
         else fprintf(out_fp, "P\t%d\t", i+1);
-        for (j = 0; j < read_path_i[i]; ++j) {
-            fprintf(out_fp, "%d+", read_paths[i][j]);
-            if (j != read_path_i[i]-1) fprintf(out_fp, ",");
-            else fprintf(out_fp, "\t*\n");
+        if (is_rc[i]) {
+            for (j = read_path_i[i]-1; j >= 0; --j) {
+                fprintf(out_fp, "%d-", read_paths[i][j]);
+                if (j != 0) fprintf(out_fp, ",");
+                else fprintf(out_fp, "\t*\n");
+            }
+        } else {
+            for (j = 0; j < read_path_i[i]; ++j) {
+                fprintf(out_fp, "%d+", read_paths[i][j]);
+                if (j != read_path_i[i]-1) fprintf(out_fp, ",");
+                else fprintf(out_fp, "\t*\n");
+            }
         }
     }
     if (abpt->out_cons) {
@@ -1138,8 +1149,9 @@ void abpoa_subgraph_nodes(abpoa_t *ab, int inc_beg, int inc_end, int *exc_beg, i
 
 // for seq-to-graph alignment
 //     generate dot file
-int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *seq, int seq_l, int n_cigar, abpoa_cigar_t *abpoa_cigar, int read_id, int tot_read_n) {
+int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *seq, int seq_l, abpoa_res_t res, int read_id, int tot_read_n) {
     abpoa_graph_t *abg = ab->abg;
+    int n_cigar = res.n_cigar; abpoa_cigar_t *abpoa_cigar = res.graph_cigar;
     int read_ids_n = 1 + ((tot_read_n-1) >> 6);
     uint8_t add_read_id = abpt->use_read_ids, add;
     if (abg->node_n == 2) { // empty graph
@@ -1156,6 +1168,16 @@ int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_i
     // normal graph, normal graph_cigar
     int i, j; int op, len, node_id, query_id, last_new = 0, last_id = beg_node_id, new_id, aligned_id;
     int w; //
+    if (res.is_rc) { // reverse complementary
+        uint8_t tmp1, tmp2;
+        for (i = 0; i < (seq_l+1)/2; ++i) {
+            tmp1 = seq[i], tmp2 = seq[seq_l-i-1];
+            if (tmp1 < 4) seq[seq_l-i-1] = 3 - tmp1;
+            else seq[seq_l-i-1] = 4;
+            if (tmp2 < 4) seq[i] = 3 - tmp2;
+            else seq[i] = 4;
+        }
+    }
     for (i = 0; i < n_cigar; ++i) {
         op = abpoa_cigar[i] & 0xf;
         if (op == ABPOA_CMATCH) {
@@ -1201,8 +1223,8 @@ int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_i
     return 0;
 }
 
-int abpoa_add_graph_alignment(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *seq, int seq_l, int n_cigar, abpoa_cigar_t *abpoa_cigar, int read_id, int tot_read_n) {
-    return abpoa_add_subgraph_alignment(ab, abpt, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, seq, seq_l, n_cigar, abpoa_cigar, read_id, tot_read_n);
+int abpoa_add_graph_alignment(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *seq, int seq_l, abpoa_res_t res, int read_id, int tot_read_n) {
+    return abpoa_add_subgraph_alignment(ab, abpt, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, seq, seq_l, res, read_id, tot_read_n);
 }
 
 // reset allocated memery everytime init the graph

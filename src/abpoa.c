@@ -36,6 +36,7 @@ const struct option abpoa_long_opt [] = {
     { "bouns", 1, NULL, 'e' },
 
     { "in-list", 0, NULL, 'l' },
+    { "amb-strand", 0, NULL, 's' },
     { "output", 1, NULL, 'o' },
     { "msa-header", 0, NULL, 'A' },
     { "result", 1, NULL, 'r' },
@@ -83,6 +84,8 @@ int abpoa_usage(void)
     err_printf("    -l --in-list            input file is a list of sequence file names [False]\n");
     err_printf("                            each line is one sequence file containing a set of sequences\n");
     err_printf("                            which will be aligned by abPOA to generate a consensus sequence\n");
+    err_printf("    -s --amb-strand         tyr the reverse complementary sequence if alignment score is too low [False]\n");
+    err_printf("                            keep the strand with better alignment score\n");
     err_printf("    -o --output   FILE      ouput to FILE [stdout]\n");
     err_printf("    -r --result   INT       output result mode [%d]\n", ABPOA_OUT_CONS);
     // err_printf("                            %d: consensus (FASTA format), %d: MSA (PIR format), %d: both 0 & 1\n", ABPOA_OUT_CONS, ABPOA_OUT_MSA, ABPOA_OUT_BOTH);
@@ -129,12 +132,13 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
     n_seqs = 0,  tot_n = 0, read_id = 0; \
     /* reset graph for a new input file */  \
     abpoa_reset_graph(ab, abpt, bseq_m);    \
-    char **read_names = NULL; int read_names_m = 0;  \
+    char **read_names = NULL; uint8_t *is_rc = NULL; int read_names_m = 0;  \
     while ((n_seqs = abpoa_read_seq(read_seq, CHUNK_READ_N)) != 0) {    \
         if ((abpt->out_msa && abpt->out_msa_header) || abpt->out_gfa) { \
             if (tot_n + n_seqs > read_names_m) {    \
                 read_names_m = tot_n + n_seqs; \
                 read_names = (char**)_err_realloc(read_names, read_names_m * sizeof(char*));    \
+                is_rc = (uint8_t*)_err_realloc(is_rc, read_names_m * sizeof(uint8_t));  \
             }   \
         } \
         for (i = 0; i < n_seqs; ++i) {  \
@@ -149,17 +153,18 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
                 bseq = (uint8_t*)_err_realloc(bseq, bseq_m * sizeof(uint8_t));  \
             }   \
             for (j = 0; j < seq_l; ++j) bseq[j] = nst_nt4_table[(int)(seq1[j])];    \
-            abpoa_res_t res; res.graph_cigar=0; res.n_cigar=0;    \
+            abpoa_res_t res; res.graph_cigar=0; res.n_cigar=0, res.is_rc = 0;    \
             abpoa_align_sequence_to_graph(ab, abpt, bseq, seq_l, &res); \
-            abpoa_add_graph_alignment(ab, abpt, bseq, seq_l, res.n_cigar, res.graph_cigar, read_id++, tot_n+n_seqs);     \
+            abpoa_add_graph_alignment(ab, abpt, bseq, seq_l, res, read_id++, tot_n+n_seqs);     \
+            if ((abpt->out_msa && abpt->out_msa_header) || abpt->out_gfa) is_rc[tot_n+i] = res.is_rc;   \
             if (res.n_cigar) free(res.graph_cigar); \
         }   \
         tot_n += n_seqs;    \
     }   \
     /* generate consensus from graph */ \
     if (abpt->out_gfa) {  \
-        abpoa_generate_gfa(ab, abpt, read_names, tot_n, stdout);    \
-        for (i = 0; i < read_names_m; ++i) free(read_names[i]); free(read_names);   \
+        abpoa_generate_gfa(ab, abpt, read_names, is_rc, tot_n, stdout);    \
+        for (i = 0; i < read_names_m; ++i) free(read_names[i]); free(read_names); free(is_rc);    \
     } else {  \
         if (abpt->out_cons) {   \
             abpoa_generate_consensus(ab, abpt, tot_n, stdout, NULL, NULL, NULL, NULL); \
@@ -167,9 +172,9 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
         /* generate multiple sequence alignment */  \
         if (abpt->out_msa) {  \
             if (abpt->out_msa_header) { \
-                abpoa_generate_rc_msa(ab, abpt, read_names, tot_n, stdout, NULL, NULL);   \
-                for (i = 0; i < read_names_m; ++i) free(read_names[i]); free(read_names);   \
-            } else abpoa_generate_rc_msa(ab, abpt, NULL, tot_n, stdout, NULL, NULL);   \
+                abpoa_generate_rc_msa(ab, abpt, read_names, is_rc, tot_n, stdout, NULL, NULL);   \
+                for (i = 0; i < read_names_m; ++i) free(read_names[i]); free(read_names); free(is_rc);    \
+            } else abpoa_generate_rc_msa(ab, abpt, NULL, NULL, tot_n, stdout, NULL, NULL);   \
         }   \
     }   \
     /* generate dot plot */     \
@@ -204,7 +209,7 @@ int abpoa_main(const char *list_fn, int in_list, abpoa_para_t *abpt){
 
 int main(int argc, char **argv) {
     int c, m, in_list=0; char *s; abpoa_para_t *abpt = abpoa_init_para();
-    while ((c = getopt_long(argc, argv, "m:M:X:O:E:b:f:z:e:lo:Ar:g:a:dq:hv", abpoa_long_opt, NULL)) >= 0) {
+    while ((c = getopt_long(argc, argv, "m:M:X:O:E:b:f:z:e:lso:Ar:g:a:dq:hv", abpoa_long_opt, NULL)) >= 0) {
         switch(c)
         {
             case 'm': m = atoi(optarg);
@@ -222,6 +227,7 @@ int main(int argc, char **argv) {
             case 'e': abpt->end_bonus= atoi(optarg); break;
 
             case 'l': in_list = 1; break;
+            case 's': abpt->amb_strand = 1; break;
             case 'o': if (strcmp(optarg, "-") != 0) {
                           if (freopen(optarg, "wb", stdout) == NULL)
                               err_fatal(__func__, "Failed to open the output file %s", optarg);

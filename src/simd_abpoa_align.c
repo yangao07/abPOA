@@ -1025,7 +1025,8 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
         }                                                                                           \
     }                                                                                               \
     if (abpt->align_mode == ABPOA_GLOBAL_MODE) simd_abpoa_global_get_max(score_t, DP_H, dp_sn);     \
- /* simd_abpoa_print_lg_matrix(score_t, beg_index, end_index); */                                                         \
+    res->best_score = best_score;                                                                   \
+ /* simd_abpoa_print_lg_matrix(score_t, beg_index, end_index); */                                   \
  /* printf("best_score: (%d, %d) -> %d\n", best_i, best_j, best_score); */                          \
     if (abpt->ret_cigar) simd_abpoa_lg_backtrack(score_t);                                          \
     simd_abpoa_free_var; SIMDFree(GAP_E1S);                                                         \
@@ -1053,6 +1054,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
         }                                                                                                       \
     }                                                                                                           \
     if (abpt->align_mode == ABPOA_GLOBAL_MODE) simd_abpoa_global_get_max(score_t, DP_HEF, 3*dp_sn);             \
+    res->best_score = best_score;                                                                               \
  /* simd_abpoa_print_ag_matrix(score_t, beg_index, end_index); printf("best_score: (%d, %d) -> %d\n", best_i, best_j, best_score); */ \
     if (abpt->ret_cigar) simd_abpoa_ag_backtrack(score_t);                                                      \
     simd_abpoa_free_var; SIMDFree(GAP_E1S);                                                                     \
@@ -1081,6 +1083,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
     }                                                                                                           \
  /* printf("dp_sn: %d\n", tot_dp_sn); */                                                                        \
     if (abpt->align_mode == ABPOA_GLOBAL_MODE) simd_abpoa_global_get_max(score_t, DP_H2E2F, 5*dp_sn);           \
+    res->best_score = best_score;                                                                               \
  /* simd_abpoa_print_cg_matrix(score_t, beg_index, end_index);fprintf(stderr,"best_score: (%d, %d) -> %d\n",best_i,best_j,best_score); */ \
     if (abpt->ret_cigar) simd_abpoa_cg_backtrack(score_t);                                                      \
     simd_abpoa_free_var; SIMDFree(GAP_E1S); SIMDFree(GAP_E2S);                                                  \
@@ -1538,7 +1541,7 @@ int abpoa_cg_global_align_sequence_to_graph_core(abpoa_t *ab, int beg_node_id, i
 
 // align query to subgraph between beg_node_id and end_node_id (both are excluded)
 // generally: beg/end are the SRC/SINK_node
-int simd_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *query, int qlen, abpoa_res_t *res) {
+int simd_abpoa_align_sequence_to_subgraph1(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *query, int qlen, abpoa_res_t *res) {
     if (abpt->simd_flag == 0) err_fatal_simple("No SIMD instruction available.");
 
 #ifdef __DEBUG__
@@ -1591,6 +1594,27 @@ int simd_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int b
         }
     }
 #endif
+    return 0;
+}
+
+int simd_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *query, int qlen, abpoa_res_t *res) {
+    if (abpt->amb_strand) { // ambiguous strand
+        // forward strand
+        simd_abpoa_align_sequence_to_subgraph1(ab, abpt, beg_node_id, end_node_id, query, qlen, res);
+        if (res->best_score < qlen * abpt->match * .3333) { // TODO .3333
+            // reverse complementary
+            int i;
+            uint8_t *rc_query = (uint8_t*)_err_malloc(sizeof(uint8_t) * qlen);
+            for (i = 0; i < qlen; ++i) {
+                if (query[qlen-i-1] < 4) rc_query[i] = 3 - query[qlen-i-1];
+                else rc_query[i] = 4;
+            }
+            abpoa_res_t rc_res; rc_res.n_cigar = 0, rc_res.graph_cigar = 0, rc_res.is_rc = 1;
+            simd_abpoa_align_sequence_to_subgraph1(ab, abpt, beg_node_id, end_node_id, rc_query, qlen, &rc_res);
+            if (rc_res.best_score > res->best_score) abpoa_res_copy(res, &rc_res);
+            free(rc_query); if (rc_res.n_cigar) free(rc_res.graph_cigar);
+        }
+    } else simd_abpoa_align_sequence_to_subgraph1(ab, abpt, beg_node_id, end_node_id, query, qlen, res);
     return 0;
 }
 

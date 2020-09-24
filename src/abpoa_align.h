@@ -34,6 +34,18 @@
 extern "C" {
 #endif
 
+static inline void abpoa_res_copy(abpoa_res_t *dest, abpoa_res_t *src) {
+    int i;
+    if (dest->n_cigar) free(dest->graph_cigar);
+    dest->n_cigar = src->n_cigar;
+    dest->graph_cigar = (abpoa_cigar_t*)_err_malloc(src->n_cigar * sizeof(abpoa_cigar_t));
+    for (i = 0; i < src->n_cigar; ++i) dest->graph_cigar[i] = src->graph_cigar[i];
+    dest->node_s = src->node_s, dest->node_e = src->node_e;
+    dest->query_s = src->query_s, dest->query_e = src->query_e;
+    dest->n_aln_bases = src->n_aln_bases, dest->n_matched_bases = src->n_matched_bases;
+    dest->best_score = src->best_score, dest->is_rc = src->is_rc;
+}
+
 static inline abpoa_cigar_t *abpoa_push_cigar(int *n_cigar, int *m_cigar, abpoa_cigar_t *cigar, int op, int len, int32_t node_id, int32_t query_id) {
     abpoa_cigar_t l = len;
     if (*n_cigar == 0 || (op != ABPOA_CINS && op != ABPOA_CSOFT_CLIP && op != ABPOA_CHARD_CLIP) || op != (cigar[(*n_cigar)-1] & 0xf)) {
