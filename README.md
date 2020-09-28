@@ -34,7 +34,7 @@ abpoa ./test_data/seq.fa > cons.fa
 - [General usage](#usage)
   - [To generate consensus sequence](#gen_cons)
   - [To generate row-column multiple sequence alignment](#gen_msa)
-  - [To generate full graph information in GFA format](#gen_gfa)
+  - [To generate graph information in GFA format](#gen_gfa)
   - [To generate a plot of the alignment graph](#gen_plot)
 - [Commands and options](#cmd)
 - [Input](#input)
@@ -106,7 +106,7 @@ abpoa seq.fa > cons.fa
 abpoa seq.fa -r2 > cons.out
 ```
 
-### <a name="gen_gfa"></a>To generate full graph information in [GFA](https://github.com/GFA-spec/GFA-spec/blob/master/GFA1.md) format
+### <a name="gen_gfa"></a>To generate graph information in [GFA](https://github.com/GFA-spec/GFA-spec/blob/master/GFA1.md) format
 
 ```
 abpoa seq.fa -r3 > abpoa.gfa
