@@ -21,8 +21,6 @@ extern "C" {
 void set_65536_table(abpoa_para_t *abpt);
 void set_bit_table16(abpoa_para_t *abpt);
 
-void abpoa_set_msa_rank(abpoa_graph_t *abg, int src_id, int sink_id);
-
 abpoa_graph_t *abpoa_init_graph(void);
 void abpoa_free_graph(abpoa_graph_t *graph, abpoa_para_t *abpt);
 
