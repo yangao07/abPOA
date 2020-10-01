@@ -907,7 +907,7 @@ void abpoa_generate_gfa(abpoa_t *ab, abpoa_para_t *abpt, char **read_names, uint
                     while (num) {
                         tmp = num & -num;
                         read_id = ilog2_64(abpt, tmp);
-                        read_paths[read_id][read_path_i[read_id]++] = cur_id-1;
+                        read_paths[b+read_id][read_path_i[b+read_id]++] = cur_id-1;
                         num ^= tmp;
                     }
                     b += 64;
