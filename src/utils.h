@@ -137,14 +137,14 @@ extern "C" {
 
 #define _realloc(p, m, type) {(m) <<= 1; p = (type*)_err_realloc(p, (m) * sizeof(type));}
 
-#define _sim_insert(v, p, n, m, type) { \
+#define _sim_insert_abpoa_utils(v, p, n, m, type) { \
     if (n == m) {               \
         _realloc(p, m, type)    \
     }                           \
     p[n++] = v;                 \
 }
 
-#define _insert(v, p, n, m, type) { \
+#define _insert_abpoa_utils(v, p, n, m, type) { \
     int _i, _flag=0;                  \
     for (_i = 0; _i < n; ++_i) {       \
         if (p[_i] == v) {            \
@@ -160,7 +160,7 @@ extern "C" {
     }                               \
 }
 
-#define _bin_insert_idx(v, p, n, m, type, flag, k_i) { \
+#define _bin_insert_abpoa_utils_idx(v, p, n, m, type, flag, k_i) { \
     flag=0, k_i=-1;   \
     int _left=0,_right=n-1,_mid;    \
     type _mid_v, _tmp_v;                 \
@@ -187,9 +187,9 @@ extern "C" {
     if (k_i == -1) k_i = n;         \
 }
      
-#define _bin_insert(v, p, n, m, type) { \
+#define _bin_insert_abpoa_utils(v, p, n, m, type) { \
     int _k_i, _flag;    \
-    _bin_insert_idx(v, p, n, m, type, _flag, _k_i)   \
+    _bin_insert_abpoa_utils_idx(v, p, n, m, type, _flag, _k_i)   \
     if (_flag == 0) {                \
         if (n == m) {               \
             _realloc(p, m, type)    \
