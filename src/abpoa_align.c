@@ -122,7 +122,8 @@ int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seqs, char **seq_names, int
         abpoa_generate_gfa(ab, abpt, seq_names, is_rc, n_seqs, out_fp);
     } else {
         if (abpt->out_cons) {
-            abpoa_generate_consensus(ab, abpt, tot_n, out_fp, cons_seq, cons_cov, cons_l, cons_n);
+            if (abpt->out_msa) abpoa_generate_consensus(ab, abpt, tot_n, NULL, cons_seq, cons_cov, cons_l, cons_n);
+            else abpoa_generate_consensus(ab, abpt, tot_n, out_fp, cons_seq, cons_cov, cons_l, cons_n);
             if (ab->abg->is_called_cons == 0)
                 err_printf("Warning: no consensus sequence generated.\n");
         }

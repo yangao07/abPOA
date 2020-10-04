@@ -856,6 +856,28 @@ void abpoa_generate_rc_msa(abpoa_t *ab, abpoa_para_t *abpt, char **read_names, u
             for (j = 0; j < _msa_l; ++j) fprintf(out_fp, "%c", "ACGTN-"[_msa_seq[i][j]]);
             fprintf(out_fp, "\n");
         }
+        if (abpt->out_cons) { // RC-MSA for consensus sequence
+            if (read_names) fprintf(out_fp, ">Consensus_sequence\n");
+
+            i = abg->node[ABPOA_SRC_NODE_ID].max_out_id;
+            int last_rank = 1;
+            while (i != ABPOA_SINK_NODE_ID) {
+                rank = abpoa_graph_node_id_to_msa_rank(abg, i);
+                for (k = 0; k < abg->node[i].aligned_node_n; ++k) {
+                    aligned_id = abg->node[i].aligned_node_id[k];
+                    rank = MAX_OF_TWO(rank, abpoa_graph_node_id_to_msa_rank(abg, aligned_id));
+                }
+                // last_rank -> rank : -
+                for (k = last_rank; k < rank; ++k) fprintf(out_fp, "-");
+                // rank : base
+                fprintf(out_fp, "%c", "ACGTN"[abg->node[i].base]);
+                last_rank = rank+1;
+                i = abg->node[i].max_out_id;
+            }
+            // last_rank -> msa_l:-
+            for (k = last_rank; k <= _msa_l; ++k) fprintf(out_fp, "-");
+            fprintf(out_fp, "\n");
+        }
     }
     if (msa_l) {
         *msa_l = _msa_l; *msa_seq = _msa_seq;

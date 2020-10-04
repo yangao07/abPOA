@@ -168,7 +168,8 @@ int abpoa_read_seq(kseq_t *read_seq, int chunk_read_n)
         for (i = 0; i < read_names_m; ++i) free(read_names[i]); free(read_names); free(is_rc);    \
     } else {  \
         if (abpt->out_cons) {   \
-            abpoa_generate_consensus(ab, abpt, tot_n, stdout, NULL, NULL, NULL, NULL); \
+            if (abpt->out_msa) abpoa_generate_consensus(ab, abpt, tot_n, NULL, NULL, NULL, NULL, NULL); \
+            else abpoa_generate_consensus(ab, abpt, tot_n, stdout, NULL, NULL, NULL, NULL); \
         }   \
         /* generate multiple sequence alignment */  \
         if (abpt->out_msa) {  \
