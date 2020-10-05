@@ -122,14 +122,14 @@ bool Window::generate_consensus(abpoa_para_t* abpt,
         // fprintf(stderr, "%d: %d %d\n", i, positions_[i].first, positions_[i].second); 
         if (positions_[i].first < offset && positions_[i].second > sequences_.front().second - offset) {
             abpoa_align_sequence_to_graph(ab, abpt, bseqs[i], seq_lens[i], &res);
-            abpoa_add_graph_alignment(ab, abpt, bseqs[i], seq_lens[i], res.n_cigar, res.graph_cigar, i, n_seqs);
+            abpoa_add_graph_alignment(ab, abpt, bseqs[i], seq_lens[i], res, i, n_seqs);
         } else {
             int32_t inc_beg = positions_[i].first + 2, inc_end = positions_[i].second + 2;
             abpoa_align_sequence_to_subgraph(ab, abpt, inc_beg, inc_end, bseqs[i], seq_lens[i], &res);
             int32_t exc_beg, exc_end;
             if (i != 0) abpoa_subgraph_nodes(ab, inc_beg, inc_end, &exc_beg, &exc_end);
             else exc_beg = 0, exc_end = 0;
-            abpoa_add_subgraph_alignment(ab, abpt, exc_beg, exc_end, bseqs[i], seq_lens[i], res.n_cigar, res.graph_cigar, i, n_seqs);
+            abpoa_add_subgraph_alignment(ab, abpt, exc_beg, exc_end, bseqs[i], seq_lens[i], res, i, n_seqs);
         }
         if (res.n_cigar) free(res.graph_cigar);
     }

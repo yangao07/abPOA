@@ -11,11 +11,11 @@ git clone https://github.com/yangao07/abPOA.git
 
 # replace SPOA with abPOA:
 cp abPOA -r vendor/
-cp abPOA/evaluation/Racon_abPOA_CMakeLists.txt CMakeLists.txt
-cp abPOA/evaluation/polisher.cpp src/polisher.cpp
-cp abPOA/evaluation/polisher.hpp src/polisher.hpp
-cp abPOA/evaluation/window.cpp src/window.cpp
-cp abPOA/evaluation/window.hpp src/window.hpp
+cp abPOA/evaluation/Racon_abPOA/Racon_abPOA_CMakeLists.txt CMakeLists.txt
+cp abPOA/evaluation/Racon_abPOA/polisher.cpp src/polisher.cpp
+cp abPOA/evaluation/Racon_abPOA/polisher.hpp src/polisher.hpp
+cp abPOA/evaluation/Racon_abPOA/window.cpp src/window.cpp
+cp abPOA/evaluation/Racon_abPOA/window.hpp src/window.hpp
 
 # build Racon-SPOA
 mkdir build
