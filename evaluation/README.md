@@ -8,8 +8,8 @@ git clone https://github.com/yangao07/abPOA.git
 cd abPOA && make # make abPOA library
 
 cd ../
-git clone https://github.com/rvaser/spoa.git
-cd spoa
+wget https://github.com/rvaser/spoa/releases/download/3.4.0/spoa-v3.4.0.tar.gz
+tar -zxvf spoa-v3.4.0.tar.gz && cd spoa-v3.4.0
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
