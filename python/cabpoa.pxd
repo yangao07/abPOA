@@ -43,6 +43,8 @@ cdef extern from "abpoa.h":
         uint64_t *graph_cigar
         int node_s, node_e, query_s, query_e # for local and  extension mode
         int n_aln_bases, n_matched_bases
+        uint32_t best_score
+        uint8_t is_rc
 
 
     ctypedef struct abpoa_para_t:
@@ -56,13 +58,16 @@ cdef extern from "abpoa.h":
         int simd_flag # available SIMD instruction
         # alignment mode
         uint8_t ret_cigar, rev_cigar, out_msa, out_msa_header, out_cons, out_gfa, is_diploid, use_read_ids # mode: 0: global, 1: local, 2: extend
+        uint8_t amb_strand
         char *out_pog
         int align_mode, gap_mode, cons_agrm
         double min_freq # for diploid data
+        char LogTable65536[65536]
+        char bit_table16[65536]
 
 
     ctypedef struct abpoa_node_t:
-        int node_id, index, rank
+        int node_id
         int in_edge_n, in_edge_m
         int *in_id
         int out_edge_n, out_edge_m
@@ -73,7 +78,6 @@ cdef extern from "abpoa.h":
         int read_ids_n # for diploid
         int aligned_node_n, aligned_node_m
         int *aligned_node_id # mismatch; aligned node will have same rank
-        int heaviest_weight, heaviest_out_id # for consensus
         uint8_t base # 0~m
 
     ctypedef struct abpoa_graph_t:
@@ -81,11 +85,12 @@ cdef extern from "abpoa.h":
         int node_n, node_m, index_rank_m
         int *index_to_node_id
         int *node_id_to_index 
-        int *node_id_to_min_rank
-        int *node_id_to_max_rank
+        int *node_id_to_max_pos_left
+        int *node_id_to_max_pos_right
         int *node_id_to_max_remain
         int *node_id_to_msa_rank
         uint8_t is_topological_sorted, is_called_cons, is_set_msa_rank
+        double cal_R_time
 
     ctypedef struct abpoa_simd_matrix_t:
         pass
@@ -105,7 +110,7 @@ cdef extern from "abpoa.h":
     void abpoa_free(abpoa_t *ab, abpoa_para_t *abpt)
 
     # do msa for a set of input sequences
-    int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seqs, char **seq_names, int *seq_lens, uint8_t **seqs, FILE *out_fp, uint8_t ***cons_seq, int **cons_l, int *cons_n, uint8_t ***msa_seq, int *msa_l)
+    int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seqs, char **seq_names, int *seq_lens, uint8_t **seqs, FILE *out_fp, uint8_t ***cons_seq, uint8_t ***cons_cov, int **cons_l, int *cons_n, uint8_t ***msa_seq, int *msa_l)
 
     # clean alignment graph
     void abpoa_reset_graph(abpoa_t *ab, abpoa_para_t *abpt, int qlen)
@@ -115,8 +120,8 @@ cdef extern from "abpoa.h":
 
     # add an alignment to a graph
     int abpoa_add_graph_node(abpoa_graph_t *abg, uint8_t base)
-    void abpoa_add_graph_edge(abpoa_graph_t *abg, int from_id, int to_id, int check_edge, uint8_t add_read_id, int read_id, int read_ids_n)
-    int abpoa_add_graph_alignment(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int qlen, int n_cigar, uint64_t *abpoa_cigar, int read_id, int tot_read_n)
+    void abpoa_add_graph_edge(abpoa_graph_t *abg, int from_id, int to_id, int check_edge, int w, uint8_t add_read_id, int read_id, int read_ids_n)
+    int abpoa_add_graph_alignment(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int qlen, abpoa_res_t res, int read_id, int tot_read_n)
     void abpoa_topological_sort(abpoa_graph_t *abg, abpoa_para_t *abpt)
 
     # generate consensus sequence from graph
@@ -129,10 +134,10 @@ cdef extern from "abpoa.h":
     #     Note: cons_seq and cons_l need to be freed by user.
     int abpoa_generate_consensus(abpoa_t *ab, abpoa_para_t *abpt, int seq_n, FILE *out_fp, uint8_t ***cons_seq, int ***cons_cov, int **cons_l, int *cons_n)
     # generate column multiple sequence alignment from graph
-    void abpoa_generate_rc_msa(abpoa_t *ab, abpoa_para_t *abpt, char **seq_names, int seq_n, FILE *out_fp, uint8_t ***msa_seq, int *msa_l)
+    void abpoa_generate_rc_msa(abpoa_t *ab, abpoa_para_t *abpt, char **seq_names, uint8_t *is_rc, int seq_n, FILE *out_fp, uint8_t ***msa_seq, int *msa_l)
 
     # generate full graph in GFA format
-    void abpoa_generate_gfa(abpoa_t *ab, abpoa_para_t *abpt, char **seq_names, int seq_n, FILE *out_fp)
+    void abpoa_generate_gfa(abpoa_t *ab, abpoa_para_t *abpt, char **seq_names, uint8_t *is_rc, int seq_n, FILE *out_fp)
 
     # generate DOT graph plot 
     int abpoa_dump_pog(abpoa_t *ab, abpoa_para_t *abpt)

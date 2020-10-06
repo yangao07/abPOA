@@ -35,7 +35,7 @@ seqs=[
 #@parameters of msa
 #seqs: multiple sequences
 out_cons=True # generate consensus sequence, set as False to disable
-out_msa=True  # generate row-column multiple sequence alignment, set as False to disable
+out_msa=True # generate row-column multiple sequence alignment, set as False to disable
 out_pog="example.png" # generate plot of alignment graph, set None to disable
 
 # multiple sequence alignment for 'seqs'

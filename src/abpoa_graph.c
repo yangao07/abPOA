@@ -452,7 +452,7 @@ int abpoa_store_consensus(abpoa_graph_t *abg, int src_id, int sink_id, uint8_t *
     (*cons_seq)[0] = (uint8_t*)_err_malloc(sizeof(uint8_t) * abg->node_n);
     int id = abg->node[src_id].max_out_id, i = 0;
     while (id != sink_id) {
-        (*cons_seq)[0][i++] = "ACGTN"[abg->node[id].base];
+        (*cons_seq)[0][i++] = abg->node[id].base;
         id = abg->node[id].max_out_id;
     }
     (*cons_l)[0] = i;
