@@ -104,12 +104,12 @@ int main(void) {
     // perform abpoa-msa
     abpoa_res_t res;
     for (i = 0; i < n_seqs; ++i) {
-        res.graph_cigar = 0, res.n_cigar = 0;
+        res.graph_cigar = 0, res.n_cigar = 0; res.is_rc = 0;
         abpoa_align_sequence_to_subgraph(ab, abpt, beg_end_id[i][0], beg_end_id[i][1], bseqs[i], seq_lens[i], &res);
         int exc_beg, exc_end;
         if (i != 0) abpoa_subgraph_nodes(ab, beg_end_id[i][0], beg_end_id[i][1], &exc_beg, &exc_end);
         else exc_beg = 0, exc_end = 0;
-        abpoa_add_subgraph_alignment(ab, abpt, exc_beg, exc_end, bseqs[i], seq_lens[i], res.n_cigar, res.graph_cigar, i, n_seqs);
+        abpoa_add_subgraph_alignment(ab, abpt, exc_beg, exc_end, bseqs[i], seq_lens[i], res, i, n_seqs);
         if (res.n_cigar) free(res.graph_cigar);
     }
     if (abpt->out_cons) {
@@ -118,7 +118,7 @@ int main(void) {
             fprintf(stderr, "Warning: no consensus sequence generated.\n");
     }
     if (abpt->out_msa) {
-        abpoa_generate_rc_msa(ab, abpt, NULL, n_seqs, stdout, NULL, NULL);
+        abpoa_generate_rc_msa(ab, abpt, NULL, NULL, n_seqs, stdout, NULL, NULL);
     }
     // abpoa_reset_graph(ab, abpt, seq_lens[0]); // reset graph before re-use
 
