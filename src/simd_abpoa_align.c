@@ -1540,8 +1540,9 @@ int abpoa_cg_global_align_sequence_to_graph_core(abpoa_t *ab, int beg_node_id, i
     res->best_score = best_score; 
     abpoa_cg_backtrack(DP_H2E2F, pre_index, pre_n, dp_beg, dp_end, dp_sn, abpt->m, mat, gap_ext1, gap_ext2, gap_oe1, gap_oe2, beg_index, 0, best_i, best_j, qlen, graph, abpt, query, res);
     for (i = 0; i < graph->node_n; ++i) {
-        free(pre_index[i]); free(pre_index);
+        free(pre_index[i]);
     }
+    free(pre_index);
     free(pre_n);
     SIMDFree(PRE_MASK); SIMDFree(SUF_MIN); SIMDFree(PRE_MIN);
     SIMDFree(GAP_E1S); SIMDFree(GAP_E2S);
