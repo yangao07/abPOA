@@ -1611,7 +1611,7 @@ int simd_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int b
     if (abpt->amb_strand) { // ambiguous strand
         // forward strand
         simd_abpoa_align_sequence_to_subgraph1(ab, abpt, beg_node_id, end_node_id, query, qlen, res);
-        if (res->best_score < MIN_OF_TWO(qlen, ab->abg->node_n-2) * abpt->match * .3333 || !res->traceback_ok) { // TODO .3333
+        if (res->best_score < MIN_OF_TWO(qlen, ab->abg->node_n-2) * abpt->match * .3333 || !res->traceback_ok || !res->traceback_ok) { // TODO .3333
             // reverse complement
             int i;
             uint8_t *rc_query = (uint8_t*)_err_malloc(sizeof(uint8_t) * qlen);
