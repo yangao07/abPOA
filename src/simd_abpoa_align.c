@@ -1608,7 +1608,7 @@ int simd_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int b
     if (abpt->amb_strand) { // ambiguous strand
         // forward strand
         simd_abpoa_align_sequence_to_subgraph1(ab, abpt, beg_node_id, end_node_id, query, qlen, res);
-        if (res->best_score < qlen * abpt->match * .3333) { // TODO .3333
+        if (res->best_score < qlen * abpt->match * .3333 || !res->traceback_ok) { // TODO .3333
             // reverse complement
             int i;
             uint8_t *rc_query = (uint8_t*)_err_malloc(sizeof(uint8_t) * qlen);
@@ -1618,7 +1618,7 @@ int simd_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int b
             }
             abpoa_res_t rc_res; rc_res.n_cigar = 0, rc_res.graph_cigar = 0, rc_res.is_rc = 1;
             simd_abpoa_align_sequence_to_subgraph1(ab, abpt, beg_node_id, end_node_id, rc_query, qlen, &rc_res);
-            if (rc_res.best_score > res->best_score) abpoa_res_copy(res, &rc_res);
+            if (rc_res.traceback_ok && (rc_res.best_score > res->best_score || !res->traceback_ok)) abpoa_res_copy(res, &rc_res);
             free(rc_query); if (rc_res.n_cigar) free(rc_res.graph_cigar);
         }
     } else simd_abpoa_align_sequence_to_subgraph1(ab, abpt, beg_node_id, end_node_id, query, qlen, res);
