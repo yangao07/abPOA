@@ -44,7 +44,6 @@ static inline void abpoa_res_copy(abpoa_res_t *dest, abpoa_res_t *src) {
     dest->query_s = src->query_s, dest->query_e = src->query_e;
     dest->n_aln_bases = src->n_aln_bases, dest->n_matched_bases = src->n_matched_bases;
     dest->best_score = src->best_score, dest->is_rc = src->is_rc;
-    dest->traceback_ok = src->traceback_ok;
 }
 
 static inline abpoa_cigar_t *abpoa_push_cigar(int *n_cigar, int *m_cigar, abpoa_cigar_t *cigar, int op, int len, int32_t node_id, int32_t query_id) {
