@@ -1058,6 +1058,8 @@ ADD_READ_ID:
             from_node->read_ids_n = read_ids_n;
         } else if (from_node->read_ids_n < read_ids_n) {
             from_node->read_ids = (uint64_t*)_err_realloc(from_node->read_ids, read_ids_n * sizeof(uint64_t*));
+            int i;
+            for (i = from_node->read_ids_n; i < read_ids_n; ++i) from_node->read_ids[i] = 0;
             from_node->read_ids_n = read_ids_n;
         }
         abpoa_set_read_id(from_node->read_ids, read_id);
