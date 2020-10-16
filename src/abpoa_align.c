@@ -90,10 +90,10 @@ int abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int inc_be
 }
 
 int abpoa_align_sequence_to_graph(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int qlen, abpoa_res_t *res) {
+    fprintf(stderr, "in abpoa_align_sequence_to_graph\n");
     if (ab->abg->node_n <= 2 || qlen <= 0) return -1;
     if (ab->abg->is_topological_sorted == 0) abpoa_topological_sort(ab->abg, abpt);
     simd_abpoa_align_sequence_to_graph(ab, abpt, query, qlen, res);
-    res->traceback_ok = 1;
     return 0;
 }
 
