@@ -55,8 +55,7 @@ typedef struct {
     int node_s, node_e, query_s, query_e; // for local and  extension mode
     int n_aln_bases, n_matched_bases;
     int32_t best_score;
-    uint8_t traceback_ok;
-    uint8_t is_rc:1; // is_rc: best_score is from the reverse complement
+    uint8_t traceback_ok:1, is_rc:1;
 } abpoa_res_t;
 
 typedef struct {

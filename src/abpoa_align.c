@@ -93,6 +93,7 @@ int abpoa_align_sequence_to_graph(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *quer
     if (ab->abg->node_n <= 2 || qlen <= 0) return -1;
     if (ab->abg->is_topological_sorted == 0) abpoa_topological_sort(ab->abg, abpt);
     simd_abpoa_align_sequence_to_graph(ab, abpt, query, qlen, res);
+    res->traceback_ok = 1;
     return 0;
 }
 
