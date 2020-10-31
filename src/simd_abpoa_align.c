@@ -501,7 +501,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
             int out_id = graph->node[beg_node_id].out_id[i];	                                    \
             graph->node_id_to_max_pos_left[out_id] = graph->node_id_to_max_pos_right[out_id] = 1;	\
         }                                                                                           \
-        dp_beg[beg_index] = 0, dp_end[beg_index] = GET_AD_DP_END(graph, w, beg_node_id, qlen) / pn; \
+        dp_beg[beg_index] = 0, dp_end[beg_index] = GET_AD_DP_END(graph, w, beg_node_id, qlen);      \
     } else {                                                                                        \
         dp_beg[beg_index] = 0, dp_end[beg_index] = qlen;	                                        \
     }                                                                                               \
@@ -518,7 +518,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
             int out_id = graph->node[beg_node_id].out_id[i];                                        \
             graph->node_id_to_max_pos_left[out_id] = graph->node_id_to_max_pos_right[out_id] = 1;   \
         }                                                                                           \
-        dp_beg[beg_index] = 0, dp_end[beg_index] = GET_AD_DP_END(graph, w, beg_node_id, qlen) / pn; \
+        dp_beg[beg_index] = 0, dp_end[beg_index] = GET_AD_DP_END(graph, w, beg_node_id, qlen);      \
     } else {                                                                                        \
         dp_beg[beg_index] = 0, dp_end[beg_index] = qlen;                                            \
     }                                                                                               \
@@ -536,7 +536,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
             int out_id = graph->node[beg_node_id].out_id[i];                                        \
             graph->node_id_to_max_pos_left[out_id] = graph->node_id_to_max_pos_right[out_id] = 1;   \
         }                                                                                           \
-        dp_beg[beg_index] = 0, dp_end[beg_index] = GET_AD_DP_END(graph, w, beg_node_id, qlen) / pn; \
+        dp_beg[beg_index] = 0, dp_end[beg_index] = GET_AD_DP_END(graph, w, beg_node_id, qlen);      \
     } else {                                                                                        \
         dp_beg[beg_index] = 0, dp_end[beg_index] = qlen;                                            \
     }                                                                                               \
@@ -1169,7 +1169,7 @@ void abpoa_cg_first_dp(abpoa_para_t *abpt, abpoa_graph_t *graph, int beg_node_id
             int out_id = graph->node[beg_node_id].out_id[i];
             graph->node_id_to_max_pos_left[out_id] = graph->node_id_to_max_pos_right[out_id] = 1;
         }
-        dp_beg[beg_index] = 0, dp_end[beg_index] = w; // GET_AD_DP_BEGIN(graph, w, 0, qlen), dp_end[0] = GET_AD_DP_END(graph, w, 0, qlen);
+        dp_beg[beg_index] = GET_AD_DP_BEGIN(graph, w, 0, qlen), dp_end[beg_index] = GET_AD_DP_END(graph, w, 0, qlen);
     } else {
         dp_beg[beg_index] = 0, dp_end[beg_index] = qlen;
     }
