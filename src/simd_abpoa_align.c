@@ -464,15 +464,21 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
     /* for backtrack */                                                                             \
     dp_beg=abm->dp_beg, dp_end=abm->dp_end, dp_beg_sn=abm->dp_beg_sn, dp_end_sn=abm->dp_end_sn;     \
     /* index of pre-node */                                                                         \
-    pre_index = (int**)_err_malloc(graph->node_n * sizeof(int*));                                   \
-    pre_n = (int*)_err_malloc(graph->node_n * sizeof(int));                                         \
-    for (i = 0; i < graph->node_n; ++i) {                                                           \
-        node_id = abpoa_graph_index_to_node_id(graph, i); /* i: node index */                       \
-        pre_n[i] = graph->node[node_id].in_edge_n;                                                  \
-        pre_index[i] = (int*)_err_malloc(pre_n[i] * sizeof(int));                                   \
-        for (j = 0; j < pre_n[i]; ++j) {                                                            \
-            pre_index[i][j] = abpoa_graph_node_id_to_index(graph, graph->node[node_id].in_id[j]);   \
-        }                                                                                           \
+    if (graph->node_n) {   \
+        pre_index = (int**)_err_malloc(graph->node_n * sizeof(int*));                                   \
+        pre_n = (int*)_err_malloc(graph->node_n * sizeof(int));                                         \
+        for (i = 0; i < graph->node_n; ++i) {                                                           \
+            node_id = abpoa_graph_index_to_node_id(graph, i); /* i: node index */                       \
+            pre_n[i] = graph->node[node_id].in_edge_n;                                                  \
+            if (pre_n[i]) {                                                                             \
+                pre_index[i] = (int*)_err_malloc(pre_n[i] * sizeof(int));                               \
+                for (j = 0; j < pre_n[i]; ++j) {                                                            \
+                    pre_index[i][j] = abpoa_graph_node_id_to_index(graph, graph->node[node_id].in_id[j]);   \
+                }                                                                                           \
+            } else {                                                                                    \
+                pre_index[i] = 0;                                                                       \
+            }                                                                                           \
+        }                                                                                              \
     }                                                                                               \
 }
 
