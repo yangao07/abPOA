@@ -348,8 +348,8 @@ double cputime()
 double realtime()
 {
 	struct timeval tp;
-	struct timezone tzp;
-	gettimeofday(&tp, &tzp);
+	//struct timezone tzp;
+	gettimeofday(&tp, NULL);
 	return tp.tv_sec*1e6 + tp.tv_usec; // * 1e-6;
 }
 
