@@ -1071,7 +1071,7 @@ void abpoa_add_graph_sequence(abpoa_graph_t *abg, uint8_t *seq, int seq_l, int s
     if (seq_l <= 0 || start >= seq_l || end <= start) err_fatal(__func__, "seq_l: %d\tstart: %d\tend: %d.", seq_l, start, end);
     if (start < 0) start = 0; if (end > seq_l) end = seq_l;
     int node_id = abpoa_add_graph_node(abg, seq[start]);
-    abpoa_add_graph_edge(abg, ABPOA_SRC_NODE_ID, node_id, 0, 1, 0, read_id, read_ids_n);
+    abpoa_add_graph_edge(abg, ABPOA_SRC_NODE_ID, node_id, 0, 1, add_read_id, read_id, read_ids_n);
     int i; 
     for (i = start+1; i < end; ++i) {
         node_id = abpoa_add_graph_node(abg, seq[i]);
