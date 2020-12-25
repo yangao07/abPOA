@@ -8,15 +8,17 @@
 [![Build Status](https://img.shields.io/travis/yangao07/abPOA/master.svg?label=Master)](https://travis-ci.org/yangao07/abPOA)
 [![License](https://img.shields.io/badge/License-MIT-black.svg)](https://github.com/yangao07/abPOA/blob/master/LICENSE)
 <!-- [![PyPI](https://img.shields.io/pypi/v/pyabpoa.svg?style=flat)](https://pypi.python.org/pypi/pyabpoa) -->
-## Updates (v1.0.5)
+## Updates (v1.0.6)
 
-- Fixed a bug in backtrack
+- Fixed a bug in read id assignment
+- Fixed a bug in DP of first row
+- Archived evaluation datasets and scripts
 
 ## Getting started
 Download the [latest release](https://github.com/yangao07/abPOA/releases):
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.0.5/abPOA-v1.0.5.tar.gz
-tar -zxvf abPOA-v1.0.5.tar.gz && cd abPOA-v1.0.5
+wget https://github.com/yangao07/abPOA/releases/download/v1.0.6/abPOA-v1.0.6.tar.gz
+tar -zxvf abPOA-v1.0.6.tar.gz && cd abPOA-v1.0.6
 ```
 Make from source and run with test data:
 ```
@@ -47,6 +49,7 @@ abpoa ./test_data/seq.fa > cons.fa
   - [Full graph information](#gfa)
   - [Plot of alignment graph](#plot)
 - [For development](#dev)
+- [Evaluation datasets](#eval)
 - [Contact](#contact)
 
 ## <a name="introduction"></a>Introduction
@@ -78,9 +81,9 @@ You can also build abPOA from source files.
 Make sure you have gcc (>=6.4.0) and zlib installed before compiling.
 It is recommended to download the [latest release](https://github.com/yangao07/abPOA/releases).
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.0.5/abPOA-v1.0.5.tar.gz
-tar -zxvf abPOA-v1.0.5.tar.gz
-cd abPOA-v1.0.5; make
+wget https://github.com/yangao07/abPOA/releases/download/v1.0.6/abPOA-v1.0.6.tar.gz
+tar -zxvf abPOA-v1.0.6.tar.gz
+cd abPOA-v1.0.6; make
 ```
 Or, you can use `git clone` command to download the source code.
 This gives you the latest version of abPOA, which might be still under development.
@@ -92,8 +95,8 @@ cd abPOA; make
 ### <a name="binary"></a>Pre-built binary executable file for Linux/Unix 
 If you meet any compiling issue, please try the pre-built binary file:
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.0.5/abPOA-v1.0.5_x64-linux.tar.gz
-tar -zxvf abPOA-v1.0.5_x64-linux.tar.gz
+wget https://github.com/yangao07/abPOA/releases/download/v1.0.6/abPOA-v1.0.6_x64-linux.tar.gz
+tar -zxvf abPOA-v1.0.6_x64-linux.tar.gz
 ```
 
 ## <a name="usage"></a>General usage
@@ -227,10 +230,13 @@ abPOA is not only a stand-alone tool for MSA and consensus calling, it can also 
 
 abPOA also provides Python bindings to all the primary C APIs. Refer to [python/README.md](python/README.md) for more details.
 
-## <a name="contact"></a>Contact
-Yan Gao yangao07@hit.edu.cn
+## <a name="eval"></a>Evaluation datasets
+The evaluation datasets and scripts used in [abPOA paper](https://dx.doi.org/10.1093/bioinformatics/btaa963) can be found in [abPOA-v1.0.5](https://github.com/yangao07/abPOA/releases/tag/v1.0.5).
 
-Yi Xing XINGYI@email.chop.edu
+## <a name="contact"></a>Contact
+Yan Gao gaoy286@mail.sysu.edu.cn
+
+Yi Xing xingyi@email.chop.edu
 
 Yadong Wang ydwang@hit.edu.cn
 

@@ -123,7 +123,7 @@ int main(void) {
     // abpoa_reset_graph(ab, abpt, seq_lens[0]); // reset graph before re-use
 
     /* generate DOT partial order graph plot */
-    abpt->out_pog = strdup("example.pdf"); // dump parital order graph to file
+    abpt->out_pog = strdup("sub_example.png"); // dump parital order graph to file
     if (abpt->out_pog != NULL) abpoa_dump_pog(ab, abpt);
     for (i = 0; i < n_seqs; ++i) free(bseqs[i]); free(bseqs); free(seq_lens);
     abpoa_free(ab, abpt); abpoa_free_para(abpt);
