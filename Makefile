@@ -1,4 +1,4 @@
-CC          = gcc
+#CC          = gcc
 EXTRA_FLAGS = -Wno-unused-function -Wno-misleading-indentation
 CFLAGS      = -Wall -O3 $(EXTRA_FLAGS)
 
