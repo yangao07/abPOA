@@ -10,7 +10,7 @@
 #include "abpoa.h"
 
 // AaCcGgTtNn ==> 0,1,2,3,4
-unsigned char nst_nt4_table[256] = {
+unsigned char _nt4_table[256] = {
 	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
 	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
 	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 5 /*'-'*/, 4, 4,
@@ -74,7 +74,7 @@ int main(void) {
         seq_lens[i] = strlen(seqs[i]);
         bseqs[i] = (uint8_t*)malloc(sizeof(uint8_t) * seq_lens[i]);
         for (j = 0; j < seq_lens[i]; ++j)
-            bseqs[i][j] = nst_nt4_table[(int)seqs[i][j]];
+            bseqs[i][j] = _nt4_table[(int)seqs[i][j]];
     }
 
     // output to stdout

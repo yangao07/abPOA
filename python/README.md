@@ -13,7 +13,7 @@ pip install pyabpoa
 ```
 
 ### Install pyabpoa from source
-Alternatively, you can install pyabpoa from source:
+Alternatively, you can install pyabpoa from source (cython is required):
 ```
 git clone https://github.com/yangao07/abPOA.git
 cd abPOA
@@ -31,7 +31,7 @@ seqs=[
 'CCCGGAAGA',
 'CCGAAGA'
 ]
-res=a.msa(seqs, out_cons=True, out_msa=True, out_pog='pog.png') # perform multiple sequence alignment 
+res=a.msa(seqs, out_cons=True, out_msa=True, out_pog='pog.png', incr_fn='') # perform multiple sequence alignment 
                                                                 # generate a figure of alignment graph to pog.png
 
 for seq in res.cons_seq:
@@ -67,13 +67,14 @@ This constructs a multiple sequence alignment handler of pyabpoa, it accepts the
 
 The `msa_aligner` handler provides one method which performs multiple sequence alignment and takes four arguments:
 ```
-pyabpoa.msa_aligner.msa(seqs, out_cons, out_msa, out_pog=None)
+pyabpoa.msa_aligner.msa(seqs, out_cons, out_msa, out_pog='', incr_fn='')
 ```
 
 * **seqs**: a list variable containing a set of input sequences; **positional**
 * **out_cons**: a bool variable to ask pyabpoa to generate consensus sequence; **positional**
 * **out_msa**: a bool variable to ask pyabpoa to generate RC-MSA; **positional**
-* **out_pog**: name of a file (`.png` or `.pdf`) to store the plot of the final alignment graph; **optional**, default: **None**
+* **out_pog**: name of a file (`.png` or `.pdf`) to store the plot of the final alignment graph; **optional**, default: **''**
+* **incr_fn**: name of an existing graph (GFA) or MSA (FASTA) file, incrementally align sequence to this graph/MSA; **optional**, default: **''**
 
 ### Class pyabpoa.msa_result
 ```

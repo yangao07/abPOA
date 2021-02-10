@@ -31,9 +31,9 @@ LIB_DIR = $(OUT_PRE_DIR)/lib
 INC_DIR = ./include
 SRC_DIR = ./src
 
-SOURCE = $(SRC_DIR)/abpoa.c $(SRC_DIR)/abpoa_align.c $(SRC_DIR)/abpoa_graph.c $(SRC_DIR)/simd_abpoa_align.c $(SRC_DIR)/simd_check.c $(SRC_DIR)/utils.c $(SRC_DIR)/abpoa_plot.c
-HEADER = $(SRC_DIR)/abpoa.h $(SRC_DIR)/abpoa_align.h $(SRC_DIR)/abpoa_graph.h $(SRC_DIR)/seq.h $(SRC_DIR)/kdq.h $(SRC_DIR)/kseq.h $(SRC_DIR)/simd_instruction.h $(SRC_DIR)/simd_abpoa_align.h $(SRC_DIR)/utils.h
-OBJS   = $(SRC_DIR)/abpoa_align.o $(SRC_DIR)/abpoa_graph.o $(SRC_DIR)/simd_abpoa_align.o $(SRC_DIR)/simd_check.o $(SRC_DIR)/utils.o $(SRC_DIR)/abpoa_plot.o
+SOURCE = $(SRC_DIR)/abpoa_align.c $(SRC_DIR)/abpoa.c $(SRC_DIR)/abpoa_graph.c $(SRC_DIR)/abpoa_plot.c $(SRC_DIR)/abpoa_seq.c $(SRC_DIR)/kalloc.c $(SRC_DIR)/kstring.c  $(SRC_DIR)/simd_abpoa_align.c $(SRC_DIR)/simd_check.c $(SRC_DIR)/utils.c
+HEADER = $(SRC_DIR)/abpoa_align.h $(SRC_DIR)/abpoa_graph.h $(SRC_DIR)/abpoa.h $(SRC_DIR)/abpoa_seq.h $(SRC_DIR)/kalloc.h $(SRC_DIR)/kdq.h $(SRC_DIR)/khash.h $(SRC_DIR)/kseq.h $(SRC_DIR)/kstring.h $(SRC_DIR)/simd_instruction.h $(SRC_DIR)/simd_abpoa_align.h $(SRC_DIR)/utils.h
+OBJS   = $(SRC_DIR)/abpoa_align.o $(SRC_DIR)/abpoa_graph.o $(SRC_DIR)/abpoa_plot.o $(SRC_DIR)/abpoa_seq.o $(SRC_DIR)/kalloc.o $(SRC_DIR)/kstring.o $(SRC_DIR)/simd_abpoa_align.o $(SRC_DIR)/simd_check.o $(SRC_DIR)/utils.o
 
 # SIMD label
 SIMD_CHECK_D = -D __CHECK_SIMD_MAIN__
@@ -91,7 +91,7 @@ $(ABPOALIB):$(OBJS)
 	$(AR) -csr $@ $(OBJS)
 
 $(SRC_DIR)/abpoa.o:$(SRC_DIR)/abpoa.c $(SRC_DIR)/abpoa.h $(SRC_DIR)/abpoa_graph.h $(SRC_DIR)/abpoa_align.h \
-                   $(SRC_DIR)/seq.h $(SRC_DIR)/utils.h $(SRC_DIR)/simd_instruction.h
+                   $(SRC_DIR)/abpoa_seq.h $(SRC_DIR)/utils.h $(SRC_DIR)/simd_instruction.h
 	$(CC) -c $(CFLAGS) $(SIMD_FLAG) $< -o $@
 
 $(SRC_DIR)/simd_check.o:$(SRC_DIR)/simd_check.c $(SRC_DIR)/simd_instruction.h

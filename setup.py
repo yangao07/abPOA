@@ -1,3 +1,5 @@
+import os, platform, sys
+
 try:
     from setuptools import setup, Extension
 except ImportError:
@@ -9,12 +11,13 @@ cmdclass = {}
 try:
     from Cython.Build import build_ext
 except ImportError: # without Cython
-    module_src = 'python/pyabpoa.c'
+    #module_src = 'python/pyabpoa.c'
+    sys.stderr.write('Error: \'cython\' is required to install pyabpoa\n')
+    sys.exit(0)
 else: # with Cython
     module_src = 'python/pyabpoa.pyx'
     cmdclass['build_ext'] = build_ext
 
-import os, platform, sys
 
 sys.path.append('python')
 
@@ -36,7 +39,7 @@ else:
 src_dir='src/'
 inc_dir='src/'
 
-src=[module_src, src_dir+'abpoa_align.c', src_dir+'abpoa_graph.c', src_dir+'simd_abpoa_align.c', src_dir+'utils.c', src_dir+'simd_check.c', src_dir+'abpoa_plot.c']
+src=[module_src, src_dir+'abpoa_align.c', src_dir+'abpoa_graph.c', src_dir+'abpoa_plot.c', src_dir+'abpoa_seq.c', src_dir+'kalloc.c', src_dir+'kstring.c', src_dir+'simd_abpoa_align.c', src_dir+'simd_check.c', src_dir+'utils.c']
 
 long_description = open('python/README.md').read()
 
@@ -46,11 +49,11 @@ setup(
     description = "pyabpoa: SIMD-based partial order alignment using adaptive band",
     long_description = long_description,
     long_description_content_type="text/markdown",
-    version = "1.0.6",
+    version = "1.1.0",
     url = "https://github.com/yangao07/abPOA",
     author = "Yan Gao",
     author_email = "gaoy286@mail.sysu.edu.cn",
-    license = "GLP",
+    license = "MIT",
     keywords = "multiple-sequence-alignment  partial-order-graph-alignment",
     # Build instructions
     ext_modules = [Extension("pyabpoa",
