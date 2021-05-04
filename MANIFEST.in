@@ -1,8 +1,12 @@
 include src/abpoa.h
 include src/abpoa_align.h
 include src/abpoa_graph.h
+include src/abpoa_seq.h
 include src/kdq.h
+include src/khash.h
 include src/kseq.h
+include src/kstring.h
+include src/kalloc.h
 include src/simd_abpoa_align.h
 include src/simd_instruction.h
 include src/utils.h

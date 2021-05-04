@@ -121,6 +121,6 @@ int main(void) {
     if (abpt->out_pog != NULL) abpoa_dump_pog(ab, abpt);
 
     for (i = 0; i < n_seqs; ++i) free(bseqs[i]); free(bseqs); free(seq_lens);
-    abpoa_free(ab, abpt); abpoa_free_para(abpt); 
+    abpoa_free(ab); abpoa_free_para(abpt); 
     return 0;
 }
