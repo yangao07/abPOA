@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include "src/abpoa.h"
+#include "include/abpoa.h"
 
 // AaCcGgTtNn ==> 0,1,2,3,4
 unsigned char _nt4_table[256] = {
@@ -30,7 +30,7 @@ unsigned char _nt4_table[256] = {
 };
 
 int main(void) {
-    int i, j, n_seqs = 4;
+    int i, j, n_seqs = 6;
     char seqs[100][1000] = {
          // 0       1         2         3
          // 23456789012345678901234567890123               
@@ -47,7 +47,7 @@ int main(void) {
         };
 
     int beg_end_id[100][2] = {
-        {0, 0}, 
+        {0, 1}, 
         {2, 33},
         {6, 23}, 
         {5, 30}, 
@@ -73,7 +73,7 @@ int main(void) {
     abpoa_para_t *abpt = abpoa_init_para();
 
     // alignment parameters
-    // abpt->align_mode = 0; // 0:global alignment, 1:extension
+    // abpt->align_mode = 0; // 0:global 1:local, 2:extension
     // abpt->match = 2;      // match score
     // abpt->mismatch = 4;   // mismatch penalty
     // abpt->gap_mode = ABPOA_CONVEX_GAP; // gap penalty mode
@@ -106,11 +106,12 @@ int main(void) {
     abpoa_res_t res;
     for (i = 0; i < n_seqs; ++i) {
         res.graph_cigar = 0, res.n_cigar = 0; res.is_rc = 0;
-        abpoa_align_sequence_to_subgraph(ab, abpt, beg_end_id[i][0], beg_end_id[i][1], bseqs[i], seq_lens[i], &res);
         int exc_beg, exc_end;
-        if (i != 0) abpoa_subgraph_nodes(ab, beg_end_id[i][0], beg_end_id[i][1], &exc_beg, &exc_end);
-        else exc_beg = 0, exc_end = 0;
-        abpoa_add_subgraph_alignment(ab, abpt, exc_beg, exc_end, bseqs[i], seq_lens[i], res, i, n_seqs);
+        if (i != 0) abpoa_subgraph_nodes(ab, abpt, beg_end_id[i][0], beg_end_id[i][1], &exc_beg, &exc_end);
+        else exc_beg = 0, exc_end = 1;
+        fprintf(stderr, "i: %d, beg: %d, end: %d\n", i, exc_beg, exc_end);
+        abpoa_align_sequence_to_subgraph(ab, abpt, exc_beg, exc_end, bseqs[i], seq_lens[i], &res);
+        abpoa_add_subgraph_alignment(ab, abpt, exc_beg, exc_end, bseqs[i], seq_lens[i], NULL, res, i, n_seqs, 0);
         if (res.n_cigar) free(res.graph_cigar);
     }
     if (abpt->out_cons) {

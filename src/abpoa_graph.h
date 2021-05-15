@@ -18,8 +18,8 @@
 extern "C" {
 #endif
 
-void set_65536_table(abpoa_para_t *abpt);
-void set_bit_table16(abpoa_para_t *abpt);
+void set_65536_table(void);
+void set_bit_table16(void);
 
 int abpoa_get_aligned_id(abpoa_graph_t *abg, int node_id, uint8_t base);
 void abpoa_add_graph_aligned_node(abpoa_graph_t *abg, int node_id, int aligned_id);

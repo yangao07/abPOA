@@ -42,6 +42,11 @@
 #include <time.h>
 #include "utils.h"
 
+#include "ksort.h"
+#define pair64_lt(a, b) ((a).x < (b).x || ((a).x == (b).x && (a).y < (b).y))
+KSORT_INIT(128, pair64_t, pair64_lt)
+KSORT_INIT(64,  uint64_t, ks_lt_generic)
+
 #include "kseq.h"
 KSEQ_INIT2(, gzFile, err_gzread)
 
@@ -176,6 +181,7 @@ int err_func_printf(const char *func, const char *format, ...)
 	int done;
 	va_start(arg, format);
 	done = vfprintf(stderr, format, arg);
+    fprintf(stderr, "\n");
 	int saveErrno = errno;
 	va_end(arg);
 	if (done < 0) _err_fatal_simple("vfprintf(stderr)", strerror(saveErrno));
@@ -350,7 +356,7 @@ double realtime()
 	struct timeval tp;
 	struct timezone tzp;
 	gettimeofday(&tp, &tzp);
-	return tp.tv_sec*1e6 + tp.tv_usec; // * 1e-6;
+	return tp.tv_sec + tp.tv_usec * 1e-6;
 }
 
 long peakrss(void)
@@ -382,7 +388,7 @@ void print_format_time(FILE *out)
     time(&rawtime);
     info = localtime( &rawtime );
     strftime(buffer,80,"%m-%d-%Y %X", info);
-    fprintf(out, "=== %s === ", buffer);
+    fprintf(out, "== %s == ", buffer);
 }
 
 int err_func_format_printf(const char *func, const char *format, ...)
@@ -393,6 +399,7 @@ int err_func_format_printf(const char *func, const char *format, ...)
 	int done;
 	va_start(arg, format);
 	done = vfprintf(stderr, format, arg);
+    fprintf(stderr, "\n");
 	int saveErrno = errno;
 	va_end(arg);
 	if (done < 0) _err_fatal_simple("vfprintf(stderr)", strerror(saveErrno));

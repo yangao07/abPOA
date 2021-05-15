@@ -12,14 +12,14 @@ KHASH_MAP_INIT_STR(str, uint32_t)
 
 // AaCcGgTtNn ==> 0,1,2,3,4
 unsigned char nt4_table[256] = {
-	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+	0, 1, 2, 3,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
 	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
 	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 5 /*'-'*/, 4, 4,
 	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
 	4, 0, 4, 1,  4, 4, 4, 2,  4, 4, 4, 4,  4, 4, 4, 4, 
-	4, 4, 4, 4,  3, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+	4, 4, 4, 4,  3, 3, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
 	4, 0, 4, 1,  4, 4, 4, 2,  4, 4, 4, 4,  4, 4, 4, 4, 
-	4, 4, 4, 4,  3, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+	4, 4, 4, 4,  3, 3, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
 	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
 	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
 	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
@@ -32,14 +32,14 @@ unsigned char nt4_table[256] = {
 
 // AaCcGgTtNn ==> 3,2,1,0,4
 unsigned char com_nt4_table[256] = {
-	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+	3, 2, 1, 0,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
 	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
 	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4 /*'-'*/, 4, 4,
 	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
 	4, 3, 4, 2,  4, 4, 4, 1,  4, 4, 4, 4,  4, 4, 4, 4, 
-	4, 4, 4, 4,  0, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+	4, 4, 4, 4,  0, 0, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
 	4, 3, 4, 2,  4, 4, 4, 1,  4, 4, 4, 4,  4, 4, 4, 4, 
-	4, 4, 4, 4,  0, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+	4, 4, 4, 4,  0, 0, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
 	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
 	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
 	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
@@ -105,7 +105,7 @@ abpoa_seq_t *abpoa_init_seq(void) {
 void abpoa_free_seq(abpoa_seq_t *abs) {
     int i;
     for (i = 0; i < abs->m_seq; ++i) {
-        // if (abs->seq[i].seq.m > 0) free(abs->seq[i].seq.s);
+        if (abs->seq[i].m > 0) free(abs->seq[i].s);
         if (abs->name[i].m > 0) free(abs->name[i].s);
         if (abs->comment[i].m > 0) free(abs->comment[i].s);
         if (abs->qual[i].m > 0) free(abs->qual[i].s);
@@ -151,9 +151,20 @@ abpoa_seq_t *abpoa_realloc_seq(abpoa_seq_t *abs) {
     return abs;
 }
 
-int abpoa_read_seq(abpoa_seq_t *abs, kseq_t *kseq, int chunk_read_n) {
+int abpoa_read_nseq(abpoa_seq_t *abs, kseq_t *kseq, int chunk_read_n) {
     int n = 0;
     while (n < chunk_read_n && kseq_read(kseq) >= 0) {
+        abpoa_realloc_seq(abs);
+        // copy kseq to abs->seq
+        abpoa_cpy_seq(abs, abs->n_seq, kseq);
+        abs->n_seq++; n++;
+    }
+    return n;
+}
+
+int abpoa_read_seq(abpoa_seq_t *abs, kseq_t *kseq) {
+    int n = 0;
+    while (kseq_read(kseq) >= 0) {
         abpoa_realloc_seq(abs);
         // copy kseq to abs->seq
         abpoa_cpy_seq(abs, abs->n_seq, kseq);
@@ -543,8 +554,8 @@ int abpoa_fa_parse_seq(abpoa_graph_t *abg, abpoa_seq_t *abs, kstring_t *seq, kst
         *rank2node_id = (int*)_err_calloc(seq->l, sizeof(int));
     } 
     char *s = seq->s;
-    int read_ids_n = 1 + ((p_n-1) >> 6);
-    int i, rank, last_id = ABPOA_SRC_NODE_ID, cur_id, aln_id; uint8_t base;
+    int32_t read_ids_n = 1 + ((p_n-1) >> 6);
+    int32_t i, rank, last_id = ABPOA_SRC_NODE_ID, cur_id, aln_id; uint8_t base;
     for (i = 0; s[i]; ++i) {
         if (s[i] == '-') continue; // gap
         else {

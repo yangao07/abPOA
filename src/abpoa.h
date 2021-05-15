@@ -49,35 +49,41 @@
 extern "C" {
 #endif
 
+char LogTable65536[65536];
+char bit_table16[65536];
+
 typedef struct {
     int n_cigar; abpoa_cigar_t *graph_cigar;
     int node_s, node_e, query_s, query_e; // for local and  extension mode
     int n_aln_bases, n_matched_bases;
     int32_t best_score; 
     uint8_t is_rc:1; // is_rc: best_score is from the reverse complement
+                        // now is_rc is determined based on minimizer-based seeding and chaining
 } abpoa_res_t;
 
 typedef struct {
     int m; int *mat; // score matrix
     int match, mismatch, gap_open1, gap_open2, gap_ext1, gap_ext2; int inf_min;
+    // minimizer seeding parameter
+    int k, w, min_w;
     int wb; float wf; // extra band width
     int zdrop, end_bonus; // from minimap2
     int simd_flag; // available SIMD instruction
     // alignment mode
     uint8_t ret_cigar:1, rev_cigar:1, out_msa:1, out_msa_header:1, out_cons:1, out_gfa:1, is_diploid:1, use_read_ids:1;
-    uint8_t amb_strand:1;
+    uint8_t amb_strand:1, disable_seeding:1, progressive_poa:1;
     char *incr_fn, *out_pog;
     int align_mode, gap_mode, cons_agrm;
     double min_freq; // for multiploid data
 
-    char LogTable65536[65536];
-    char bit_table16[65536];
+    // char LogTable65536[65536];
+    //char bit_table16[65536];
 } abpoa_para_t;
 
 typedef struct {
     int node_id;
     int in_edge_n, in_edge_m, *in_id;
-    int out_edge_n, out_edge_m, *out_id, *out_weight, max_out_id;
+    int out_edge_n, out_edge_m, *out_id, max_out_id; int *out_weight;
     uint64_t *read_ids; int read_ids_n; // for multiploid
 
     int aligned_node_n, aligned_node_m, *aligned_node_id; // mismatch; aligned node will have same rank
@@ -105,7 +111,7 @@ typedef struct {
 
 typedef struct {
     SIMDi *s_mem; uint64_t s_msize; // qp, DP_HE, dp_f OR qp, DP_H, dp_f : based on (qlen, num_of_value, m, node_n)
-    int *dp_beg, *dp_end, *dp_beg_sn, *dp_end_sn; int rang_m; // if band : based on (node_m)
+    int *dp_beg, *dp_end, *dp_beg_sn, *dp_end_sn, rang_m; // if band : based on (node_m)
 } abpoa_simd_matrix_t;
 
 typedef struct {
@@ -126,6 +132,8 @@ void abpoa_free(abpoa_t *ab);
 // perform msa
 int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seqs, char **seq_names, int *seq_lens, uint8_t **seqs, FILE *out_fp, uint8_t ***cons_seq, int ***cons_cov, int **cons_l, int *cons_n, uint8_t ***msa_seq, int *msa_l);
 
+int abpoa_msa1(abpoa_t *ab, abpoa_para_t *abpt, char *read_fn, FILE *out_fp, uint8_t ***cons_seq, int ***cons_cov, int **cons_l, int *cons_n, uint8_t ***msa_seq, int *msa_l);
+
 // clean alignment graph
 void abpoa_reset_graph(abpoa_t *ab, abpoa_para_t *abpt, int qlen);
 
@@ -136,7 +144,7 @@ abpoa_t *abpoa_restore_graph(abpoa_t *ab, abpoa_para_t *abpt);
 // align a sequence to a graph
 int abpoa_align_sequence_to_graph(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int qlen, abpoa_res_t *res);
 // align a sequence to a graph between beg_node_id and end_node_id (both are excluded)
-void abpoa_subgraph_nodes(abpoa_t *ab, int inc_beg, int inc_end, int *exc_beg, int *exc_end);
+void abpoa_subgraph_nodes(abpoa_t *ab, abpoa_para_t *abpt, int inc_beg, int inc_end, int *exc_beg, int *exc_end);
 int abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *query, int qlen, abpoa_res_t *res);
 
 // add a node to a graph
@@ -160,8 +168,8 @@ int abpoa_add_graph_edge(abpoa_graph_t *abg, int from_id, int to_id, int check_e
 //   n_cigar/abpoa_cigar: from alignment result (abpoa_res_t)
 //   read_id: id of sequence
 //   tot_read_n: total number of sequence
-int abpoa_add_graph_alignment(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int qlen, abpoa_res_t res, int read_id, int tot_read_n);
-int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *query, int qlen, abpoa_res_t res, int read_id, int tot_read_n);
+int abpoa_add_graph_alignment(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int qlen, int *qpos_to_node_id, abpoa_res_t res, int read_id, int tot_read_n, int inc_both_ends);
+int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *query, int qlen, int *qpos_to_node_id, abpoa_res_t res, int read_id, int tot_read_n, int inc_both_ends);
 
 void abpoa_BFS_set_node_index(abpoa_graph_t *abg, int src_id, int sink_id);
 void abpoa_BFS_set_node_remain(abpoa_graph_t *abg, int src_id, int sink_id);

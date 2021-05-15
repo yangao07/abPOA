@@ -156,7 +156,7 @@ cdef class msa_aligner:
             res.is_rc = 0
             abpoa_align_sequence_to_graph(self.ab, &self.abpt, bseq, seq_l, &res)
 
-            abpoa_add_graph_alignment(self.ab, &self.abpt, bseq, seq_l, res, exist_n+read_i, tot_n)
+            abpoa_add_graph_alignment(self.ab, &self.abpt, bseq, seq_l, NULL, res, exist_n+read_i, tot_n, 1)
             free(bseq)
             if res.n_cigar: free(res.graph_cigar)
 

@@ -16,7 +16,7 @@ char PROG[20] = "abpoa";
 #define _bO BOLD UNDERLINE "O" NONE
 #define _bA BOLD UNDERLINE "A" NONE
 char DESCRIPTION[100] = _ba "daptive " _bb "anded " _bP "artial " _bO "rder " _bA "lignment";
-char VERSION[20] = "1.1.0";
+char VERSION[20] = "1.2.0";
 char CONTACT[30] = "gaoy286@mail.sysu.edu.cn";
 
 const struct option abpoa_long_opt [] = {
@@ -32,8 +32,16 @@ const struct option abpoa_long_opt [] = {
     { "zdrop", 1, NULL, 'z' },
     { "bouns", 1, NULL, 'e' },
 
+    { "no-seeding", 0, NULL, 'N'},
+    { "k-mer", 1, NULL, 'k' },
+    { "window", 1, NULL, 'w' },
+    { "min-poa-win", 1, NULL, 'n' },
+    { "progressive", 0, NULL, 'p'},
+
     { "in-list", 0, NULL, 'l' },
     { "increment", 1, NULL, 'i' },
+    
+
     { "amb-strand", 0, NULL, 's' },
     { "output", 1, NULL, 'o' },
     { "msa-header", 0, NULL, 'A' },
@@ -81,6 +89,14 @@ int abpoa_usage(void)
     // err_printf("                            set as <= 0 to disable Z-drop extension\n");
     // err_printf("    -e --bonus    INT       end bonus score in extension alignment [-1]\n");
     // err_printf("                            set as <= 0 to disable end bounus\n");
+    err_printf("  Minimizer-based seeding and partition (only effective in global alignment mode):\n");
+    err_printf("    -N --no-seeding         disable seeding [False]\n");
+    err_printf("    -k --k-mer       INT    minimizer k-mer size [%d]\n", ABPOA_MMK);
+    err_printf("    -w --window      INT    minimizer window size [%d]\n", ABPOA_MMW);
+    err_printf("    -n --min-poa-win INT    min. size of window to perform POA [%d]\n", ABPOA_MIN_POA_WIN);
+    err_printf("    -p --progressive        build guide tree and perform progressive partial order alignment [False]\n");
+    // err_printf("    -n --par-size           minimal partition size [%d]\n", ABPOA_W);
+
     err_printf("  Input/Output:\n");
     err_printf("    -l --in-list            input file is a list of sequence file names [False]\n");
     err_printf("                            each line is one sequence file containing a set of sequences\n");
@@ -115,79 +131,28 @@ int abpoa_usage(void)
     return 1;
 }
 
-// XXX always store read name incrementally, no matter abg is empty or not
-#define abpoa_core(read_fn) {   \
-    gzFile readfp = xzopen(read_fn, "r"); kseq_t *ks =kseq_init(readfp);  \
-    /* progressively partial order alignment */     \
-    /* reset graph for a new input sequence file */  \
-    abpoa_reset_graph(ab, abpt, bseq_m);    \
-    if (abpt->incr_fn) abpoa_restore_graph(ab, abpt);   \
-    n_seqs = 0,  tot_n = abs->n_seq; \
-    while ((n_seqs = abpoa_read_seq(abs, ks, CHUNK_READ_N)) != 0) {    \
-        for (i = 0; i < n_seqs; ++i) {  \
-            read_i = tot_n + i; \
-            abpoa_str_t *seq = abs->seq + read_i; \
-            int seq_l = seq->l; \
-            if (seq_l <= 0) err_fatal("read_seq", "Unexpected read length: %d (%s)", seq_l, abs->name[read_i].s);   \
-            char *seq1 = seq->s;    \
-            if (seq_l > bseq_m) {   \
-                bseq_m = seq_l; kroundup32(bseq_m); \
-                bseq = (uint8_t*)_err_realloc(bseq, bseq_m * sizeof(uint8_t));  \
-            }   \
-            for (j = 0; j < seq_l; ++j) bseq[j] = nt4_table[(int)(seq1[j])];    \
-            abpoa_res_t res; res.graph_cigar=0; res.n_cigar=0, res.is_rc = 0;    \
-            abpoa_align_sequence_to_graph(ab, abpt, bseq, seq_l, &res); \
-            abpoa_add_graph_alignment(ab, abpt, bseq, seq_l, res, read_i, tot_n+n_seqs);     \
-            abs->is_rc[read_i] = res.is_rc;  \
-            if (res.n_cigar) free(res.graph_cigar); \
-            seq->l = seq->m = 0; free(seq->s); /*free abs->seq->seq.s */ \
-        }   \
-        tot_n += n_seqs;    \
-    }   \
-    /* generate consensus from graph */ \
-    if (abpt->out_gfa) {  \
-        abpoa_generate_gfa(ab, abpt, stdout);    \
-    } else {  \
-        if (abpt->out_cons) {   \
-            if (abpt->out_msa) abpoa_generate_consensus(ab, abpt, NULL, NULL, NULL, NULL, NULL); \
-            else abpoa_generate_consensus(ab, abpt, stdout, NULL, NULL, NULL, NULL); \
-        }   \
-        /* generate multiple sequence alignment */  \
-        if (abpt->out_msa) {  \
-            abpoa_generate_rc_msa(ab, abpt, stdout, NULL, NULL);   \
-        }   \
-    }   \
-    /* generate dot plot */     \
-    if (abpt->out_pog) {    \
-        abpoa_dump_pog(ab, abpt);  \
-    }   \
-    kseq_destroy(ks); gzclose(readfp);    \
-}
-
-int abpoa_main(const char *file_fn, int is_list, abpoa_para_t *abpt){
-    int bseq_m = 1024; uint8_t *bseq = (uint8_t*)_err_malloc(bseq_m * sizeof(uint8_t));
-    int i, j, n_seqs, tot_n, read_i;
-    extern char nt4_table[256];
+int abpoa_main(char *file_fn, int is_list, abpoa_para_t *abpt){
+    double realtime0 = realtime();
     // TODO abpoa_init for each input file ???
-    abpoa_t *ab = abpoa_init(); abpoa_seq_t *abs = ab->abs;
+    abpoa_t *ab = abpoa_init();
     if (is_list) { // input file list
         FILE *list_fp = fopen(file_fn, "r"); char read_fn[1024];
         while (fgets(read_fn, sizeof(read_fn), list_fp)) {
             read_fn[strlen(read_fn)-1] = '\0';
-            abpoa_core(read_fn);
+            abpoa_msa1(ab, abpt, read_fn, stdout, NULL, NULL, NULL, NULL, NULL, NULL);
         }
         fclose(list_fp);
-    } else { // input file
-        abpoa_core(file_fn);
-    }
+    } else // input file
+        abpoa_msa1(ab, abpt, file_fn, stdout, NULL, NULL, NULL, NULL, NULL, NULL);
 
-    free(bseq); abpoa_free(ab);
+    abpoa_free(ab);
+	err_func_printf(__func__, "Real time: %.3f sec; CPU: %.3f sec; Peak RSS: %.3f GB.", realtime() - realtime0, cputime(), peakrss() / 1024.0 / 1024.0 / 1024.0);
     return 0;
 }
 
 int main(int argc, char **argv) {
     int c, m, in_list=0; char *s; abpoa_para_t *abpt = abpoa_init_para();
-    while ((c = getopt_long(argc, argv, "m:M:X:O:E:b:f:z:e:i:lso:Ar:g:a:dq:hv", abpoa_long_opt, NULL)) >= 0) {
+    while ((c = getopt_long(argc, argv, "m:M:X:O:E:b:f:z:e:Nk:w:n:i:lpso:Ar:g:a:dq:hv", abpoa_long_opt, NULL)) >= 0) {
         switch(c)
         {
             case 'm': m = atoi(optarg);
@@ -204,8 +169,14 @@ int main(int argc, char **argv) {
             case 'z': abpt->zdrop = atoi(optarg); break;
             case 'e': abpt->end_bonus= atoi(optarg); break;
 
+            case 'N': abpt->disable_seeding = 1; break;
+            case 'k': abpt->k = atoi(optarg); break;
+            case 'w': abpt->w = atoi(optarg); break;
+            case 'n': abpt->min_w = atoi(optarg); break;
+
             case 'i': abpt->incr_fn = strdup(optarg); break;
             case 'l': in_list = 1; break;
+            case 'p': abpt->progressive_poa = 1; break;
             case 's': abpt->amb_strand = 1; break;
             case 'o': if (strcmp(optarg, "-") != 0) {
                           if (freopen(optarg, "wb", stdout) == NULL)

@@ -8,15 +8,15 @@
 [![Build Status](https://img.shields.io/travis/yangao07/abPOA/master.svg?label=Master)](https://travis-ci.org/yangao07/abPOA)
 [![License](https://img.shields.io/badge/License-MIT-black.svg)](https://github.com/yangao07/abPOA/blob/master/LICENSE)
 <!-- [![PyPI](https://img.shields.io/pypi/v/pyabpoa.svg?style=flat)](https://pypi.python.org/pypi/pyabpoa) -->
-## Updates (v1.1.0)
+## Updates (v1.2.0)
 
-- Added option `-i/--incrmnt` to align sequence to an existing graph in GFA/MSA format
+- Added minimizer-based seeding, reduce memory usage for long input sequences
 
 ## Getting started
 Download the [latest release](https://github.com/yangao07/abPOA/releases):
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.1.0/abPOA-v1.1.0.tar.gz
-tar -zxvf abPOA-v1.1.0.tar.gz && cd abPOA-v1.1.0
+wget https://github.com/yangao07/abPOA/releases/download/v1.2.0/abPOA-v1.2.0.tar.gz
+tar -zxvf abPOA-v1.2.0.tar.gz && cd abPOA-v1.2.0
 ```
 Make from source and run with test data:
 ```
@@ -80,9 +80,9 @@ You can also build abPOA from source files.
 Make sure you have gcc (>=6.4.0) and zlib installed before compiling.
 It is recommended to download the [latest release](https://github.com/yangao07/abPOA/releases).
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.1.0/abPOA-v1.1.0.tar.gz
-tar -zxvf abPOA-v1.1.0.tar.gz
-cd abPOA-v1.1.0; make
+wget https://github.com/yangao07/abPOA/releases/download/v1.2.0/abPOA-v1.2.0.tar.gz
+tar -zxvf abPOA-v1.2.0.tar.gz
+cd abPOA-v1.2.0; make
 ```
 Or, you can use `git clone` command to download the source code.
 This gives you the latest version of abPOA, which might be still under development.
@@ -94,8 +94,8 @@ cd abPOA; make
 ### <a name="binary"></a>Pre-built binary executable file for Linux/Unix 
 If you meet any compiling issue, please try the pre-built binary file:
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.1.0/abPOA-v1.1.0_x64-linux.tar.gz
-tar -zxvf abPOA-v1.1.0_x64-linux.tar.gz
+wget https://github.com/yangao07/abPOA/releases/download/v1.2.0/abPOA-v1.2.0_x64-linux.tar.gz
+tar -zxvf abPOA-v1.2.0_x64-linux.tar.gz
 ```
 
 ## <a name="usage"></a>General usage
@@ -167,6 +167,12 @@ Options:
     -f --extra-f  FLOAT     second adaptive banding parameter [0.01]
                             the number of extra bases added on both sites of the band is
                             b+f*L, where L is the length of the aligned sequence
+  Minimizer-based seeding and partition (only effective in global alignment mode):
+    -N --no-seeding         disable seeding [False]
+    -k --k-mer       INT    minimizer k-mer size [19]
+    -w --window      INT    minimizer window size [10]
+    -n --min-poa-win INT    min. size of window to perform POA [50]
+    -p --progressive        build guide tree and perform progressive partial order alignment [False]
   Input/Output:
     -l --in-list            input file is a list of sequence file names [False]
                             each line is one sequence file containing a set of sequences
