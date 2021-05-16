@@ -5,6 +5,9 @@
 #include "simd_abpoa_align.h"
 #include "kdq.h"
 
+char LogTable65536[65536];
+char bit_table16[65536];
+
 static const char LogTable256[256] = {
 #define LT(n) n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n
     -1, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
@@ -33,8 +36,7 @@ void set_bit_table16(void) {
 
 #define get_bit_cnt4(table, b) (table[(b)&0xffff] + table[(b)>>16&0xffff] + table[(b)>>32&0xffff] + table[(b)>>48&0xffff])
 
-static inline int ilog2_64(uint64_t v)
-{
+static inline int ilog2_64(uint64_t v) {
     uint64_t t, tt;
     if ((tt = v >> 32)) return (t = tt >> 16) ? 48 + LogTable65536[t] : 32 + LogTable65536[tt];
     return (t = v>>16) ? 16 + LogTable65536[t] : LogTable65536[v];

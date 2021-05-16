@@ -49,8 +49,6 @@
 extern "C" {
 #endif
 
-char LogTable65536[65536];
-char bit_table16[65536];
 
 typedef struct {
     int n_cigar; abpoa_cigar_t *graph_cigar;
@@ -77,7 +75,7 @@ typedef struct {
     double min_freq; // for multiploid data
 
     // char LogTable65536[65536];
-    //char bit_table16[65536];
+    // char bit_table16[65536];
 } abpoa_para_t;
 
 typedef struct {
