@@ -3,7 +3,9 @@
 #include <stdint.h>
 #include "simd_abpoa_align.h"
 #include "abpoa_align.h"
+#include "abpoa_seq.h"
 #include "utils.h"
+#include "abpoa_seed.h"
 
 void gen_simple_mat(int m, int *mat, int match, int mismatch) {
     int i, j;
@@ -44,6 +46,7 @@ abpoa_para_t *abpoa_init_para(void) {
     abpt->min_freq = DIPLOID_MIN_FREQ; 
     abpt->cons_agrm = ABPOA_HB;   // consensus calling algorithm 
     abpt->use_read_ids = 0;
+    abpt->incr_fn = NULL; // incrementally align seq to an existing graph
     abpt->out_pog = NULL; // dump partial order graph to file
 
     // number of residue types
@@ -58,6 +61,12 @@ abpoa_para_t *abpoa_init_para(void) {
     abpt->gap_ext1 = ABPOA_GAP_EXT1;
     abpt->gap_ext2 = ABPOA_GAP_EXT2;
 
+    abpt->disable_seeding = 0; // perform seeding by default
+    abpt->k = ABPOA_MMK;
+    abpt->w = ABPOA_MMW;
+    abpt->min_w = ABPOA_MIN_POA_WIN;
+    abpt->progressive_poa = 0; // progressive partial order alignment
+
     abpt->simd_flag = simd_check();
 
     return abpt;
@@ -68,8 +77,8 @@ void abpoa_post_set_para(abpoa_para_t *abpt) {
     abpoa_set_gap_mode(abpt);
     if (abpt->cons_agrm == ABPOA_HC || abpt->out_msa || abpt->out_gfa || abpt->is_diploid) {
         abpt->use_read_ids = 1;
-        set_65536_table(abpt);
-        if (abpt->cons_agrm == ABPOA_HC || abpt->is_diploid) set_bit_table16(abpt);
+        set_65536_table();
+        if (abpt->cons_agrm == ABPOA_HC || abpt->is_diploid) set_bit_table16();
     }
     if (abpt->align_mode == ABPOA_LOCAL_MODE) abpt->wb = -1;
 }
@@ -77,23 +86,140 @@ void abpoa_post_set_para(abpoa_para_t *abpt) {
 void abpoa_free_para(abpoa_para_t *abpt) {
     if (abpt->mat != NULL) free(abpt->mat);
     if (abpt->out_pog != NULL) free(abpt->out_pog);
+    if (abpt->incr_fn != NULL) free(abpt->incr_fn);
     free(abpt);
 }
 
-int abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int inc_beg_node_id, int inc_end_node_id, uint8_t *query, int qlen, abpoa_res_t *res) {
-    if (ab->abg->node_n <= 2 || qlen <= 0) return -1;
+int abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int exc_beg_node_id, int exc_end_node_id, uint8_t *query, int qlen, abpoa_res_t *res) {
+    if (ab->abg->node_n <= 2) return -1;
     if (ab->abg->is_topological_sorted == 0) abpoa_topological_sort(ab->abg, abpt);
-    int exc_beg_node_id, exc_end_node_id;
-    abpoa_subgraph_nodes(ab, inc_beg_node_id, inc_end_node_id, &exc_beg_node_id, &exc_end_node_id);
     simd_abpoa_align_sequence_to_subgraph(ab, abpt, exc_beg_node_id, exc_end_node_id, query, qlen, res);
     return 0;
 }
 
 int abpoa_align_sequence_to_graph(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int qlen, abpoa_res_t *res) {
-    if (ab->abg->node_n <= 2 || qlen <= 0) return -1;
+    if (ab->abg->node_n <= 2) return -1;
     if (ab->abg->is_topological_sorted == 0) abpoa_topological_sort(ab->abg, abpt);
     simd_abpoa_align_sequence_to_graph(ab, abpt, query, qlen, res);
     return 0;
+}
+
+int abpoa_anchor_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int *seq_lens, u64_v par_anchors, int *par_c, int *tpos_to_node_id, int *qpos_to_node_id, int *read_id_map, int exist_n_seq, int n_seq) {
+    abpoa_res_t res; int read_id, last_read_id = -1, m_c = 0, k = abpt->k;
+    abpoa_seq_t *abs = ab->abs;
+    int *tmp;
+    int i, _i, ai, j, tot_n_seq = exist_n_seq + n_seq;
+    uint8_t *qseq;
+    // uint8_t *seq1;
+    for (_i = 0; _i < n_seq; ++_i) {
+        i = read_id_map[_i]; read_id = exist_n_seq + i;
+#ifdef __DEBUG__
+        fprintf(stderr, "seq: # %d\n", i);
+#endif
+        // seq-to-graph alignment and add alignment within each split window
+        if (_i == 0) ai = 0; else ai = par_c[_i-1];
+
+        int beg_id = ABPOA_SRC_NODE_ID, beg_qpos = 0, end_id, end_tpos, end_qpos;
+        if (ai < par_c[_i]) {
+            abs->is_rc[read_id] = (abs->is_rc[last_read_id] ^ (par_anchors.a[ai] >> 63));
+            // construct rc qseq
+            int qlen = seq_lens[i];
+            if (abs->is_rc[read_id]) {
+                qseq = (uint8_t*)_err_malloc(qlen * sizeof(uint8_t));
+                for (j = 0; j < qlen; ++j) {
+                    if (seqs[i][qlen-j-1] < 4) qseq[j] = 3 - seqs[i][qlen-j-1];
+                    else qseq[j] = 4;
+                }
+                if (abs->is_rc[last_read_id]) { // reset tpos/qpos in par_anchors
+                    int last_qlen = seq_lens[read_id_map[_i-1]];
+                    for (j = ai; j < par_c[_i]; ++j) {
+                        end_tpos = ((par_anchors.a[j] >> 32) & 0x7fffffff); end_qpos = (uint32_t)par_anchors.a[j];
+                        par_anchors.a[j] = (par_anchors.a[j] >> 63) << 63 | (uint64_t)(last_qlen-end_tpos+k) << 32 | (qlen-end_qpos+k);
+                    }
+                    for (j = 0; j < (par_c[_i]-ai)/2; ++j) {
+                        uint64_t tmp = par_anchors.a[ai+j];
+                        par_anchors.a[ai+j] = par_anchors.a[par_c[_i]-1-j];
+                        par_anchors.a[par_c[_i]-1-j] = tmp;
+                    }
+                }
+            } else { 
+                qseq = seqs[i];
+                if (abs->is_rc[last_read_id]) { // reset tpos/qpos in par_anchors 
+                    int last_qlen = seq_lens[read_id_map[_i-1]];
+                    for (j = ai; j < par_c[_i]; ++j) {
+                        end_tpos = ((par_anchors.a[j] >> 32) & 0x7fffffff); end_qpos = (uint32_t)par_anchors.a[j];
+                        par_anchors.a[j] = (par_anchors.a[j] >> 63) << 63 | (uint64_t)(last_qlen-end_tpos+k) << 32 | (qlen-end_qpos+k);
+                    }
+                    for (j = 0; j < (par_c[_i]-ai)/2; ++j) {
+                        uint64_t tmp = par_anchors.a[ai+j];
+                        par_anchors.a[ai+j] = par_anchors.a[par_c[_i]-1-j];
+                        par_anchors.a[par_c[_i]-1-j] = tmp;
+                    }
+                }
+            }
+        } else abs->is_rc[read_id] = 0, qseq = seqs[i];
+
+        for (; ai < par_c[_i]; ++ai) {
+            end_tpos = ((par_anchors.a[ai] >> 32) & 0x7fffffff) - k + 1; end_id = tpos_to_node_id[end_tpos];
+            end_qpos = (uint32_t)par_anchors.a[ai] - k + 1;
+
+#ifdef __DEBUG__
+            fprintf(stderr, "\tanchor: t: %d (id: %d), q: %d\n", end_tpos, end_id, end_qpos);
+#endif
+
+            res.graph_cigar = 0; res.n_cigar = 0;
+            abpoa_align_sequence_to_subgraph(ab, abpt, beg_id, end_id, qseq+beg_qpos, end_qpos-beg_qpos, &res);
+            abpoa_add_subgraph_alignment(ab, abpt, beg_id, end_id, qseq+beg_qpos, end_qpos-beg_qpos, qpos_to_node_id+beg_qpos, res, read_id, tot_n_seq, 1);
+            if (res.n_cigar) free(res.graph_cigar);
+
+            // add alignment for anchors
+            res.graph_cigar = (abpoa_cigar_t*)_err_malloc((k-2) * sizeof(abpoa_cigar_t)); res.n_cigar = 0; m_c = k-2;
+            for (j = 1; j < k-1; ++j)
+                res.graph_cigar = abpoa_push_cigar(&(res.n_cigar), &m_c, res.graph_cigar, ABPOA_CMATCH, 1, tpos_to_node_id[end_tpos+j], j);
+            for (j = 0; j < k; ++j) qpos_to_node_id[end_qpos+j] = tpos_to_node_id[end_tpos+j];
+            abpoa_add_subgraph_alignment(ab, abpt, end_id, tpos_to_node_id[end_tpos+k-1], qseq+end_qpos, k, NULL, res, read_id, tot_n_seq, 1);
+            free(res.graph_cigar);
+
+            // for next anchor
+            beg_id = tpos_to_node_id[end_tpos+k-1]; beg_qpos = end_qpos+k;
+        }
+        end_id = ABPOA_SINK_NODE_ID; end_qpos = seq_lens[i];
+
+        res.graph_cigar = 0; res.n_cigar = 0; res.is_rc = 0; // for non-seeding
+        abpoa_align_sequence_to_subgraph(ab, abpt, beg_id, end_id, qseq+beg_qpos, end_qpos-beg_qpos, &res);
+        if (res.is_rc) { // for non-seeding
+            uint8_t *rc_qseq = (uint8_t*)_err_malloc(seq_lens[i] * sizeof(uint8_t));
+            for (j = 0; j < seq_lens[i]; ++j) {
+                if (qseq[seq_lens[i]-j-1] < 4) rc_qseq[j] = 3 - qseq[seq_lens[i]-j-1];
+                else rc_qseq[j] = qseq[seq_lens[i]-j-1];
+            }
+            abpoa_add_subgraph_alignment(ab, abpt, beg_id, end_id, rc_qseq+beg_qpos, end_qpos-beg_qpos, qpos_to_node_id+beg_qpos, res, read_id, tot_n_seq, 1);
+        } else abpoa_add_subgraph_alignment(ab, abpt, beg_id, end_id, qseq+beg_qpos, end_qpos-beg_qpos, qpos_to_node_id+beg_qpos, res, read_id, tot_n_seq, 1);
+        if (abs->is_rc[read_id]) free(qseq);
+
+        if (res.is_rc) abs->is_rc[read_id] = 1;
+        if (res.n_cigar) free(res.graph_cigar);
+
+        tmp = qpos_to_node_id; qpos_to_node_id = tpos_to_node_id; tpos_to_node_id = tmp;
+        last_read_id = read_id;
+    }
+    return 0;
+}
+
+void abpoa_output(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp, uint8_t ***cons_seq, int ***cons_cov, int **cons_l, int *cons_n, uint8_t ***msa_seq, int *msa_l) {
+    if (abpt->out_gfa) abpoa_generate_gfa(ab, abpt, out_fp);
+    else {
+        if (abpt->out_cons) {
+            if (abpt->out_msa) abpoa_generate_consensus(ab, abpt, NULL, cons_seq, cons_cov, cons_l, cons_n);
+            else abpoa_generate_consensus(ab, abpt, out_fp, cons_seq, cons_cov, cons_l, cons_n);
+            if (ab->abg->is_called_cons == 0)
+                err_printf("Warning: no consensus sequence generated.\n");
+        }
+        if (abpt->out_msa) {
+            abpoa_generate_rc_msa(ab, abpt, out_fp, msa_seq, msa_l);
+        }
+    }
+    if (abpt->out_pog) abpoa_dump_pog(ab, abpt);
 }
 
 // do msa for a set of input sequences
@@ -102,35 +228,120 @@ int abpoa_align_sequence_to_graph(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *quer
 //    generate rc-msa (row column multiple sequence alignment)
 // @para:
 //    ab/abpt: abpoa related variable and parameter 
-//    seq_n: number of input sequences
+//    n_seq: number of input sequences
 //    seq_len: array of input sequence length, size: seq_n
 //    seqs: array of input sequences, 0123 for ACGT, size: seq_n * seq_len[]
-int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seqs, char **seq_names, int *seq_lens, uint8_t **seqs, FILE *out_fp, uint8_t ***cons_seq, int ***cons_cov, int **cons_l, int *cons_n, uint8_t ***msa_seq, int *msa_l) {
-    if ((!abpt->out_msa && !abpt->out_cons && !abpt->out_gfa) || n_seqs <= 0) return 0;
-    int i, tot_n = n_seqs;
-    uint8_t *is_rc = (uint8_t*)_err_malloc(n_seqs * sizeof(uint8_t));
-    abpoa_reset_graph(ab, abpt, seq_lens[0]);
-    for (i = 0; i < n_seqs; ++i) {
-        abpoa_res_t res;
-        res.graph_cigar = 0, res.n_cigar = 0, res.is_rc = 0;
-        abpoa_align_sequence_to_graph(ab, abpt, seqs[i], seq_lens[i], &res);
-        abpoa_add_graph_alignment(ab, abpt, seqs[i], seq_lens[i], res, i, n_seqs);
-        is_rc[i] = res.is_rc;
-        if (res.n_cigar) free(res.graph_cigar);
+int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seq, char **seq_names, int *seq_lens, uint8_t **seqs, FILE *out_fp, uint8_t ***cons_seq, int ***cons_cov, int **cons_l, int *cons_n, uint8_t ***msa_seq, int *msa_l) {
+    if ((!abpt->out_msa && !abpt->out_cons && !abpt->out_gfa) || n_seq <= 0) return 0;
+    abpoa_reset_graph(ab, abpt, 1024);
+    if (abpt->incr_fn) abpoa_restore_graph(ab, abpt); // restore existing graph
+    abpoa_seq_t *abs = ab->abs; int i, exist_n_seq = abs->n_seq;
+
+    // set ab->abs, name
+    abs->n_seq += n_seq;
+    if (abs->n_seq > abs->m_seq) {
+        abs->m_seq = abs->n_seq;
+        abs->name = (abpoa_str_t*)_err_realloc(abs->name, abs->m_seq * sizeof(abpoa_str_t));
+        abs->is_rc = (uint8_t*)_err_realloc(abs->is_rc, abs->m_seq * sizeof(uint8_t));
     }
-    if (abpt->out_gfa) {
-        abpoa_generate_gfa(ab, abpt, seq_names, is_rc, n_seqs, out_fp);
+    if (seq_names) {
+        for (i = 0; i < n_seq; ++i) {
+            abpoa_cpy_str(abs->name+exist_n_seq+i, seq_names[i], strlen(seq_names[i]));
+        }
     } else {
-        if (abpt->out_cons) {
-            if (abpt->out_msa) abpoa_generate_consensus(ab, abpt, tot_n, NULL, cons_seq, cons_cov, cons_l, cons_n);
-            else abpoa_generate_consensus(ab, abpt, tot_n, out_fp, cons_seq, cons_cov, cons_l, cons_n);
-            if (ab->abg->is_called_cons == 0)
-                err_printf("Warning: no consensus sequence generated.\n");
-        }
-        if (abpt->out_msa) {
-            abpoa_generate_rc_msa(ab, abpt, seq_names, is_rc, tot_n, out_fp, msa_seq, msa_l);
+        for (i = 0; i < n_seq; ++i) {
+            abs->name[exist_n_seq+i].l = 0; abs->name[exist_n_seq+i].m = 0;
         }
     }
-    free(is_rc);
-    return 1;
+
+    // always reset graph before perform POA
+    int max_len = 0;
+    for (i = 0; i < n_seq; ++i) {
+        if (seq_lens[i] > max_len) max_len = seq_lens[i];
+    }
+
+    // sequence pos to node id
+    int *tpos_to_node_id = (int*)_err_calloc(max_len, sizeof(int)), *qpos_to_node_id = (int*)_err_calloc(max_len, sizeof(int));
+
+    // seeding, build guide tree, and partition into small windows
+    int *read_id_map = (int*)_err_malloc(sizeof(int) * n_seq); // guide tree order -> input order
+    u64_v par_anchors = {0, 0, 0}; int *par_c = (int*)_err_malloc(sizeof(int) * n_seq);
+    abpoa_build_guide_tree_partition(seqs, seq_lens, n_seq, abpt, read_id_map, &par_anchors, par_c);
+
+    // collect anchors between last one path and first seq
+    if (abpt->incr_fn) { 
+        // anchors
+        // new_par_anchors
+        // push anchors 
+        // free(par_anchors.a);
+        // par_anchors = new_par_anchors;
+        // collect tpos_to_node_id for last one path
+    }
+
+    // perform partial order alignment
+    abpoa_anchor_poa(ab, abpt, seqs, seq_lens, par_anchors, par_c, tpos_to_node_id, qpos_to_node_id, read_id_map, exist_n_seq, n_seq);
+
+    // output
+    abpoa_output(ab, abpt, out_fp, cons_seq, cons_cov, cons_l, cons_n, msa_seq, msa_l);
+    
+    free(read_id_map); free(tpos_to_node_id); free(qpos_to_node_id); free(par_c);
+    if (par_anchors.m > 0) free(par_anchors.a);
+    return 0;
+}
+
+int abpoa_msa1(abpoa_t *ab, abpoa_para_t *abpt, char *read_fn, FILE *out_fp, uint8_t ***cons_seq, int ***cons_cov, int **cons_l, int *cons_n, uint8_t ***msa_seq, int *msa_l) {
+    if (!abpt->out_msa && !abpt->out_cons && !abpt->out_gfa) return 0;
+    abpoa_reset_graph(ab, abpt, 1024);
+    if (abpt->incr_fn) abpoa_restore_graph(ab, abpt); // restore existing graph
+    abpoa_seq_t *abs = ab->abs; int exist_n_seq = abs->n_seq;
+
+    // read seq from read_fn
+    gzFile readfp = xzopen(read_fn, "r"); kseq_t *ks = kseq_init(readfp);
+    int i, j, n_seq = abpoa_read_seq(abs, ks);
+
+    // always reset graph before perform POA
+    int max_len = 0;
+    for (i = 0; i < abs->n_seq; ++i) {
+        if (abs->seq[i].l > max_len) max_len = abs->seq[i].l;
+    }
+
+    // sequence pos to node id
+    int *tpos_to_node_id = (int*)_err_calloc(max_len, sizeof(int)), *qpos_to_node_id = (int*)_err_calloc(max_len, sizeof(int));
+
+    // seeding, build guide tree, and partition into small windows
+    int *read_id_map = (int*)_err_malloc(sizeof(int) * n_seq); // guide tree order -> input order
+    u64_v par_anchors = {0, 0, 0}; int *par_c = (int*)_err_malloc(sizeof(int) * n_seq);
+    // set seqs, seq_lens
+    extern char nt4_table[256];
+    uint8_t **seqs = (uint8_t**)_err_malloc(n_seq * sizeof(uint8_t*)); int *seq_lens = (int*)_err_malloc(n_seq * sizeof(int));
+    for (i = 0; i < n_seq; ++i) {
+        seq_lens[i] = abs->seq[exist_n_seq+i].l;
+        seqs[i] = (uint8_t*)_err_malloc(sizeof(uint8_t) * seq_lens[i]);
+        for (j = 0; j < seq_lens[i]; ++j) seqs[i][j] = nt4_table[(int)abs->seq[exist_n_seq+i].s[j]];
+    }
+    abpoa_build_guide_tree_partition(seqs, seq_lens, n_seq, abpt, read_id_map, &par_anchors, par_c);
+
+    // collect anchors between last one path and first seq
+    if (abpt->incr_fn) { // TODO
+        // anchors
+        // new_par_anchors
+        // push anchors 
+        // free(par_anchors.a);
+        // par_anchors = new_par_anchors;
+        // collect tpos_to_node_id for last one path
+        // set tpos_to_node_id
+        //
+    }
+
+    // perform partial order alignment
+    abpoa_anchor_poa(ab, abpt, seqs, seq_lens, par_anchors, par_c, tpos_to_node_id, qpos_to_node_id, read_id_map, exist_n_seq, n_seq);
+
+    // output
+    abpoa_output(ab, abpt, out_fp, cons_seq, cons_cov, cons_l, cons_n, msa_seq, msa_l);
+
+    kseq_destroy(ks); gzclose(readfp);
+    for (i = 0; i < n_seq; ++i) free(seqs[i]); free(seqs); free(seq_lens);
+    free(read_id_map); free(tpos_to_node_id); free(qpos_to_node_id); free(par_c);
+    if (par_anchors.m > 0) free(par_anchors.a);
+    return 0;
 }

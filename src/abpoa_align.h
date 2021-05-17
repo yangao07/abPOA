@@ -13,6 +13,10 @@
 #define ABPOA_GAP_EXT1  2
 #define ABPOA_GAP_EXT2  1
 
+#define ABPOA_MMK 19
+#define ABPOA_MMW 10
+#define ABPOA_MIN_POA_WIN 50
+
 #define ABPOA_M_OP   0x1
 #define ABPOA_E1_OP  0x2
 #define ABPOA_E2_OP  0x4
@@ -27,8 +31,8 @@
 // start and end of each band:
 //   range: (min_of_two(max_left, qlen-remain), max_of_two(max_right, qlen-remain))
 //   with extra band width: (range_min-w, range_max+w)
-#define GET_AD_DP_BEGIN(graph, w, i, qlen) MAX_OF_TWO(0,    MIN_OF_TWO(abpoa_graph_node_id_to_max_pos_left(graph, i),  qlen - abpoa_graph_node_id_to_max_remain(graph, i))-w)
-#define GET_AD_DP_END(graph, w, i, qlen)   MIN_OF_TWO(qlen, MAX_OF_TWO(abpoa_graph_node_id_to_max_pos_right(graph, i), qlen - abpoa_graph_node_id_to_max_remain(graph, i))+w)
+#define GET_AD_DP_BEGIN(graph, w, id, end_id, qlen) MAX_OF_TWO(0,    MIN_OF_TWO(abpoa_graph_node_id_to_max_pos_left(graph, id),  qlen-(abpoa_graph_node_id_to_max_remain(graph,id)-abpoa_graph_node_id_to_max_remain(graph,end_id)-1)) - w)
+#define GET_AD_DP_END(graph, w, id, end_id, qlen)   MIN_OF_TWO(qlen, MAX_OF_TWO(abpoa_graph_node_id_to_max_pos_right(graph, id), qlen-(abpoa_graph_node_id_to_max_remain(graph,id)-abpoa_graph_node_id_to_max_remain(graph,end_id)-1)) + w)
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,7 +47,8 @@ static inline void abpoa_res_copy(abpoa_res_t *dest, abpoa_res_t *src) {
     dest->node_s = src->node_s, dest->node_e = src->node_e;
     dest->query_s = src->query_s, dest->query_e = src->query_e;
     dest->n_aln_bases = src->n_aln_bases, dest->n_matched_bases = src->n_matched_bases;
-    dest->best_score = src->best_score, dest->is_rc = src->is_rc;
+    dest->best_score = src->best_score;
+    dest->is_rc = src->is_rc;
 }
 
 static inline abpoa_cigar_t *abpoa_push_cigar(int *n_cigar, int *m_cigar, abpoa_cigar_t *cigar, int op, int len, int32_t node_id, int32_t query_id) {
@@ -78,7 +83,7 @@ static inline abpoa_cigar_t *abpoa_reverse_cigar(int n_cigar, abpoa_cigar_t *cig
 }
 
 static inline void abpoa_print_cigar(int n_cigar, abpoa_cigar_t *cigar, abpoa_graph_t *graph) {
-    int i, op, len, node_id, query_id, index_i;
+    int i, node_id, query_id, index_i; int op, len;
     int n[6] = {0, 0, 0, 0, 0, 0};
     for (i = 0; i < n_cigar; ++i) {
         op = cigar[i] & 0xf; node_id = (int)(cigar[i] >> 34); 

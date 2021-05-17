@@ -1,16 +1,17 @@
 /* example.c libabpoa usage example
    To compile: 
-       gcc -O2 example.c -I ./include -L ./lib -labpoa -lz -o example
-   Or: gcc -O2 example.c -I ./include ./lib/libabpoa.a -lz -o example
+gcc -g example.c -I ./include -L ./lib -labpoa -lz -o example
+   or:
+gcc -g example.c -I ./include ./lib/libabpoa.a -lz -o example
 */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include "abpoa.h"
+#include "include/abpoa.h"
 
 // AaCcGgTtNn ==> 0,1,2,3,4
-unsigned char nst_nt4_table[256] = {
+unsigned char _nt4_table[256] = {
 	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
 	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
 	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 5 /*'-'*/, 4, 4,
@@ -49,7 +50,7 @@ int main(void) {
     abpoa_para_t *abpt = abpoa_init_para();
 
     // alignment parameters
-    // abpt->align_mode = 0; // 0:global alignment, 1:extension
+    // abpt->align_mode = 0; // 0:global 1:local, 2:extension
     // abpt->match = 2;      // match score
     // abpt->mismatch = 4;   // mismatch penalty
     // abpt->gap_mode = ABPOA_CONVEX_GAP; // gap penalty mode
@@ -64,6 +65,8 @@ int main(void) {
     // output options
     abpt->out_msa = 1; // generate Row-Column multiple sequence alignment(RC-MSA), set 0 to disable
     abpt->out_cons = 1; // generate consensus sequence, set 0 to disable
+    abpt->w = 6, abpt->k = 9; abpt->min_w = 10; // minimizer-based seeding and partition
+    abpt->progressive_poa = 1;
 
     abpoa_post_set_para(abpt);
 
@@ -74,22 +77,21 @@ int main(void) {
         seq_lens[i] = strlen(seqs[i]);
         bseqs[i] = (uint8_t*)malloc(sizeof(uint8_t) * seq_lens[i]);
         for (j = 0; j < seq_lens[i]; ++j)
-            bseqs[i][j] = nst_nt4_table[(int)seqs[i][j]];
+            bseqs[i][j] = _nt4_table[(int)seqs[i][j]];
     }
 
-    // output to stdout
+    // 1. output to stdout
     fprintf(stdout, "=== output to stdout ===\n");
 
     // perform abpoa-msa
     abpoa_msa(ab, abpt, n_seqs, NULL, seq_lens, bseqs, stdout, NULL, NULL, NULL, NULL, NULL, NULL);
 
-    abpoa_reset_graph(ab, abpt, seq_lens[0]); // reset graph before re-use
-
-    // variables to store result
+    // 2. variables to store result
     uint8_t **cons_seq; int **cons_cov, *cons_l, cons_n=0;
     uint8_t **msa_seq; int msa_l=0;
 
     // perform abpoa-msa
+    ab->abs->n_seq = 0; // To re-use ab, n_seq needs to be set as 0
     abpoa_msa(ab, abpt, n_seqs, NULL, seq_lens, bseqs, NULL, &cons_seq, &cons_cov, &cons_l, &cons_n, &msa_seq, &msa_l);
 
     fprintf(stdout, "=== output to variables ===\n");
@@ -121,6 +123,6 @@ int main(void) {
     if (abpt->out_pog != NULL) abpoa_dump_pog(ab, abpt);
 
     for (i = 0; i < n_seqs; ++i) free(bseqs[i]); free(bseqs); free(seq_lens);
-    abpoa_free(ab, abpt); abpoa_free_para(abpt); 
+    abpoa_free(ab); abpoa_free_para(abpt); 
     return 0;
 }

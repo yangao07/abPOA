@@ -1,3 +1,5 @@
+import os, platform, sys
+
 try:
     from setuptools import setup, Extension
 except ImportError:
@@ -9,12 +11,13 @@ cmdclass = {}
 try:
     from Cython.Build import build_ext
 except ImportError: # without Cython
-    module_src = 'python/pyabpoa.c'
+    #module_src = 'python/pyabpoa.c'
+    sys.stderr.write('Error: \'cython\' is required to install pyabpoa\n')
+    sys.exit(0)
 else: # with Cython
     module_src = 'python/pyabpoa.pyx'
     cmdclass['build_ext'] = build_ext
 
-import os, platform, sys
 
 sys.path.append('python')
 
@@ -36,7 +39,7 @@ else:
 src_dir='src/'
 inc_dir='src/'
 
-src=[module_src, src_dir+'abpoa_align.c', src_dir+'abpoa_graph.c', src_dir+'simd_abpoa_align.c', src_dir+'utils.c', src_dir+'simd_check.c', src_dir+'abpoa_plot.c']
+src=[module_src, src_dir+'abpoa_align.c', src_dir+'abpoa_graph.c', src_dir+'abpoa_plot.c', src_dir+'abpoa_seed.c', src_dir+'abpoa_seq.c', src_dir+'kalloc.c', src_dir+'kstring.c', src_dir+'simd_abpoa_align.c', src_dir+'simd_check.c', src_dir+'utils.c']
 
 long_description = open('python/README.md').read()
 
@@ -46,17 +49,17 @@ setup(
     description = "pyabpoa: SIMD-based partial order alignment using adaptive band",
     long_description = long_description,
     long_description_content_type="text/markdown",
-    version = "1.0.5",
+    version = "1.2.0",
     url = "https://github.com/yangao07/abPOA",
     author = "Yan Gao",
-    author_email = "yangao07@hit.edu.cn",
-    license = "GLP",
+    author_email = "gaoy286@mail.sysu.edu.cn",
+    license = "MIT",
     keywords = "multiple-sequence-alignment  partial-order-graph-alignment",
     # Build instructions
     ext_modules = [Extension("pyabpoa",
                     sources=src,
                     include_dirs=[inc_dir],
-                    depends=[src_dir+'abpoa.h', src_dir+'abpoa_align.h', src_dir+'abpoa_graph.h', src_dir+'kdq.h', src_dir+'kseq.h', src_dir+'simd_abpoa_align.h', src_dir+'simd_instruction.h', src_dir+'utils.h', 'python/cabpoa.pxd'],
+                    depends=[src_dir+'abpoa.h', src_dir+'abpoa_align.h', src_dir+'abpoa_graph.h', src_dir+'abpoa_seed.h', src_dir+'abpoa_seq.h', src_dir+'kalloc.h', src_dir+'khash.h', src_dir+'kdq.h', src_dir+'kseq.h', src_dir+'ksort.h', src_dir+'kstring.h', src_dir+'kvec.h', src_dir+'simd_abpoa_align.h', src_dir+'simd_instruction.h', src_dir+'utils.h', 'python/cabpoa.pxd'],
                     libraries = ['z', 'm', 'pthread'],
                     extra_compile_args=['-O3', '-Wno-error=declaration-after-statement', simd_flag])],
     install_requires=['cython'],

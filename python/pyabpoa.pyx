@@ -104,15 +104,16 @@ cdef class msa_aligner:
 
     def __dealloc__(self):
         free(self.abpt.mat)
-        abpoa_free(self.ab, &self.abpt)
+        abpoa_free(self.ab)
 
     def __bool__(self):
         return self.ab != NULL
 
 
-    def msa(self, seqs, out_cons, out_msa, out_pog=None):
+    def msa(self, seqs, out_cons, out_msa, out_pog='', incr_fn=''):
         cdef int seq_n = len(seqs)
-        cdef int tot_n = seq_n 
+        cdef int exist_n = 0
+        cdef int tot_n = seq_n
         cdef uint8_t *bseq
         cdef abpoa_res_t res
         cdef uint8_t **cons_seq
@@ -122,8 +123,6 @@ cdef class msa_aligner:
         cdef int msa_l=0
 
         _cons_len, _cons_seq, _msa_seq = [], [], []
-
-        if seq_n < 2: return msa_result(seq_n, cons_n, _cons_len, _cons_seq, msa_l, _msa_seq)
 
         if out_cons: self.abpt.out_cons = 1
         else: self.abpt.out_cons = 0
@@ -135,8 +134,19 @@ cdef class msa_aligner:
         else: self.abpt.out_pog = NULL
 
         abpoa_post_set_para(&self.abpt)
-
         abpoa_reset_graph(self.ab, &self.abpt, len(seqs[0]))
+        if incr_fn:
+            if isinstance(incr_fn, str): incr_fn = bytes(incr_fn, 'utf-8')
+            self.abpt.incr_fn = incr_fn
+            abpoa_restore_graph(self.ab, &self.abpt)
+            exist_n = self.ab[0].abs[0].n_seq
+            tot_n += exist_n
+        else: self.abpt.incr_fn = NULL
+
+        self.ab[0].abs[0].n_seq += seq_n
+
+        if tot_n < 2: return msa_result(tot_n, cons_n, _cons_len, _cons_seq, msa_l, _msa_seq)
+
         for read_i, seq in enumerate(seqs):
             seq_l = len(seq)
             bseq = <uint8_t*>malloc(seq_l * cython.sizeof(uint8_t))
@@ -146,12 +156,12 @@ cdef class msa_aligner:
             res.is_rc = 0
             abpoa_align_sequence_to_graph(self.ab, &self.abpt, bseq, seq_l, &res)
 
-            abpoa_add_graph_alignment(self.ab, &self.abpt, bseq, seq_l, res, read_i, seq_n)
+            abpoa_add_graph_alignment(self.ab, &self.abpt, bseq, seq_l, NULL, res, exist_n+read_i, tot_n, 1)
             free(bseq)
             if res.n_cigar: free(res.graph_cigar)
 
         if self.abpt.out_cons:
-            abpoa_generate_consensus(self.ab, &self.abpt, tot_n, NULL, &cons_seq, NULL, &cons_len, &cons_n)
+            abpoa_generate_consensus(self.ab, &self.abpt, NULL, &cons_seq, NULL, &cons_len, &cons_n)
             for i in range(cons_n):
                 _cons_len.append(cons_len[i])
                 cons_seq1 = ''
@@ -165,17 +175,17 @@ cdef class msa_aligner:
                 free(cons_seq)
                 free(cons_len)
         if self.abpt.out_msa:
-            abpoa_generate_rc_msa(self.ab, &self.abpt, NULL, NULL, seq_n, NULL, &msa_seq, &msa_l)
-            for i in range(seq_n):
+            abpoa_generate_rc_msa(self.ab, &self.abpt, NULL, &msa_seq, &msa_l)
+            for i in range(tot_n):
                 msa_seq1 = ''
                 for c in msa_seq[i][:msa_l]:
                     if isinstance(c, bytes): c = ord(c)
                     msa_seq1 += self.nt4_seq_dict[c]
                 _msa_seq.append(msa_seq1)
             if msa_l > 0:
-                for i in range(seq_n):
+                for i in range(tot_n):
                     free(msa_seq[i])
                 free(msa_seq)
         if self.abpt.out_pog:
             abpoa_dump_pog(self.ab, &self.abpt)
-        return msa_result(seq_n, int(cons_n), _cons_len, _cons_seq, int(msa_l), _msa_seq)
+        return msa_result(tot_n, int(cons_n), _cons_len, _cons_seq, int(msa_l), _msa_seq)

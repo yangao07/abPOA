@@ -18,11 +18,13 @@
 extern "C" {
 #endif
 
-void set_65536_table(abpoa_para_t *abpt);
-void set_bit_table16(abpoa_para_t *abpt);
+void set_65536_table(void);
+void set_bit_table16(void);
 
+int abpoa_get_aligned_id(abpoa_graph_t *abg, int node_id, uint8_t base);
+void abpoa_add_graph_aligned_node(abpoa_graph_t *abg, int node_id, int aligned_id);
 abpoa_graph_t *abpoa_init_graph(void);
-void abpoa_free_graph(abpoa_graph_t *graph, abpoa_para_t *abpt);
+void abpoa_free_graph(abpoa_graph_t *graph);
 
 static inline int abpoa_graph_node_id_to_index(abpoa_graph_t *graph, int node_id) {
     if (node_id < 0 || node_id >= graph->node_n) err_fatal(__func__, "Wrong node id: %d\n", node_id);
