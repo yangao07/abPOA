@@ -150,7 +150,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
     if (j > 0) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, j, -1, j-1);                         \
     /* reverse cigar */                                                                                     \
     res->graph_cigar = abpt->rev_cigar ? cigar : abpoa_reverse_cigar(n_c, cigar);                           \
-    res->n_cigar = n_c;                                                                                     \
+    res->n_cigar = n_c; res->m_cigar = m_c;                                                                 \
     res->node_e = abpoa_graph_index_to_node_id(graph, best_i+beg_index), res->query_e = best_j-1; /* 0-based */\
     res->node_s = abpoa_graph_index_to_node_id(graph, _start_i+beg_index), res->query_s = _start_j-1;       \
     /*abpoa_print_cigar(n_c, *graph_cigar, graph);*/                                                        \
@@ -237,7 +237,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
     if (j > 0) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, j, -1, j-1);                         \
     /* reverse cigar */                                                                                     \
     res->graph_cigar = abpt->rev_cigar ? cigar : abpoa_reverse_cigar(n_c, cigar);                           \
-    res->n_cigar = n_c;                                                                                     \
+    res->n_cigar = n_c; res->m_cigar = m_c;                                                                 \
     res->node_e = abpoa_graph_index_to_node_id(graph, best_i+beg_index), res->query_e = best_j-1; /* 0-based */\
     res->node_s = abpoa_graph_index_to_node_id(graph, _start_i+beg_index), res->query_s = _start_j-1;       \
     /*abpoa_print_cigar(n_c, *graph_cigar, graph);*/                                                        \
@@ -367,7 +367,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
     if (j > 0) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, j, -1, j-1);                         \
     /* reverse cigar */                                                                                     \
     res->graph_cigar = abpt->rev_cigar ? cigar : abpoa_reverse_cigar(n_c, cigar);                           \
-    res->n_cigar = n_c;                                                                                     \
+    res->n_cigar = n_c; res->m_cigar = m_c;                                                                 \
     res->node_e = abpoa_graph_index_to_node_id(graph, best_i+beg_index), res->query_e = best_j-1; /* 0-based */\
     res->node_s = abpoa_graph_index_to_node_id(graph, _start_i+beg_index), res->query_s = _start_j-1;       \
     /*abpoa_print_cigar(n_c, *graph_cigar, graph);*/                                                        \
@@ -1479,7 +1479,7 @@ void abpoa_cg_backtrack(SIMDi *DP_H2E2F, int **pre_index, int *pre_n, int *dp_be
     if (dp_j > 0) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, dp_j, -1, dp_j-1);
     /* reverse cigar */
     res->graph_cigar = abpt->rev_cigar ? cigar : abpoa_reverse_cigar(n_c, cigar);
-    res->n_cigar = n_c;
+    res->n_cigar = n_c; res->m_cigar = m_c;
     res->node_e = abpoa_graph_index_to_node_id(graph, best_dp_i+beg_index), res->query_e = best_dp_j-1; /* 0-based */
     res->node_s = abpoa_graph_index_to_node_id(graph, _start_i+beg_index), res->query_s = _start_j-1;
     /*abpoa_print_cigar(n_c, *graph_cigar, graph);*/
@@ -1575,7 +1575,7 @@ int abpoa_cg_global_align_sequence_to_graph_core(abpoa_t *ab, int beg_node_id, i
 
 // align query to subgraph between beg_node_id and end_node_id (both are excluded)
 // generally: beg/end are the SRC/SINK_node
-int simd_abpoa_align_sequence_to_subgraph1(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *query, int qlen, abpoa_res_t *res) {
+int simd_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *query, int qlen, abpoa_res_t *res) {
     if (abpt->simd_flag == 0) err_fatal_simple("No SIMD instruction available.");
 
     int i, j, beg_index = ab->abg->node_id_to_index[beg_node_id], end_index = ab->abg->node_id_to_index[end_node_id];
@@ -1641,29 +1641,6 @@ int simd_abpoa_align_sequence_to_subgraph1(abpoa_t *ab, abpoa_para_t *abpt, int 
     }
 #endif
     free(index_map);
-    return 0;
-}
-
-int simd_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *query, int qlen, abpoa_res_t *res) {
-    if (abpt->amb_strand && (abpt->align_mode != ABPOA_GLOBAL_MODE || abpt->disable_seeding == 1)) { // ambiguous strand and no seeding performed
-        // forward strand
-        simd_abpoa_align_sequence_to_subgraph1(ab, abpt, beg_node_id, end_node_id, query, qlen, res);
-        if (res->best_score < MIN_OF_TWO(qlen, ab->abg->node_n-2) * abpt->match * .3333) { // TODO .3333
-            // reverse complement
-            int i;
-            uint8_t *rc_query = (uint8_t*)_err_malloc(sizeof(uint8_t) * qlen);
-            for (i = 0; i < qlen; ++i) {
-                if (query[qlen-i-1] < 4) rc_query[i] = 3 - query[qlen-i-1];
-                else rc_query[i] = 4;
-            }
-            abpoa_res_t rc_res; rc_res.n_cigar = 0, rc_res.graph_cigar = 0; rc_res.is_rc = 1;
-            simd_abpoa_align_sequence_to_subgraph1(ab, abpt, beg_node_id, end_node_id, rc_query, qlen, &rc_res);
-            if (rc_res.best_score > res->best_score) {
-                abpoa_res_copy(res, &rc_res);
-            }
-            free(rc_query); if (rc_res.n_cigar) free(rc_res.graph_cigar);
-        }
-    } else simd_abpoa_align_sequence_to_subgraph1(ab, abpt, beg_node_id, end_node_id, query, qlen, res);
     return 0;
 }
 
