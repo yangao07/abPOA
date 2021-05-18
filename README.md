@@ -10,7 +10,8 @@
 <!-- [![PyPI](https://img.shields.io/pypi/v/pyabpoa.svg?style=flat)](https://pypi.python.org/pypi/pyabpoa) -->
 ## Updates (v1.2.1)
 
-- Added minimizer-based seeding, reduce memory usage for long input sequences
+- Add minimizer-based seeding, reduce memory usage for long input sequences
+- Remove redundant topological sorting
 
 ## Getting started
 Download the [latest release](https://github.com/yangao07/abPOA/releases):
