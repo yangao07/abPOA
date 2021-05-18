@@ -8,15 +8,16 @@
 [![Build Status](https://img.shields.io/travis/yangao07/abPOA/master.svg?label=Master)](https://travis-ci.org/yangao07/abPOA)
 [![License](https://img.shields.io/badge/License-MIT-black.svg)](https://github.com/yangao07/abPOA/blob/master/LICENSE)
 <!-- [![PyPI](https://img.shields.io/pypi/v/pyabpoa.svg?style=flat)](https://pypi.python.org/pypi/pyabpoa) -->
-## Updates (v1.2.0)
+## Updates (v1.2.1)
 
-- Added minimizer-based seeding, reduce memory usage for long input sequences
+- Add minimizer-based seeding, reduce memory usage for long input sequences
+- Remove redundant topological sorting
 
 ## Getting started
 Download the [latest release](https://github.com/yangao07/abPOA/releases):
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.2.0/abPOA-v1.2.0.tar.gz
-tar -zxvf abPOA-v1.2.0.tar.gz && cd abPOA-v1.2.0
+wget https://github.com/yangao07/abPOA/releases/download/v1.2.1/abPOA-v1.2.1.tar.gz
+tar -zxvf abPOA-v1.2.1.tar.gz && cd abPOA-v1.2.1
 ```
 Make from source and run with test data:
 ```
@@ -80,9 +81,9 @@ You can also build abPOA from source files.
 Make sure you have gcc (>=6.4.0) and zlib installed before compiling.
 It is recommended to download the [latest release](https://github.com/yangao07/abPOA/releases).
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.2.0/abPOA-v1.2.0.tar.gz
-tar -zxvf abPOA-v1.2.0.tar.gz
-cd abPOA-v1.2.0; make
+wget https://github.com/yangao07/abPOA/releases/download/v1.2.1/abPOA-v1.2.1.tar.gz
+tar -zxvf abPOA-v1.2.1.tar.gz
+cd abPOA-v1.2.1; make
 ```
 Or, you can use `git clone` command to download the source code.
 This gives you the latest version of abPOA, which might be still under development.
@@ -94,8 +95,8 @@ cd abPOA; make
 ### <a name="binary"></a>Pre-built binary executable file for Linux/Unix 
 If you meet any compiling issue, please try the pre-built binary file:
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.2.0/abPOA-v1.2.0_x64-linux.tar.gz
-tar -zxvf abPOA-v1.2.0_x64-linux.tar.gz
+wget https://github.com/yangao07/abPOA/releases/download/v1.2.1/abPOA-v1.2.1_x64-linux.tar.gz
+tar -zxvf abPOA-v1.2.1_x64-linux.tar.gz
 ```
 
 ## <a name="usage"></a>General usage
