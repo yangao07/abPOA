@@ -38,9 +38,6 @@ cdef extern from "abpoa.h":
     cdef int ABPOA_HC "ABPOA_HC"
     cdef int ABPOA_MF "ABPOA_MF"
 
-    char LogTable65536[65536]
-    char bit_table16[65536]
-
     ctypedef struct abpoa_res_t:
         int n_cigar
         uint64_t *graph_cigar

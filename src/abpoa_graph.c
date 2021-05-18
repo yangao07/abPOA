@@ -5,6 +5,9 @@
 #include "simd_abpoa_align.h"
 #include "kdq.h"
 
+char LogTable65536[65536];
+char bit_table16[65536];
+
 static const char LogTable256[256] = {
 #define LT(n) n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n
     -1, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
@@ -33,8 +36,7 @@ void set_bit_table16(void) {
 
 #define get_bit_cnt4(table, b) (table[(b)&0xffff] + table[(b)>>16&0xffff] + table[(b)>>32&0xffff] + table[(b)>>48&0xffff])
 
-static inline int ilog2_64(uint64_t v)
-{
+static inline int ilog2_64(uint64_t v) {
     uint64_t t, tt;
     if ((tt = v >> 32)) return (t = tt >> 16) ? 48 + LogTable65536[t] : 32 + LogTable65536[tt];
     return (t = v>>16) ? 16 + LogTable65536[t] : LogTable65536[v];
@@ -1199,13 +1201,13 @@ int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_i
     }
     // normal graph, normal graph_cigar
     int i, j; int op, len;
-    int node_id, query_id, last_new = 0, last_id = beg_node_id, new_id, aligned_id;
+    int node_id, query_id=-1, last_new = 0, last_id = beg_node_id, new_id, aligned_id;
 
     for (i = 0; i < n_cigar; ++i) {
         op = abpoa_cigar[i] & 0xf;
         if (op == ABPOA_CMATCH) {
             node_id = (abpoa_cigar[i] >> 34) & 0x3fffffff;
-            query_id = (abpoa_cigar[i] >> 4) & 0x3fffffff;
+            query_id++; // = (abpoa_cigar[i] >> 4) & 0x3fffffff;
             if (abg->node[node_id].base != seq[query_id]) { // mismatch
                 // check if query base is identical to node_id's aligned node
                 if ((aligned_id = abpoa_get_aligned_id(abg, node_id, seq[query_id])) != -1) {
@@ -1227,8 +1229,8 @@ int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_i
             }
             if (qpos_to_node_id) qpos_to_node_id[query_id] = last_id;
         } else if (op == ABPOA_CINS || op == ABPOA_CSOFT_CLIP || op == ABPOA_CHARD_CLIP) {
-            query_id = (abpoa_cigar[i] >> 34) & 0x3fffffff;
             len = (abpoa_cigar[i] >> 4) & 0x3fffffff;
+            query_id+=len; // = (abpoa_cigar[i] >> 34) & 0x3fffffff;
             for (j = len-1; j >= 0; --j) { // XXX use dynamic id, instead of static query_id
                 new_id = abpoa_add_graph_node(abg, seq[query_id-j]);
                 if (last_id != beg_node_id || inc_both_ends) add = 1; else add = 0;

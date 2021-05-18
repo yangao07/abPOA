@@ -49,15 +49,13 @@
 extern "C" {
 #endif
 
-char LogTable65536[65536];
-char bit_table16[65536];
 
 typedef struct {
-    int n_cigar; abpoa_cigar_t *graph_cigar;
+    int n_cigar, m_cigar; abpoa_cigar_t *graph_cigar;
     int node_s, node_e, query_s, query_e; // for local and  extension mode
     int n_aln_bases, n_matched_bases;
     int32_t best_score; 
-    uint8_t is_rc:1; // is_rc: best_score is from the reverse complement
+    // uint8_t is_rc:1; // is_rc: best_score is from the reverse complement
                         // now is_rc is determined based on minimizer-based seeding and chaining
 } abpoa_res_t;
 
@@ -77,7 +75,7 @@ typedef struct {
     double min_freq; // for multiploid data
 
     // char LogTable65536[65536];
-    //char bit_table16[65536];
+    // char bit_table16[65536];
 } abpoa_para_t;
 
 typedef struct {

@@ -48,7 +48,7 @@ static inline void abpoa_res_copy(abpoa_res_t *dest, abpoa_res_t *src) {
     dest->query_s = src->query_s, dest->query_e = src->query_e;
     dest->n_aln_bases = src->n_aln_bases, dest->n_matched_bases = src->n_matched_bases;
     dest->best_score = src->best_score;
-    dest->is_rc = src->is_rc;
+    // dest->is_rc = src->is_rc;
 }
 
 static inline abpoa_cigar_t *abpoa_push_cigar(int *n_cigar, int *m_cigar, abpoa_cigar_t *cigar, int op, int len, int32_t node_id, int32_t query_id) {
@@ -70,6 +70,19 @@ static inline abpoa_cigar_t *abpoa_push_cigar(int *n_cigar, int *m_cigar, abpoa_
     } else cigar[(*n_cigar)-1] += l << 4;
 
     return cigar;
+}
+
+static inline int abpoa_push_whole_cigar(int *dest_n_cigar, int *dest_m_cigar, abpoa_cigar_t **dest_cigar, int src_n_cigar, abpoa_cigar_t *src_cigar) {
+    int i, dest_n_c = *dest_n_cigar;
+    *dest_n_cigar += src_n_cigar;
+    if (*dest_n_cigar > *dest_m_cigar) {
+        *dest_m_cigar = MAX_OF_TWO((*dest_m_cigar) << 1, *dest_n_cigar);
+        *dest_cigar = (abpoa_cigar_t*)_err_realloc(*dest_cigar, *dest_m_cigar * sizeof(abpoa_cigar_t));
+    }
+    for (i = 0; i < src_n_cigar; ++i) {
+        (*dest_cigar)[dest_n_c+i] = src_cigar[i];
+    }
+    return 0;
 }
 
 static inline abpoa_cigar_t *abpoa_reverse_cigar(int n_cigar, abpoa_cigar_t *cigar) {
@@ -97,7 +110,8 @@ static inline void abpoa_print_cigar(int n_cigar, abpoa_cigar_t *cigar, abpoa_gr
             printf("%d%c:%d\t", len, ABPOA_CIGAR_STR[op], index_i);
             n[op] += len;
         } else if (op == ABPOA_CINS || op == ABPOA_CSOFT_CLIP || op == ABPOA_CHARD_CLIP) { 
-            printf("%d%c:%d\t", len, ABPOA_CIGAR_STR[op], node_id);
+            query_id = node_id;
+            printf("%d%c:%d\t", len, ABPOA_CIGAR_STR[op], query_id);
             n[op] += len;
         } else {
             err_fatal(__func__, "Unknown cigar operation: %s\n", op);

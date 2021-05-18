@@ -624,6 +624,7 @@ int abpoa_build_guide_tree_partition(uint8_t **seqs, int *seq_lens, int n_seq, a
         for (i = 0; i < n_seq; ++i) read_id_map[i] = i;
         return 0;
     }
+    err_func_format_printf(__func__, "Seeding and chaining ...");
     void *km = km_init();
     u128_v mm1 = {0, 0, 0}; int *mm_c = (int*)_err_malloc((n_seq+1) * sizeof(int));
     abpoa_collect_mm(km, seqs, seq_lens, n_seq, abpt, &mm1, mm_c);
@@ -661,5 +662,7 @@ int abpoa_build_guide_tree_partition(uint8_t **seqs, int *seq_lens, int n_seq, a
     }
 
     kfree(km, mm1.a); free(mm_c); km_destroy(km);
+
+    err_func_format_printf(__func__, "Seeding and chaining done!");
     return par_anchors->n;
 }
