@@ -574,7 +574,7 @@ extern "C" {
 
 int simd_check(void);
 
-static void *SIMDMalloc(size_t size, size_t align) {
+static inline void *SIMDMalloc(size_t size, size_t align) {
     void *ret = (void*)_mm_malloc(size, align);
     if (ret == NULL) {
         fprintf(stderr, "[%s] mm_Malloc fail!\nSize: %ld\n", __func__, size);
