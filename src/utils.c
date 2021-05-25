@@ -393,6 +393,7 @@ void print_format_time(FILE *out)
 
 int err_func_format_printf(const char *func, const char *format, ...)
 {
+#ifdef ENABLE_ABPOA_LOG
     print_format_time(stderr);
     fprintf(stderr, "[%s] ", func);
 	va_list arg;
@@ -404,4 +405,7 @@ int err_func_format_printf(const char *func, const char *format, ...)
 	va_end(arg);
 	if (done < 0) _err_fatal_simple("vfprintf(stderr)", strerror(saveErrno));
 	return done;
+#else
+        return 0;
+#endif
 }
