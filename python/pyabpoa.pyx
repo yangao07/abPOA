@@ -153,7 +153,6 @@ cdef class msa_aligner:
             for i in range(seq_l):
                 bseq[i] = self.seq_nt4_dict[seq[i]]
             res.n_cigar = 0
-            res.is_rc = 0
             abpoa_align_sequence_to_graph(self.ab, &self.abpt, bseq, seq_l, &res)
 
             abpoa_add_graph_alignment(self.ab, &self.abpt, bseq, seq_l, NULL, res, exist_n+read_i, tot_n, 1)

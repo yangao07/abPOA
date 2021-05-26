@@ -62,8 +62,10 @@ else ifneq ($(avx512bw),)
 	py_SIMD_FLAG = AVX512BW=1
 endif
 
-# Turn this off as it hinders cross-compilation needed for cactus release process
-SIMD_FLAG = 
+# Let CACTUS_ARCH override this (it'll add -march to CFLAGS) in order to avoid -march native for more portable binaries
+ifneq ($(CACTUS_ARCH),)
+	SIMD_FLAG =
+endif
 
 .c.o:
 		$(CC) -c $(CFLAGS) $< -o $@

@@ -105,7 +105,7 @@ int abpoa_align_sequence_to_graph(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *quer
 }
 
 int abpoa_anchor_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int *seq_lens, u64_v par_anchors, int *par_c, int *tpos_to_node_id, int *qpos_to_node_id, int *read_id_map, int exist_n_seq, int n_seq) {
-    err_func_format_printf(__func__, "Performing POA between anchors ...");
+    // err_func_format_printf(__func__, "Performing POA between anchors ...");
     abpoa_res_t res; int read_id, last_read_id = -1, m_c = 0, k = abpt->k, qlen;
     abpoa_seq_t *abs = ab->abs;
     int *tmp;
@@ -200,12 +200,12 @@ int abpoa_anchor_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int *seq_l
         tmp = qpos_to_node_id; qpos_to_node_id = tpos_to_node_id; tpos_to_node_id = tmp;
         last_read_id = read_id;
     }
-    err_func_format_printf(__func__, "Performing POA between anchors done.");
+    // err_func_format_printf(__func__, "Performing POA between anchors done.");
     return 0;
 }
 
 int abpoa_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int *seq_lens, int exist_n_seq, int n_seq) {
-    err_func_format_printf(__func__, "Performing POA ...");
+    // err_func_format_printf(__func__, "Performing POA ...");
     abpoa_seq_t *abs = ab->abs;
     abpoa_res_t res; int i, j, read_id, qlen, tot_n_seq = exist_n_seq + n_seq;
     uint8_t *qseq, *rc_qseq;
@@ -236,7 +236,7 @@ int abpoa_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int *seq_lens, in
         if (abs->is_rc[read_id]) free(qseq);
         if (res.n_cigar) free(res.graph_cigar);
     }
-    err_func_format_printf(__func__, "Performing POA ... done.");
+    // err_func_format_printf(__func__, "Performing POA ... done.");
     return 0;
 }
 
