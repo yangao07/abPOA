@@ -64,4 +64,4 @@ setup(
                     extra_compile_args=['-O3', '-Wno-error=declaration-after-statement', simd_flag])],
     install_requires=['cython'],
     cmdclass = cmdclass
-1
+)

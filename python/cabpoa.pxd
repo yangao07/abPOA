@@ -39,12 +39,11 @@ cdef extern from "abpoa.h":
     cdef int ABPOA_MF "ABPOA_MF"
 
     ctypedef struct abpoa_res_t:
-        int n_cigar
+        int n_cigar, m_cigar
         uint64_t *graph_cigar
         int node_s, node_e, query_s, query_e # for local and  extension mode
         int n_aln_bases, n_matched_bases
         uint32_t best_score
-        uint8_t is_rc
 
 
     ctypedef struct abpoa_para_t:

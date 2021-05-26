@@ -18,10 +18,14 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build all libraries as shared")
 add_library(abpoa
     src/abpoa_align.c
     src/abpoa_graph.c
+    src/abpoa_plot.c
+    src/abpoa_seed.c
+    src/abpoa_seq.c
+    src/kalloc.c
+    src/kstring.c
     src/simd_abpoa_align.c
     src/simd_check.c
-    src/utils.c
-    src/abpoa_plot.c)
+    src/utils.c)
 
 add_executable(abpoa_bin
     src/abpoa.c)
