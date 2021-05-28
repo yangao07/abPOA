@@ -61,6 +61,7 @@ typedef struct {
 
 typedef struct {
     int m; int *mat; // score matrix
+    int use_score_matrix; // set _mat_ based on score matrix file, then _match_/_mismatch_ is not used.
     int match, mismatch, gap_open1, gap_open2, gap_ext1, gap_ext2; int inf_min;
     // minimizer seeding parameter
     int k, w, min_w;
@@ -120,6 +121,7 @@ typedef struct {
 
 // init for abpoa parameters
 abpoa_para_t *abpoa_init_para(void);
+void abpoa_set_mat_from_file(abpoa_para_t *abpt, char *mtx_fn);
 void abpoa_post_set_para(abpoa_para_t *abpt);
 void abpoa_free_para(abpoa_para_t *abpt);
 
