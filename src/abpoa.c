@@ -16,7 +16,7 @@ char PROG[20] = "abpoa";
 #define _bO BOLD UNDERLINE "O" NONE
 #define _bA BOLD UNDERLINE "A" NONE
 char DESCRIPTION[100] = _ba "daptive " _bb "anded " _bP "artial " _bO "rder " _bA "lignment";
-char VERSION[20] = "1.2.1";
+char VERSION[20] = "1.2.2";
 char CONTACT[30] = "gaoy286@mail.sysu.edu.cn";
 
 const struct option abpoa_long_opt [] = {
@@ -24,6 +24,7 @@ const struct option abpoa_long_opt [] = {
 
     { "match", 1, NULL, 'M' },
     { "mismatch", 1, NULL, 'X' },
+    { "matrix", 1, NULL, 't' },
     { "gap-open", 1, NULL, 'O' },
     { "gap-ext", 1, NULL, 'E' },
 
@@ -70,6 +71,8 @@ int abpoa_usage(void)
     err_printf("                              %d: global, %d: local, %d: extension\n", ABPOA_GLOBAL_MODE, ABPOA_LOCAL_MODE, ABPOA_EXTEND_MODE);
     err_printf("    -M --match    INT       match score [%d]\n", ABPOA_MATCH);
     err_printf("    -X --mismatch INT       mismatch penalty [%d]\n", ABPOA_MISMATCH);
+    err_printf("    -t --matrix   FILE      scoring matrix file, \'-M\' and \'-X\' are not used when \'-t\' is used [NULL]\n");
+    err_printf("                            e.g., \'HOXD70.mtx\'\n");
     err_printf("    -O --gap-open INT(,INT) gap opening penalty (O1,O2) [%d,%d]\n", ABPOA_GAP_OPEN1, ABPOA_GAP_OPEN2);
     err_printf("    -E --gap-ext  INT(,INT) gap extension penalty (E1,E2) [%d,%d]\n", ABPOA_GAP_EXT1, ABPOA_GAP_EXT2);
     err_printf("                            %s provides three gap penalty modes, cost of a g-long gap:\n", NAME);
@@ -152,7 +155,7 @@ int abpoa_main(char *file_fn, int is_list, abpoa_para_t *abpt){
 
 int main(int argc, char **argv) {
     int c, m, in_list=0; char *s; abpoa_para_t *abpt = abpoa_init_para();
-    while ((c = getopt_long(argc, argv, "m:M:X:O:E:b:f:z:e:Nk:w:n:i:lpso:Ar:g:a:dq:hv", abpoa_long_opt, NULL)) >= 0) {
+    while ((c = getopt_long(argc, argv, "m:M:X:t:O:E:b:f:z:e:Nk:w:n:i:lpso:Ar:g:a:dq:hv", abpoa_long_opt, NULL)) >= 0) {
         switch(c)
         {
             case 'm': m = atoi(optarg);
@@ -161,6 +164,7 @@ int main(int argc, char **argv) {
                       } abpt->align_mode=m; break;
             case 'M': abpt->match = atoi(optarg); break;
             case 'X': abpt->mismatch = atoi(optarg); break;
+            case 't': abpt->use_score_matrix = 1; abpoa_set_mat_from_file(abpt, optarg); break;
             case 'O': abpt->gap_open1 = strtol(optarg, &s, 10); if (*s == ',') abpt->gap_open2 = strtol(s+1, &s, 10); break;
             case 'E': abpt->gap_ext1 = strtol(optarg, &s, 10); if (*s == ',') abpt->gap_ext2 = strtol(s+1, &s, 10); break;
 

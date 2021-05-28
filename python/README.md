@@ -55,6 +55,8 @@ This constructs a multiple sequence alignment handler of pyabpoa, it accepts the
 
 * **aln_mode**: alignment mode. 'g': global, 'l': local, 'e': extension; default: **'g'**
 * **match**: match score; default: **2**
+* **mismatch**: match penaty; default: **4**
+* **score_matrix**: scoring matrix file, **match** and **mismatch** are not used when **score_matrix** is used; default: **''**
 * **gap_open1**: first gap opening penalty; default: **4**
 * **gap_ext1**: first gap extension penalty; default: **2**
 * **gap_open2**: second gap opening penalty; default: **24**

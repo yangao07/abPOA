@@ -50,7 +50,7 @@ cdef class msa_aligner:
     cdef abpoa_para_t abpt
     cdef seq_nt4_dict, nt4_seq_dict
 
-    def __cinit__(self, aln_mode='g', match=2, mismatch=4, gap_open1=4, gap_open2=24, gap_ext1=2, gap_ext2=1,
+    def __cinit__(self, aln_mode='g', match=2, mismatch=4, score_matrix='', gap_open1=4, gap_open2=24, gap_ext1=2, gap_ext2=1,
             extra_b=10, extra_f=0.01, end_bonus=-1, zdrop=-1, cons_agrm=ABPOA_HB, is_diploid=0, min_freq=0.3):
         self.ab = abpoa_init()
 
@@ -65,14 +65,19 @@ cdef class msa_aligner:
             sys.exit(1)
         self.abpt.match = match
         self.abpt.mismatch = mismatch
+        self.abpt.m = 5
+        self.abpt.mat = <int*>malloc(25 * cython.sizeof(int))
+
+        if score_matrix != '':
+            self.abpt.use_score_matrix = 1
+            if isinstance(score_matrix, str): score_matrix = bytes(score_matrix, 'utf-8')
+            abpoa_set_mat_from_file(&self.abpt, score_matrix)
+        else: self.abpt.use_score_matrix = 0
         self.abpt.gap_open1 = gap_open1
         self.abpt.gap_open2 = gap_open2
         self.abpt.gap_ext1 = gap_ext1
         self.abpt.gap_ext2 = gap_ext2
         self.abpt.ret_cigar = 1
-
-        self.abpt.m = 5
-        self.abpt.mat = <int*>malloc(25 * cython.sizeof(int))
 
         self.abpt.wb = extra_b
         self.abpt.wf = extra_f 
