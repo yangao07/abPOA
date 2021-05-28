@@ -39,17 +39,17 @@ cdef extern from "abpoa.h":
     cdef int ABPOA_MF "ABPOA_MF"
 
     ctypedef struct abpoa_res_t:
-        int n_cigar
+        int n_cigar, m_cigar
         uint64_t *graph_cigar
         int node_s, node_e, query_s, query_e # for local and  extension mode
         int n_aln_bases, n_matched_bases
         uint32_t best_score
-        uint8_t is_rc
 
 
     ctypedef struct abpoa_para_t:
         int m
         int *mat # score matrix
+        int use_score_matrix
         int match, mismatch, gap_open1, gap_open2, gap_ext1, gap_ext2
         int inf_min
         int k, w, min_w
@@ -113,6 +113,7 @@ cdef extern from "abpoa.h":
 
     # init for abpoa parameters
     abpoa_para_t *abpoa_init_para()
+    void abpoa_set_mat_from_file(abpoa_para_t *abpt, char *mtx_fn)
     void abpoa_post_set_para(abpoa_para_t *abpt)
     void abpoa_free_para(abpoa_para_t *abpt)
 

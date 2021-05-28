@@ -20,6 +20,59 @@ void gen_simple_mat(int m, int *mat, int match, int mismatch) {
         mat[(m - 1) * m + j] = 0;
 }
 
+void parse_mat_first_line(char *l, int *order) {
+    int i, n;
+    for (i = n = 0; l[i]; ++i) {
+        if (isspace(l[i])) continue;
+        if (l[i] == 'A' || l[i] == 'a') order[n++] = 0;
+        else if (l[i] == 'C' || l[i] == 'c') order[n++] = 1;
+        else if (l[i] == 'G' || l[i] == 'g') order[n++] = 2;
+        else if (l[i] == 'T' || l[i] == 't') order[n++] = 3;
+        else if (l[i] == 'N' || l[i] == 'n') order[n++] = 4;
+        else {
+            err_fatal(__func__, "Unknown base: \"%c\"\n", l[i]);
+        }
+    }
+}
+
+extern char nt4_table[256];
+void parse_mat_score_line(char *l, int *order, int m, int *mat) {
+    int n, is_base=1, _i=-1; long s; char *str = l, *pEnd=NULL;
+    for (n = 0; *str; ++str) {
+        if (!isalpha(*str) && !isdigit(*str) && *str != '+' && *str != '-') continue;
+        if (is_base) { // get base
+            _i = nt4_table[(int)*str];
+            if (_i >= m) err_fatal(__func__, "Unknown base: \"%c\" (%d).\n", *str, _i);
+            is_base = 0;
+        } else { // get score
+            if (n == m) err_fatal_simple("Too many scores in matrix.\n");
+            s = strtol(str, &pEnd, 10);
+            str = pEnd;
+            mat[_i *m + order[n]] = s;
+            n++;
+        }
+    }
+}
+
+void abpoa_set_mat_from_file(abpoa_para_t *abpt, char *mtx_fn) {
+    char *l = (char*)_err_malloc(1024 * sizeof(char)); FILE *fp;
+    if ((fp = fopen(mtx_fn, "r")) == NULL) err_fatal(__func__, "Unable to open scoring matrix file: \"%s\"\n", mtx_fn);
+    int first_line = 1;
+    int *order = (int*)_err_malloc(5 * sizeof(int));
+    while (fgets(l, 1024, fp) != NULL) {
+        if (l[0] == '#') continue;
+        if (first_line) {
+            first_line = 0;
+            // get A/C/G/T/N bases
+            parse_mat_first_line(l, order);
+        } else {
+            // get match/mismatch scores
+            parse_mat_score_line(l, order, abpt->m, abpt->mat);
+        }
+    }
+    free(l); free(order); fclose(fp);
+}
+
 void abpoa_set_gap_mode(abpoa_para_t *abpt) {
     if (abpt->gap_open1 == 0) abpt->gap_mode = ABPOA_LINEAR_GAP;
     else if (abpt->gap_open1 > 0 && abpt->gap_open2 == 0) abpt->gap_mode = ABPOA_AFFINE_GAP;
@@ -54,6 +107,7 @@ abpoa_para_t *abpoa_init_para(void) {
     abpt->mat = (int*)_err_malloc(abpt->m * abpt->m * sizeof(int));
 
     // score matrix
+    abpt->use_score_matrix = 0;
     abpt->match = ABPOA_MATCH;
     abpt->mismatch = ABPOA_MISMATCH;
     abpt->gap_open1 = ABPOA_GAP_OPEN1;
@@ -73,7 +127,7 @@ abpoa_para_t *abpoa_init_para(void) {
 }
 
 void abpoa_post_set_para(abpoa_para_t *abpt) {
-    gen_simple_mat(abpt->m, abpt->mat, abpt->match, abpt->mismatch);
+    if (abpt->use_score_matrix == 0) gen_simple_mat(abpt->m, abpt->mat, abpt->match, abpt->mismatch);
     abpoa_set_gap_mode(abpt);
     if (abpt->cons_agrm == ABPOA_HC || abpt->out_msa || abpt->out_gfa || abpt->is_diploid) {
         abpt->use_read_ids = 1;
@@ -105,7 +159,7 @@ int abpoa_align_sequence_to_graph(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *quer
 }
 
 int abpoa_anchor_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int *seq_lens, u64_v par_anchors, int *par_c, int *tpos_to_node_id, int *qpos_to_node_id, int *read_id_map, int exist_n_seq, int n_seq) {
-    err_func_format_printf(__func__, "Performing POA between anchors ...");
+    // err_func_format_printf(__func__, "Performing POA between anchors ...");
     abpoa_res_t res; int read_id, last_read_id = -1, m_c = 0, k = abpt->k, qlen;
     abpoa_seq_t *abs = ab->abs;
     int *tmp;
@@ -200,12 +254,12 @@ int abpoa_anchor_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int *seq_l
         tmp = qpos_to_node_id; qpos_to_node_id = tpos_to_node_id; tpos_to_node_id = tmp;
         last_read_id = read_id;
     }
-    err_func_format_printf(__func__, "Performing POA between anchors done.");
+    // err_func_format_printf(__func__, "Performing POA between anchors done.");
     return 0;
 }
 
 int abpoa_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int *seq_lens, int exist_n_seq, int n_seq) {
-    err_func_format_printf(__func__, "Performing POA ...");
+    // err_func_format_printf(__func__, "Performing POA ...");
     abpoa_seq_t *abs = ab->abs;
     abpoa_res_t res; int i, j, read_id, qlen, tot_n_seq = exist_n_seq + n_seq;
     uint8_t *qseq, *rc_qseq;
@@ -236,7 +290,7 @@ int abpoa_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int *seq_lens, in
         if (abs->is_rc[read_id]) free(qseq);
         if (res.n_cigar) free(res.graph_cigar);
     }
-    err_func_format_printf(__func__, "Performing POA ... done.");
+    // err_func_format_printf(__func__, "Performing POA ... done.");
     return 0;
 }
 
