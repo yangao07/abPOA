@@ -8,15 +8,15 @@
 [![Build Status](https://img.shields.io/travis/yangao07/abPOA/master.svg?label=Master)](https://travis-ci.org/yangao07/abPOA)
 [![License](https://img.shields.io/badge/License-MIT-black.svg)](https://github.com/yangao07/abPOA/blob/master/LICENSE)
 <!-- [![PyPI](https://img.shields.io/pypi/v/pyabpoa.svg?style=flat)](https://pypi.python.org/pypi/pyabpoa) -->
-## Updates (v1.2.2)
+## Updates (v1.2.3)
 
-- Allow scoring matrix file as input
+- Fix an overflow bug
 
 ## Getting started
 Download the [latest release](https://github.com/yangao07/abPOA/releases):
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.2.2/abPOA-v1.2.2.tar.gz
-tar -zxvf abPOA-v1.2.2.tar.gz && cd abPOA-v1.2.2
+wget https://github.com/yangao07/abPOA/releases/download/v1.2.3/abPOA-v1.2.3.tar.gz
+tar -zxvf abPOA-v1.2.3.tar.gz && cd abPOA-v1.2.3
 ```
 Make from source and run with test data:
 ```
@@ -65,7 +65,7 @@ abPOA supports three alignment modes (global, local, extension) and flexible sco
 It right now supports SSE2/SSE4.1/AVX2/AVX512F/AVX512BW vectorization and more advanced instructions 
 will be supported in the future.
 
-For more information, please refer to our [preprint paper](https://doi.org/10.1101/2020.05.07.083196).
+For more information, please refer to our [preprint paper](https://doi.org/10.1101.2.30.05.07.083196).
 
 ## <a name="install"></a>Installation
 
@@ -80,9 +80,9 @@ You can also build abPOA from source files.
 Make sure you have gcc (>=6.4.0) and zlib installed before compiling.
 It is recommended to download the [latest release](https://github.com/yangao07/abPOA/releases).
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.2.2/abPOA-v1.2.2.tar.gz
-tar -zxvf abPOA-v1.2.2.tar.gz
-cd abPOA-v1.2.2; make
+wget https://github.com/yangao07/abPOA/releases/download/v1.2.3/abPOA-v1.2.3.tar.gz
+tar -zxvf abPOA-v1.2.3.tar.gz
+cd abPOA-v1.2.3; make
 ```
 Or, you can use `git clone` command to download the source code.
 This gives you the latest version of abPOA, which might be still under development.
@@ -94,8 +94,8 @@ cd abPOA; make
 ### <a name="binary"></a>Pre-built binary executable file for Linux/Unix 
 If you meet any compiling issue, please try the pre-built binary file:
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.2.2/abPOA-v1.2.2_x64-linux.tar.gz
-tar -zxvf abPOA-v1.2.2_x64-linux.tar.gz
+wget https://github.com/yangao07/abPOA/releases/download/v1.2.3/abPOA-v1.2.3_x64-linux.tar.gz
+tar -zxvf abPOA-v1.2.3_x64-linux.tar.gz
 ```
 
 ## <a name="usage"></a>General usage
@@ -152,7 +152,7 @@ Options:
                               0: global, 1: local, 2: extension
     -M --match    INT       match score [2]
     -X --mismatch INT       mismatch penalty [4]
-    -t --matrix   FILE      scoring matrix file, '-M' and '-X' are not used when '-t' is used [NULL]
+    -t --matrix   FILE      scoring matrix file, '-M' and '-X' are not used when '-t' is used [Null]
                             e.g., 'HOXD70.mtx'
     -O --gap-open INT(,INT) gap opening penalty (O1,O2) [4,24]
     -E --gap-ext  INT(,INT) gap extension penalty (E1,E2) [2,1]
