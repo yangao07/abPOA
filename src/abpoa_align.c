@@ -7,17 +7,18 @@
 #include "utils.h"
 #include "abpoa_seed.h"
 
-void gen_simple_mat(int m, int *mat, int match, int mismatch) {
-    int i, j;
-    match = match < 0 ? -match : match;
-    mismatch = mismatch > 0? -mismatch : mismatch;
+void gen_simple_mat(abpoa_para_t *abpt) {
+    int m = abpt->m, i, j;
+    int match = abpt->match < 0 ? -abpt->match : abpt->match;
+    int mismatch = abpt->mismatch > 0? -abpt->mismatch : abpt->mismatch;
     for (i = 0; i < m - 1; ++i) {
         for (j = 0; j < m - 1; ++j)
-            mat[i * m + j] = i == j ? match : mismatch;
-        mat[i * m + m - 1] = 0;
+            abpt->mat[i * m + j] = i == j ? match : mismatch;
+        abpt->mat[i * m + m - 1] = 0;
     }
     for (j = 0; j < m; ++j)
-        mat[(m - 1) * m + j] = 0;
+        abpt->mat[(m - 1) * m + j] = 0;
+    abpt->min_mis = -mismatch;
 }
 
 void parse_mat_first_line(char *l, int *order) {
@@ -58,7 +59,7 @@ void abpoa_set_mat_from_file(abpoa_para_t *abpt, char *mtx_fn) {
     char *l = (char*)_err_malloc(1024 * sizeof(char)); FILE *fp;
     if ((fp = fopen(mtx_fn, "r")) == NULL) err_fatal(__func__, "Unable to open scoring matrix file: \"%s\"\n", mtx_fn);
     int first_line = 1;
-    int *order = (int*)_err_malloc(5 * sizeof(int));
+    int *order = (int*)_err_malloc(abpt->m * sizeof(int));
     while (fgets(l, 1024, fp) != NULL) {
         if (l[0] == '#') continue;
         if (first_line) {
@@ -69,6 +70,11 @@ void abpoa_set_mat_from_file(abpoa_para_t *abpt, char *mtx_fn) {
             // get match/mismatch scores
             parse_mat_score_line(l, order, abpt->m, abpt->mat);
         }
+    }
+    int i; abpt->min_mis = 0;
+    for (i = 0; i < abpt->m * abpt->m; ++i) {
+        if (-abpt->mat[i] > abpt->min_mis) 
+            abpt->min_mis = -abpt->mat[i];
     }
     free(l); free(order); fclose(fp);
 }
@@ -127,7 +133,7 @@ abpoa_para_t *abpoa_init_para(void) {
 }
 
 void abpoa_post_set_para(abpoa_para_t *abpt) {
-    if (abpt->use_score_matrix == 0) gen_simple_mat(abpt->m, abpt->mat, abpt->match, abpt->mismatch);
+    if (abpt->use_score_matrix == 0) gen_simple_mat(abpt);
     abpoa_set_gap_mode(abpt);
     if (abpt->cons_agrm == ABPOA_HC || abpt->out_msa || abpt->out_gfa || abpt->is_diploid) {
         abpt->use_read_ids = 1;

@@ -16,7 +16,7 @@ char PROG[20] = "abpoa";
 #define _bO BOLD UNDERLINE "O" NONE
 #define _bA BOLD UNDERLINE "A" NONE
 char DESCRIPTION[100] = _ba "daptive " _bb "anded " _bP "artial " _bO "rder " _bA "lignment";
-char VERSION[20] = "1.2.2";
+char VERSION[20] = "1.2.3";
 char CONTACT[30] = "gaoy286@mail.sysu.edu.cn";
 
 const struct option abpoa_long_opt [] = {
@@ -71,7 +71,7 @@ int abpoa_usage(void)
     err_printf("                              %d: global, %d: local, %d: extension\n", ABPOA_GLOBAL_MODE, ABPOA_LOCAL_MODE, ABPOA_EXTEND_MODE);
     err_printf("    -M --match    INT       match score [%d]\n", ABPOA_MATCH);
     err_printf("    -X --mismatch INT       mismatch penalty [%d]\n", ABPOA_MISMATCH);
-    err_printf("    -t --matrix   FILE      scoring matrix file, \'-M\' and \'-X\' are not used when \'-t\' is used [NULL]\n");
+    err_printf("    -t --matrix   FILE      scoring matrix file, \'-M\' and \'-X\' are not used when \'-t\' is used [Null]\n");
     err_printf("                            e.g., \'HOXD70.mtx\'\n");
     err_printf("    -O --gap-open INT(,INT) gap opening penalty (O1,O2) [%d,%d]\n", ABPOA_GAP_OPEN1, ABPOA_GAP_OPEN2);
     err_printf("    -E --gap-ext  INT(,INT) gap extension penalty (E1,E2) [%d,%d]\n", ABPOA_GAP_EXT1, ABPOA_GAP_EXT2);

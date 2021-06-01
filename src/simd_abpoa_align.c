@@ -1560,10 +1560,8 @@ int abpoa_cg_global_align_sequence_to_graph_core(abpoa_t *ab, int beg_node_id, i
     // printf("dp_sn: %d\n", tot_dp_sn);
     // printf("dp_sn: %d, node_n: %d, seq_n: %d\n", tot_dp_sn, graph->node_n, qlen);
     abpoa_global_get_max(graph, beg_index, end_node_id, index_map, DP_H2E2F, 5*dp_sn, qlen, dp_end, &best_score, &best_i, &best_j);
-    // simd_abpoa_print_cg_matrix(int32_t, beg_index, end_index);
-#ifdef __DEBUG__
+    simd_abpoa_print_cg_matrix(int32_t, beg_index, end_index);
     fprintf(stderr, "best_score: (%d, %d) -> %d\n", best_i, best_j, best_score);
-#endif
     res->best_score = best_score;
     abpoa_cg_backtrack(DP_H2E2F, pre_index, pre_n, dp_beg, dp_end, dp_sn, abpt->m, mat, gap_ext1, gap_ext2, gap_oe1, gap_oe2, beg_index, best_i, best_j, qlen, graph, abpt, query, res);
     for (i = 0; i < matrix_row_n; ++i) free(pre_index[i]);
@@ -1593,7 +1591,7 @@ int simd_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int b
     }
 
 #ifdef __DEBUG__
-    _simd_p32.inf_min = MAX_OF_TWO(abpt->gap_ext1, abpt->gap_ext2) * 31 +MAX_OF_THREE(INT32_MIN + abpt->mismatch, INT32_MIN + abpt->gap_open1 + abpt->gap_ext1, INT32_MIN + abpt->gap_open2 + abpt->gap_ext2);
+    _simd_p32.inf_min = MAX_OF_TWO(abpt->gap_ext1, abpt->gap_ext2) * 31 +MAX_OF_THREE(INT32_MIN + abpt->min_mis, INT32_MIN + abpt->gap_open1 + abpt->gap_ext1, INT32_MIN + abpt->gap_open2 + abpt->gap_ext2);
     if (simd_abpoa_realloc(ab, gn, qlen, abpt, _simd_p32)) return 0;
     if (abpt->gap_mode == ABPOA_CONVEX_GAP) abpoa_cg_global_align_sequence_to_graph_core(ab, beg_node_id, beg_index, end_node_id, end_index, index_map, qlen, query, abpt, _simd_p32, res);
 #else
@@ -1605,12 +1603,12 @@ int simd_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int b
         int len = qlen > gn ? qlen : gn;
         max_score = MAX_OF_TWO(qlen * abpt->match, len * abpt->gap_ext1 + abpt->gap_open1);
     }
-    if (max_score <= INT16_MAX-abpt->mismatch - gap_oe1 - gap_oe2) {
-        _simd_p16.inf_min = MAX_OF_THREE(INT16_MIN + abpt->mismatch, INT16_MIN + gap_oe1, INT16_MIN + gap_oe2) + 31 * MAX_OF_TWO(gap_ext1, gap_ext2);
+    if (max_score <= INT16_MAX - abpt->min_mis - gap_oe1 - gap_oe2) {
+        _simd_p16.inf_min = MAX_OF_THREE(INT16_MIN + abpt->min_mis, INT16_MIN + gap_oe1, INT16_MIN + gap_oe2) + 31 * MAX_OF_TWO(gap_ext1, gap_ext2);
         mem_ret = simd_abpoa_realloc(ab, gn, qlen, abpt, _simd_p16);
         bits = 16;
     } else {
-        _simd_p32.inf_min = MAX_OF_THREE(INT32_MIN + abpt->mismatch, INT32_MIN + gap_oe1, INT32_MIN + gap_oe2) + 31 * MAX_OF_TWO(gap_ext1, gap_ext2);
+        _simd_p32.inf_min = MAX_OF_THREE(INT32_MIN + abpt->min_mis, INT32_MIN + gap_oe1, INT32_MIN + gap_oe2) + 31 * MAX_OF_TWO(gap_ext1, gap_ext2);
         mem_ret = simd_abpoa_realloc(ab, gn, qlen, abpt, _simd_p32);
         bits = 32;
     }
