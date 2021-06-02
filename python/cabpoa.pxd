@@ -50,7 +50,7 @@ cdef extern from "abpoa.h":
         int m
         int *mat # score matrix
         int use_score_matrix
-        int match, mismatch, gap_open1, gap_open2, gap_ext1, gap_ext2
+        int match, max_mat, mismatch, min_mis, gap_open1, gap_open2, gap_ext1, gap_ext2
         int inf_min
         int k, w, min_w
         int wb # 1st part of extra band width
