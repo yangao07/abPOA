@@ -18,6 +18,7 @@ void gen_simple_mat(abpoa_para_t *abpt) {
     }
     for (j = 0; j < m; ++j)
         abpt->mat[(m - 1) * m + j] = 0;
+    abpt->max_mat = match;
     abpt->min_mis = -mismatch;
 }
 
@@ -71,8 +72,10 @@ void abpoa_set_mat_from_file(abpoa_para_t *abpt, char *mtx_fn) {
             parse_mat_score_line(l, order, abpt->m, abpt->mat);
         }
     }
-    int i; abpt->min_mis = 0;
+    int i; abpt->min_mis = 0, abpt->max_mat = 0;
     for (i = 0; i < abpt->m * abpt->m; ++i) {
+        if (abpt->mat[i] > abpt->max_mat)
+            abpt->max_mat = abpt->mat[i];
         if (-abpt->mat[i] > abpt->min_mis) 
             abpt->min_mis = -abpt->mat[i];
     }
@@ -277,7 +280,7 @@ int abpoa_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int *seq_lens, in
 #endif
         res.graph_cigar = 0; res.n_cigar = 0;
         abpoa_align_sequence_to_graph(ab, abpt, qseq, qlen, &res);
-        if (abpt->amb_strand && (res.best_score < MIN_OF_TWO(qlen, ab->abg->node_n-2) * abpt->match * .3333)) { // TODO .3333
+        if (abpt->amb_strand && (res.best_score < MIN_OF_TWO(qlen, ab->abg->node_n-2) * abpt->max_mat * .3333)) { // TODO .3333
             rc_qseq = (uint8_t*)_err_malloc(sizeof(uint8_t) * qlen);
             for (j = 0; j < qlen; ++j) {
                 if (qseq[qlen-i-1] < 4) rc_qseq[i] = 3 - qseq[qlen-i-1];
