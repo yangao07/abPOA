@@ -62,7 +62,7 @@ typedef struct {
 typedef struct {
     int m; int *mat; // score matrix
     int use_score_matrix; // set _mat_ based on score matrix file, then _match_/_mismatch_ is not used.
-    int match, mismatch, min_mis, gap_open1, gap_open2, gap_ext1, gap_ext2; int inf_min;
+    int match, max_mat, mismatch, min_mis, gap_open1, gap_open2, gap_ext1, gap_ext2; int inf_min;
     // minimizer seeding parameter
     int k, w, min_w;
     int wb; float wf; // extra band width
