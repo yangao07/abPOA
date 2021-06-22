@@ -335,12 +335,8 @@ int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seq, char **seq_names, int 
     abpoa_seq_t *abs = ab->abs; int i, exist_n_seq = abs->n_seq;
 
     // set ab->abs, name
-    abs->n_seq += n_seq;
-    if (abs->n_seq > abs->m_seq) {
-        abs->m_seq = abs->n_seq;
-        abs->name = (abpoa_str_t*)_err_realloc(abs->name, abs->m_seq * sizeof(abpoa_str_t));
-        abs->is_rc = (uint8_t*)_err_realloc(abs->is_rc, abs->m_seq * sizeof(uint8_t));
-    }
+    abs->n_seq += n_seq; abpoa_realloc_seq(abs);
+
     if (seq_names) {
         for (i = 0; i < n_seq; ++i) {
             abpoa_cpy_str(abs->name+exist_n_seq+i, seq_names[i], strlen(seq_names[i]));
@@ -403,7 +399,6 @@ int abpoa_msa1(abpoa_t *ab, abpoa_para_t *abpt, char *read_fn, FILE *out_fp, uin
     for (i = 0; i < abs->n_seq; ++i) {
         if (abs->seq[i].l > max_len) max_len = abs->seq[i].l;
     }
-
 
     // set seqs, seq_lens
     extern char nt4_table[256];
