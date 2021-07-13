@@ -279,22 +279,23 @@ int abpoa_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int *seq_lens, in
         fprintf(stderr, "seq: # %d\n", i);
 #endif
         res.graph_cigar = 0; res.n_cigar = 0;
-        abpoa_align_sequence_to_graph(ab, abpt, qseq, qlen, &res);
-        if (abpt->amb_strand && (res.best_score < MIN_OF_TWO(qlen, ab->abg->node_n-2) * abpt->max_mat * .3333)) { // TODO .3333
-            rc_qseq = (uint8_t*)_err_malloc(sizeof(uint8_t) * qlen);
-            for (j = 0; j < qlen; ++j) {
-                if (qseq[qlen-i-1] < 4) rc_qseq[i] = 3 - qseq[qlen-i-1];
-                else rc_qseq[i] = 4;
-            }
-            abpoa_res_t rc_res; rc_res.n_cigar = 0, rc_res.graph_cigar = 0;
-            simd_abpoa_align_sequence_to_graph(ab, abpt, rc_qseq, qlen, &rc_res);
-            if (rc_res.best_score > res.best_score) {
-                abpoa_res_copy(&res, &rc_res);
-                qseq = rc_qseq;
-                abs->is_rc[read_id] = 1;
-            }
-            if (rc_res.n_cigar) free(rc_res.graph_cigar);
-        } 
+        if (abpoa_align_sequence_to_graph(ab, abpt, qseq, qlen, &res) >= 0) {
+            if (abpt->amb_strand && (res.best_score < MIN_OF_TWO(qlen, ab->abg->node_n-2) * abpt->max_mat * .3333)) { // TODO .3333
+                rc_qseq = (uint8_t*)_err_malloc(sizeof(uint8_t) * qlen);
+                for (j = 0; j < qlen; ++j) {
+                    if (qseq[qlen-j-1] < 4) rc_qseq[j] = 3 - qseq[qlen-j-1];
+                    else rc_qseq[j] = 4;
+                }
+                abpoa_res_t rc_res; rc_res.n_cigar = 0, rc_res.graph_cigar = 0;
+                simd_abpoa_align_sequence_to_graph(ab, abpt, rc_qseq, qlen, &rc_res);
+                if (rc_res.best_score > res.best_score) {
+                    abpoa_res_copy(&res, &rc_res);
+                    qseq = rc_qseq;
+                    abs->is_rc[read_id] = 1;
+                }
+                if (rc_res.n_cigar) free(rc_res.graph_cigar);
+            } 
+        }
         abpoa_add_graph_alignment(ab, abpt, qseq, qlen, NULL, res, read_id, tot_n_seq, 1);
         if (abs->is_rc[read_id]) free(qseq);
         if (res.n_cigar) free(res.graph_cigar);
