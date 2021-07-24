@@ -585,9 +585,13 @@ HB_CONS:
     free(score);
 }
 
-void abpoa_heaviest_column_consensus(abpoa_graph_t *abg, int **rc_weight, int **msa_node_id, int src_id, int sink_id, int msa_l, int n_seq) {
+void abpoa_heaviest_column_consensus(abpoa_graph_t *abg, int **rc_weight, int **msa_node_id, int src_id, int sink_id, int msa_l, int n_seq, int ***cons_cov) {
     int i, j, w, max_base, max_w, gap_w;
-    int last_id = src_id, cur_id;
+    int last_id = src_id, cur_id, cons_i = 0;
+    if (cons_cov != NULL) {
+        *cons_cov = (int**)_err_malloc(sizeof(int*));
+        (*cons_cov)[0] = (int*)_err_malloc(sizeof(int) * abg->node_n);
+    }
     for (i = 0; i < msa_l; ++i) {
         max_w = 0, max_base = 5, gap_w = n_seq;
         for (j = 0; j < 4; ++j) {
@@ -601,12 +605,14 @@ void abpoa_heaviest_column_consensus(abpoa_graph_t *abg, int **rc_weight, int **
             cur_id = msa_node_id[i][max_base];
             abg->node[last_id].max_out_id = cur_id;
             last_id = cur_id;
+            if (cons_cov != NULL) 
+                (*cons_cov)[0][cons_i++] = max_w;
         }
     }
     abg->node[last_id].max_out_id = sink_id;
 }
 
-void abpoa_heaviest_column(abpoa_graph_t *abg, int src_id, int sink_id, int n_seq) {
+void abpoa_heaviest_column(abpoa_graph_t *abg, int src_id, int sink_id, int n_seq, int ***cons_cov) {
     abpoa_set_msa_rank(abg, src_id, sink_id);
 
     int i, msa_l = abg->node_id_to_msa_rank[sink_id] - 1;
@@ -619,7 +625,7 @@ void abpoa_heaviest_column(abpoa_graph_t *abg, int src_id, int sink_id, int n_se
     } 
     abpoa_set_row_column_weight(abg, rc_weight, msa_node_id);
 
-    abpoa_heaviest_column_consensus(abg, rc_weight, msa_node_id, src_id, sink_id, msa_l, n_seq);
+    abpoa_heaviest_column_consensus(abg, rc_weight, msa_node_id, src_id, sink_id, msa_l, n_seq, cons_cov);
     for (i = 0; i < msa_l; ++i) { 
         free(rc_weight[i]); free(msa_node_id[i]);
     } free(rc_weight); free(msa_node_id);
@@ -764,7 +770,7 @@ void abpoa_diploid_heaviest_column(abpoa_graph_t *abg, int src_id, int sink_id, 
     clu_read_ids_n = (int*)_err_calloc(2, sizeof(int));
     int clu_n = abpoa_diploid_ids(read_ids, rc_weight, msa_l, n_seq, min_freq, read_ids_n, clu_read_ids, clu_read_ids_n);
     if (clu_n == 1) {
-        abpoa_heaviest_column_consensus(abg, rc_weight, msa_node_id, src_id, sink_id, msa_l, n_seq);
+        abpoa_heaviest_column_consensus(abg, rc_weight, msa_node_id, src_id, sink_id, msa_l, n_seq, NULL);
         if (out_fp) output_consensus(abg, src_id, sink_id, out_fp);
         if (cons_n) {
             *cons_n = 1; abpoa_store_consensus(abg, src_id, sink_id, cons_seq, cons_l);
@@ -794,7 +800,7 @@ int abpoa_generate_consensus(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp, uint
         abpoa_diploid_heaviest_column(abg, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, n_seq, abpt->min_freq, out_fp, cons_seq, cons_l, cons_n);
     } else {
         if (abpt->cons_agrm == ABPOA_HB) abpoa_heaviest_bundling(abg, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, out_degree, cons_cov);
-        else if (abpt->cons_agrm == ABPOA_HC) abpoa_heaviest_column(abg, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, n_seq);
+        else if (abpt->cons_agrm == ABPOA_HC) abpoa_heaviest_column(abg, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, n_seq, cons_cov);
         else if (abpt->cons_agrm == ABPOA_MF) abpoa_traverse_min_flow(abg, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, out_degree); 
         else err_fatal(__func__, "Unknown consensus calling algorithm: %d.", abpt->cons_agrm);
         if (out_fp) _cons_l = output_consensus(abg, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, out_fp);

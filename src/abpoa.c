@@ -72,7 +72,7 @@ int abpoa_usage(void)
     err_printf("    -M --match    INT       match score [%d]\n", ABPOA_MATCH);
     err_printf("    -X --mismatch INT       mismatch penalty [%d]\n", ABPOA_MISMATCH);
     err_printf("    -t --matrix   FILE      scoring matrix file, \'-M\' and \'-X\' are not used when \'-t\' is used [Null]\n");
-    err_printf("                            e.g., \'HOXD70.mtx\'\n");
+    err_printf("                            e.g., \'HOXD70.mtx, BLOSUM62.mtx\'\n");
     err_printf("    -O --gap-open INT(,INT) gap opening penalty (O1,O2) [%d,%d]\n", ABPOA_GAP_OPEN1, ABPOA_GAP_OPEN2);
     err_printf("    -E --gap-ext  INT(,INT) gap extension penalty (E1,E2) [%d,%d]\n", ABPOA_GAP_EXT1, ABPOA_GAP_EXT2);
     err_printf("                            %s provides three gap penalty modes, cost of a g-long gap:\n", NAME);

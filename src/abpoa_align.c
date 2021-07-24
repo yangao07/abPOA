@@ -112,7 +112,7 @@ abpoa_para_t *abpoa_init_para(void) {
     abpt->out_pog = NULL; // dump partial order graph to file
 
     // number of residue types
-    abpt->m = 5; // nucleotides TODO score matrix for aa
+    abpt->m = 27; // A-Z *
     abpt->mat = (int*)_err_malloc(abpt->m * abpt->m * sizeof(int));
 
     // score matrix

@@ -225,12 +225,12 @@ int abpoa_build_guide_tree(int n_seq, u128_v *mm, int *tree_id_map) {
 
     // then, pick one with biggest jac sum with existing sequence in tree_id_map
     while (n_in_map < n_seq) {
-        max_jac = 0.0, max_i = n_seq;
+        max_jac = -1.0, max_i = n_seq;
         for (rid1 = 0; rid1 < n_seq; ++rid1) {
             jac = 0.0;
             for (i = 0; i < (size_t)n_in_map; ++i) {
                 rid2 = tree_id_map[i];
-                if (rid1 == rid2) { jac = 0.0; break; }
+                if (rid1 == rid2) { jac = -1.0; break; }
                 else if (rid1 > rid2) jac += jac_sim[((rid1 * (rid1-1)) >> 1) + rid2];
                 else jac += jac_sim[((rid2 * (rid2-1)) >> 1) + rid1];
             }
