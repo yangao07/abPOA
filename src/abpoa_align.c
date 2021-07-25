@@ -22,22 +22,15 @@ void gen_simple_mat(abpoa_para_t *abpt) {
     abpt->min_mis = -mismatch;
 }
 
+extern char nt4_table[256];
 void parse_mat_first_line(char *l, int *order) {
     int i, n;
     for (i = n = 0; l[i]; ++i) {
         if (isspace(l[i])) continue;
-        if (l[i] == 'A' || l[i] == 'a') order[n++] = 0;
-        else if (l[i] == 'C' || l[i] == 'c') order[n++] = 1;
-        else if (l[i] == 'G' || l[i] == 'g') order[n++] = 2;
-        else if (l[i] == 'T' || l[i] == 't') order[n++] = 3;
-        else if (l[i] == 'N' || l[i] == 'n') order[n++] = 4;
-        else {
-            err_fatal(__func__, "Unknown base: \"%c\"\n", l[i]);
-        }
+        order[n++] = nt4_table[(int)l[i]];
     }
 }
 
-extern char nt4_table[256];
 void parse_mat_score_line(char *l, int *order, int m, int *mat) {
     int n, is_base=1, _i=-1; long s; char *str = l, *pEnd=NULL;
     for (n = 0; *str; ++str) {
@@ -124,7 +117,7 @@ abpoa_para_t *abpoa_init_para(void) {
     abpt->gap_ext1 = ABPOA_GAP_EXT1;
     abpt->gap_ext2 = ABPOA_GAP_EXT2;
 
-    abpt->disable_seeding = 0; // perform seeding by default
+    abpt->disable_seeding = 1; // no seeding by default
     abpt->k = ABPOA_MMK;
     abpt->w = ABPOA_MMW;
     abpt->min_w = ABPOA_MIN_POA_WIN;

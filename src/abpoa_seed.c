@@ -8,15 +8,12 @@
 #include "kvec.h"
 #include "ksort.h"
 
-extern char nt4_table[256];
-
 const char LogTable256[256] = {
 #define LT(n) n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n
     -1, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
     LT(4), LT(5), LT(5), LT(6), LT(6), LT(6), LT(6),
     LT(7), LT(7), LT(7), LT(7), LT(7), LT(7), LT(7), LT(7)
 };
-
 
 static inline int ilog2_32(uint32_t v) {
     uint32_t t, tt;

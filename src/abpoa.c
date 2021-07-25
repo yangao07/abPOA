@@ -33,7 +33,7 @@ const struct option abpoa_long_opt [] = {
     { "zdrop", 1, NULL, 'z' },
     { "bouns", 1, NULL, 'e' },
 
-    { "no-seeding", 0, NULL, 'N'},
+    { "seeding", 0, NULL, 'S'},
     { "k-mer", 1, NULL, 'k' },
     { "window", 1, NULL, 'w' },
     { "min-poa-win", 1, NULL, 'n' },
@@ -93,7 +93,7 @@ int abpoa_usage(void)
     // err_printf("    -e --bonus    INT       end bonus score in extension alignment [-1]\n");
     // err_printf("                            set as <= 0 to disable end bounus\n");
     err_printf("  Minimizer-based seeding and partition (only effective in global alignment mode):\n");
-    err_printf("    -N --no-seeding         disable seeding [False]\n");
+    err_printf("    -S --seeding            enable seeding [False]\n");
     err_printf("    -k --k-mer       INT    minimizer k-mer size [%d]\n", ABPOA_MMK);
     err_printf("    -w --window      INT    minimizer window size [%d]\n", ABPOA_MMW);
     err_printf("    -n --min-poa-win INT    min. size of window to perform POA [%d]\n", ABPOA_MIN_POA_WIN);
@@ -155,7 +155,7 @@ int abpoa_main(char *file_fn, int is_list, abpoa_para_t *abpt){
 
 int main(int argc, char **argv) {
     int c, m, in_list=0; char *s; abpoa_para_t *abpt = abpoa_init_para();
-    while ((c = getopt_long(argc, argv, "m:M:X:t:O:E:b:f:z:e:Nk:w:n:i:lpso:Ar:g:a:dq:hv", abpoa_long_opt, NULL)) >= 0) {
+    while ((c = getopt_long(argc, argv, "m:M:X:t:O:E:b:f:z:e:Sk:w:n:i:lpso:Ar:g:a:dq:hv", abpoa_long_opt, NULL)) >= 0) {
         switch(c)
         {
             case 'm': m = atoi(optarg);
@@ -173,7 +173,7 @@ int main(int argc, char **argv) {
             case 'z': abpt->zdrop = atoi(optarg); break;
             case 'e': abpt->end_bonus= atoi(optarg); break;
 
-            case 'N': abpt->disable_seeding = 1; break;
+            case 'S': abpt->disable_seeding = 0; break;
             case 'k': abpt->k = atoi(optarg); break;
             case 'w': abpt->w = atoi(optarg); break;
             case 'n': abpt->min_w = atoi(optarg); break;

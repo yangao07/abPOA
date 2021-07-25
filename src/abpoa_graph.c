@@ -5,6 +5,7 @@
 #include "simd_abpoa_align.h"
 #include "kdq.h"
 
+extern char nt256_table[256];
 char LogTable65536[65536];
 char bit_table16[65536];
 
@@ -425,7 +426,7 @@ void abpoa_heaviest_column_multip_consensus(uint64_t ***read_ids, int **cluster_
             }
         }
         if (out_fp) {
-            for (j = 0; j < cons_l; ++j) fprintf(out_fp, "%c", "ACGT"[cons_seq[j]]); fprintf(out_fp, "\n");
+            for (j = 0; j < cons_l; ++j) fprintf(out_fp, "%c", nt256_table[cons_seq[j]]); fprintf(out_fp, "\n");
         }
         if (_cons_n) {
             (*_cons_l)[i] = cons_l;
@@ -441,7 +442,7 @@ int output_consensus(abpoa_graph_t *abg, int src_id, int sink_id, FILE *out_fp) 
     fprintf(out_fp, ">Consensus_sequence\n");
     int id = abg->node[src_id].max_out_id;
     while (id != sink_id) {
-        fprintf(out_fp, "%c", "ACGTN"[abg->node[id].base]);
+        fprintf(out_fp, "%c", nt256_table[abg->node[id].base]);
         id = abg->node[id].max_out_id;
         cons_l++;
     } fprintf(out_fp, "\n");
@@ -843,7 +844,7 @@ void abpoa_generate_rc_msa(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp, uint8_
     for (i = 0; i < n_seq; ++i) {
         _msa_seq[i] = (uint8_t*)_err_malloc(_msa_l * sizeof(uint8_t));
         for (j = 0; j < _msa_l; ++j) 
-            _msa_seq[i][j] = 5;
+            _msa_seq[i][j] = 27;
     }
 
     if (out_fp && abpt->out_msa_header == 0) fprintf(out_fp, ">Multiple_sequence_alignment\n");
@@ -863,7 +864,7 @@ void abpoa_generate_rc_msa(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp, uint8_
                 if (abs->is_rc[i]) fprintf(out_fp, ">%s_reverse_complement\n", abs->name[i].s);
                 else fprintf(out_fp, ">%s\n", abs->name[i].s);
             }
-            for (j = 0; j < _msa_l; ++j) fprintf(out_fp, "%c", "ACGTN-"[_msa_seq[i][j]]);
+            for (j = 0; j < _msa_l; ++j) fprintf(out_fp, "%c", nt256_table[_msa_seq[i][j]]);
             fprintf(out_fp, "\n");
         }
         if (abpt->out_cons) { // RC-MSA for consensus sequence
@@ -880,7 +881,7 @@ void abpoa_generate_rc_msa(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp, uint8_
                 // last_rank -> rank : -
                 for (k = last_rank; k < rank; ++k) fprintf(out_fp, "-");
                 // rank : base
-                fprintf(out_fp, "%c", "ACGTN"[abg->node[i].base]);
+                fprintf(out_fp, "%c", nt256_table[abg->node[i].base]);
                 last_rank = rank+1;
                 i = abg->node[i].max_out_id;
             }
@@ -925,7 +926,7 @@ void abpoa_generate_gfa(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp) {
         } else {
             if (cur_id != ABPOA_SRC_NODE_ID) {
                 // output node
-                fprintf(out_fp, "S\t%d\t%c\n", cur_id-1, "ACGTN"[abg->node[cur_id].base]);
+                fprintf(out_fp, "S\t%d\t%c\n", cur_id-1, nt256_table[abg->node[cur_id].base]);
                 // output all links based pre_ids
                 for (i = 0; i < abg->node[cur_id].in_edge_n; ++i) {
                     pre_id = abg->node[cur_id].in_id[i];
