@@ -65,7 +65,7 @@ abPOA supports three alignment modes (global, local, extension) and flexible sco
 It right now supports SSE2/SSE4.1/AVX2/AVX512F/AVX512BW vectorization and more advanced instructions 
 will be supported in the future.
 
-For more information, please refer to our [preprint paper](https://doi.org/10.1101.2.50.05.07.083196).
+For more information, please refer to our [paper](https://dx.doi.org/10.1093/bioinformatics/btaa963) published in Bioinformatics .
 
 ## <a name="install"></a>Installation
 
@@ -105,7 +105,7 @@ tar -zxvf abPOA-v1.2.5_x64-linux.tar.gz
 abpoa seq.fa > cons.fa
 ```
 
-### <a name="gen_cons"></a>To generate row-column multiple sequence alignment in PIR format
+### <a name="gen_msa"></a>To generate row-column multiple sequence alignment in PIR format
 
 ```
 abpoa seq.fa -r2 > cons.out
