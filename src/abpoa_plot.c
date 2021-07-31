@@ -27,7 +27,7 @@
 */
 
 
-extern char nt256_table[256];
+extern char char256_table[256];
 // base (index, rank, node_id)
 // A (1, 1, 2) A: base 1: index 1: rank 2: node_id
 int abpoa_dump_pog(abpoa_t *ab, abpoa_para_t *abpt) {
@@ -71,7 +71,7 @@ int abpoa_dump_pog(abpoa_t *ab, abpoa_para_t *abpt) {
             sprintf(node_label[id], "\"%c\n%d\"", base,index);
             fprintf(fp, "%s [color=%s, fontsize=%d]\n", node_label[id], node_color[4], font_size);
         } else {
-            base = nt256_table[abg->node[id].base];
+            base = char256_table[abg->node[id].base];
             //sprintf(node_label[id], "\"%c\n(%d,%d,%d)\"", base, index, rank, id);
             // only show seq
             sprintf(node_label[id], "\"%c\n%d\"", base,index);

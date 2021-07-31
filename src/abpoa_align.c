@@ -22,12 +22,12 @@ void gen_simple_mat(abpoa_para_t *abpt) {
     abpt->min_mis = -mismatch;
 }
 
-extern char nt4_table[256];
+extern char char26_table[256];
 void parse_mat_first_line(char *l, int *order) {
     int i, n;
     for (i = n = 0; l[i]; ++i) {
         if (isspace(l[i])) continue;
-        order[n++] = nt4_table[(int)l[i]];
+        order[n++] = char26_table[(int)l[i]];
     }
 }
 
@@ -36,7 +36,7 @@ void parse_mat_score_line(char *l, int *order, int m, int *mat) {
     for (n = 0; *str; ++str) {
         if (!isalpha(*str) && !isdigit(*str) && *str != '+' && *str != '-') continue;
         if (is_base) { // get base
-            _i = nt4_table[(int)*str];
+            _i = char26_table[(int)*str];
             if (_i >= m) err_fatal(__func__, "Unknown base: \"%c\" (%d).\n", *str, _i);
             is_base = 0;
         } else { // get score
@@ -395,12 +395,12 @@ int abpoa_msa1(abpoa_t *ab, abpoa_para_t *abpt, char *read_fn, FILE *out_fp, uin
     }
 
     // set seqs, seq_lens
-    extern char nt4_table[256];
+    extern char char26_table[256];
     uint8_t **seqs = (uint8_t**)_err_malloc(n_seq * sizeof(uint8_t*)); int *seq_lens = (int*)_err_malloc(n_seq * sizeof(int));
     for (i = 0; i < n_seq; ++i) {
         seq_lens[i] = abs->seq[exist_n_seq+i].l;
         seqs[i] = (uint8_t*)_err_malloc(sizeof(uint8_t) * seq_lens[i]);
-        for (j = 0; j < seq_lens[i]; ++j) seqs[i][j] = nt4_table[(int)abs->seq[exist_n_seq+i].s[j]];
+        for (j = 0; j < seq_lens[i]; ++j) seqs[i][j] = char26_table[(int)abs->seq[exist_n_seq+i].s[j]];
     }
     if (abpt->disable_seeding || abpt->align_mode != ABPOA_GLOBAL_MODE) {
         abpoa_poa(ab, abpt, seqs, seq_lens, exist_n_seq, n_seq);
