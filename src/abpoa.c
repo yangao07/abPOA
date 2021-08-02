@@ -39,6 +39,7 @@ const struct option abpoa_long_opt [] = {
     { "min-poa-win", 1, NULL, 'n' },
     { "progressive", 0, NULL, 'p'},
 
+    { "amio-acid", 0, NULL, 'c'},
     { "in-list", 0, NULL, 'l' },
     { "increment", 1, NULL, 'i' },
     
@@ -101,6 +102,7 @@ int abpoa_usage(void)
     // err_printf("    -n --par-size           minimal partition size [%d]\n", ABPOA_W);
 
     err_printf("  Input/Output:\n");
+    err_printf("    -c --amio-acid          input sequences are amio acid (default is nucleotide) [False]\n");
     err_printf("    -l --in-list            input file is a list of sequence file names [False]\n");
     err_printf("                            each line is one sequence file containing a set of sequences\n");
     err_printf("                            which will be aligned by abPOA to generate a consensus sequence\n");
@@ -155,7 +157,7 @@ int abpoa_main(char *file_fn, int is_list, abpoa_para_t *abpt){
 
 int main(int argc, char **argv) {
     int c, m, in_list=0; char *s; abpoa_para_t *abpt = abpoa_init_para();
-    while ((c = getopt_long(argc, argv, "m:M:X:t:O:E:b:f:z:e:Sk:w:n:i:lpso:Ar:g:a:dq:hv", abpoa_long_opt, NULL)) >= 0) {
+    while ((c = getopt_long(argc, argv, "m:M:X:t:O:E:b:f:z:e:Sk:w:n:i:clpso:Ar:g:a:dq:hv", abpoa_long_opt, NULL)) >= 0) {
         switch(c)
         {
             case 'm': m = atoi(optarg);
@@ -178,6 +180,7 @@ int main(int argc, char **argv) {
             case 'w': abpt->w = atoi(optarg); break;
             case 'n': abpt->min_w = atoi(optarg); break;
 
+            case 'c': abpt->m = 27; abpt->mat = (int*)_err_realloc(abpt->mat, abpt->m * abpt->m * sizeof(int)); break;
             case 'i': abpt->incr_fn = strdup(optarg); break;
             case 'l': in_list = 1; break;
             case 'p': abpt->progressive_poa = 1; break;
