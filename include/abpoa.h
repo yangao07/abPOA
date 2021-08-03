@@ -33,10 +33,10 @@
 #define ABPOA_OUT_CONS_MSA 2
 #define ABPOA_OUT_GFA      3
 #define ABPOA_OUT_CONS_GFA 4
+#define ABPOA_OUT_CONS_FQ  5
 
 #define ABPOA_HB 0
 #define ABPOA_HC 1
-#define ABPOA_MF 2
 
 // NOTE: upper boundary of in_edge_n is pow(2,30)
 // for MATCH/MISMATCH: node_id << 34  | query_id << 4 | op
@@ -70,7 +70,7 @@ typedef struct {
     int simd_flag; // available SIMD instruction
     // alignment mode
     uint8_t ret_cigar:1, rev_cigar:1, out_msa:1, out_msa_header:1, out_cons:1, out_gfa:1, is_diploid:1, use_read_ids:1;
-    uint8_t amb_strand:1, disable_seeding:1, progressive_poa:1;
+    uint8_t amb_strand:1, disable_seeding:1, progressive_poa:1, out_fq:1;
     char *incr_fn, *out_pog;
     int align_mode, gap_mode, cons_agrm;
     double min_freq; // for multiploid data
