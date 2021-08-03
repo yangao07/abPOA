@@ -111,11 +111,12 @@ int abpoa_usage(void)
     err_printf("    -o --output   FILE      ouput to FILE [stdout]\n");
     err_printf("    -r --result   INT       output result mode [%d]\n", ABPOA_OUT_CONS);
     // err_printf("                            %d: consensus (FASTA format), %d: MSA (PIR format), %d: both 0 & 1\n", ABPOA_OUT_CONS, ABPOA_OUT_MSA, ABPOA_OUT_BOTH);
-    err_printf("                            - %d: consensus (FASTA format)\n", ABPOA_OUT_CONS);
-    err_printf("                            - %d: MSA (PIR format)\n", ABPOA_OUT_MSA);
+    err_printf("                            - %d: consensus in FASTA format\n", ABPOA_OUT_CONS);
+    err_printf("                            - %d: MSA in PIR format\n", ABPOA_OUT_MSA);
     err_printf("                            - %d: both 0 & 1\n", ABPOA_OUT_CONS_MSA);
-    err_printf("                            - %d: graph (GFA format)\n", ABPOA_OUT_GFA);
-    err_printf("                            - %d: graph with consensus path (GFA format)\n", ABPOA_OUT_CONS_GFA);
+    err_printf("                            - %d: graph in GFA format\n", ABPOA_OUT_GFA);
+    err_printf("                            - %d: graph with consensus path in GFA format\n", ABPOA_OUT_CONS_GFA);
+    err_printf("                            - %d: consensus in FASTQ format\n", ABPOA_OUT_CONS_FQ);
     err_printf("    -A --msa-header         add read ID as header of each sequence in MSA output [False]\n");
     err_printf("    -g --out-pog  FILE      dump final alignment graph to FILE (.pdf/.png) [Null]\n\n");
 
@@ -194,6 +195,7 @@ int main(int argc, char **argv) {
                       else if (atoi(optarg) == ABPOA_OUT_CONS_MSA) abpt->out_cons = abpt->out_msa = 1;
                       else if (atoi(optarg) == ABPOA_OUT_GFA) abpt->out_cons = 0, abpt->out_gfa = 1;
                       else if (atoi(optarg) == ABPOA_OUT_CONS_GFA) abpt->out_cons = 1, abpt->out_gfa = 1;
+                      else if (atoi(optarg) == ABPOA_OUT_CONS_FQ) abpt->out_cons = 1, abpt->out_fq = 1;
                       else err_printf("Error: unknown output result mode: %s.\n", optarg);
                       break;
             case 'A': abpt->out_msa_header = 1; break;

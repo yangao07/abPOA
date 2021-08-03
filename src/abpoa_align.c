@@ -93,7 +93,8 @@ abpoa_para_t *abpoa_init_para(void) {
     abpt->amb_strand = 0; // ambiguous strand
     abpt->ret_cigar = 1;  // return cigar
     abpt->rev_cigar = 0;  // reverse cigar
-    abpt->out_cons = 1;   // output consensus sequence in msa
+    abpt->out_cons = 1;   // output consensus sequence in fasta
+    abpt->out_fq = 0;     // output consensus sequence in fastq
     abpt->out_gfa = 0;    // out graph in GFA format
     abpt->out_msa = 0;    // output msa
     abpt->out_msa_header = 0; // output read ID in msa output
@@ -305,6 +306,8 @@ void abpoa_output(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp, uint8_t ***cons
             else abpoa_generate_consensus(ab, abpt, out_fp, cons_seq, cons_cov, cons_l, cons_n);
             if (ab->abg->is_called_cons == 0)
                 err_printf("Warning: no consensus sequence generated.\n");
+        } else if (abpt->out_fq) {
+            abpoa_generate_consensus(ab, abpt, out_fp, cons_seq, cons_cov, cons_l, cons_n);
         }
         if (abpt->out_msa) {
             abpoa_generate_rc_msa(ab, abpt, out_fp, msa_seq, msa_l);

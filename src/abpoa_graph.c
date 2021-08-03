@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "abpoa_align.h"
 #include "abpoa_seq.h"
 #include "simd_abpoa_align.h"
@@ -437,15 +438,28 @@ void abpoa_heaviest_column_multip_consensus(uint64_t ***read_ids, int **cluster_
     free(read_ids_mask); free(cons_seq);
 }
 
-int output_consensus(abpoa_graph_t *abg, int src_id, int sink_id, FILE *out_fp) {
+int output_consensus(int out_fq, abpoa_graph_t *abg, int src_id, int sink_id, int **cons_cov, int n_seq, FILE *out_fp) {
     int cons_l = 0;
-    fprintf(out_fp, ">Consensus_sequence\n");
+    if (out_fq) fprintf(out_fp, "@Consensus_sequence\n");
+    else fprintf(out_fp, ">Consensus_sequence\n");
     int id = abg->node[src_id].max_out_id;
     while (id != sink_id) {
         fprintf(out_fp, "%c", char256_table[abg->node[id].base]);
         id = abg->node[id].max_out_id;
         cons_l++;
     } fprintf(out_fp, "\n");
+    if (out_fq) {
+        fprintf(out_fp, "+Consensus_sequence\n");
+        if (cons_cov == NULL) err_fatal_simple("No coverage information available.");
+        int i, phred;
+        for (i = 0; i < cons_l; ++i) {
+            if (cons_cov[0][i] == n_seq) phred = 73; // max q-score: 33+40=73, min score: 33+0=33
+            else {
+                phred = 33 + (int)(-10 * log10((n_seq-cons_cov[0][i]+0.0) / n_seq));
+            }
+            fprintf(out_fp, "%c", phred);
+        } fprintf(out_fp, "\n");
+    }
     return cons_l;
 }
 
@@ -772,7 +786,7 @@ void abpoa_diploid_heaviest_column(abpoa_graph_t *abg, int src_id, int sink_id, 
     int clu_n = abpoa_diploid_ids(read_ids, rc_weight, msa_l, n_seq, min_freq, read_ids_n, clu_read_ids, clu_read_ids_n);
     if (clu_n == 1) {
         abpoa_heaviest_column_consensus(abg, rc_weight, msa_node_id, src_id, sink_id, msa_l, n_seq, NULL);
-        if (out_fp) output_consensus(abg, src_id, sink_id, out_fp);
+        if (out_fp) output_consensus(0, abg, src_id, sink_id, NULL, n_seq, out_fp);
         if (cons_n) {
             *cons_n = 1; abpoa_store_consensus(abg, src_id, sink_id, cons_seq, cons_l);
         }
@@ -792,6 +806,8 @@ int abpoa_generate_consensus(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp, uint
     abpoa_graph_t *abg = ab->abg;
     if (abg->node_n <= 2) return 0;
     int i, _cons_l = 0, *out_degree = (int*)_err_malloc(abg->node_n * sizeof(int));
+    int **_cons_cov;
+    if (abpt->out_fq == 0 && cons_cov == NULL) _cons_cov = NULL;
     int n_seq = ab->abs->n_seq;
     for (i = 0; i < abg->node_n; ++i) {
         out_degree[i] = abg->node[i].out_edge_n;
@@ -800,14 +816,22 @@ int abpoa_generate_consensus(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp, uint
     if (abpt->is_diploid) {
         abpoa_diploid_heaviest_column(abg, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, n_seq, abpt->min_freq, out_fp, cons_seq, cons_l, cons_n);
     } else {
-        if (abpt->cons_agrm == ABPOA_HB) abpoa_heaviest_bundling(abg, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, out_degree, cons_cov);
-        else if (abpt->cons_agrm == ABPOA_HC) abpoa_heaviest_column(abg, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, n_seq, cons_cov);
-        else if (abpt->cons_agrm == ABPOA_MF) abpoa_traverse_min_flow(abg, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, out_degree); 
+        if (abpt->cons_agrm == ABPOA_HB) abpoa_heaviest_bundling(abg, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, out_degree, &_cons_cov);
+        else if (abpt->cons_agrm == ABPOA_HC) abpoa_heaviest_column(abg, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, n_seq, &_cons_cov);
         else err_fatal(__func__, "Unknown consensus calling algorithm: %d.", abpt->cons_agrm);
-        if (out_fp) _cons_l = output_consensus(abg, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, out_fp);
-        if (cons_n) {
+        if (out_fp) _cons_l = output_consensus(abpt->out_fq, abg, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, _cons_cov, n_seq, out_fp);
+        if (cons_n && cons_l && cons_seq) {
             *cons_n = 1; 
             _cons_l = abpoa_store_consensus(abg, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, cons_seq, cons_l);
+        }
+        if (cons_cov && _cons_l) {
+            *cons_cov = (int**)_err_malloc(sizeof(int*));
+            (*cons_cov)[0] = (int*)_err_malloc(sizeof(int) * _cons_l);
+            for (i = 0; i < _cons_l; ++i) (*cons_cov)[0][i] = _cons_cov[0][i];
+        }
+
+        if (_cons_cov) {
+            free(_cons_cov[0]); free(_cons_cov);
         }
     } 
     abg->is_called_cons = 1; free(out_degree);
