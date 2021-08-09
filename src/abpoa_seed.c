@@ -21,14 +21,14 @@ static inline int ilog2_32(uint32_t v) {
     return (t = v>>8) ? 8 + LogTable256[t] : LogTable256[v];
 }
 
-#define sort_key_128x(a) ((a).x)
-KRADIX_SORT_INIT(128x, u128_t, sort_key_128x, 8)
+#define ab_sort_key_128x(a) ((a).x)
+KRADIX_SORT_INIT(ab_128x, ab_u128_t, ab_sort_key_128x, 8)
 
-#define sort_key_128y(a) ((a).y)
-KRADIX_SORT_INIT(128y, u128_t, sort_key_128y, 8)
+#define ab_sort_key_128y(a) ((a).y)
+KRADIX_SORT_INIT(ab_128y, ab_u128_t, ab_sort_key_128y, 8)
 
-#define sort_key_64(a) (a)
-KRADIX_SORT_INIT(64, uint64_t, sort_key_64, 8)
+#define ab_sort_key_64(a) (a)
+KRADIX_SORT_INIT(64, uint64_t, ab_sort_key_64, 8)
 
 /* from lh3/minimap2/sketch.c */
 /********** start *************/
@@ -81,21 +81,21 @@ static inline int tq_shift(tiny_queue_t *q)
  *               and strand indicates whether the minimizer comes from the top or the bottom strand.
  *               Callers may want to set "p->n = 0"; otherwise results are appended to p
  */
-void mm_sketch(void *km, const uint8_t *str, int len, int w, int k, uint32_t rid, int is_hpc, int both_strand, u128_v *p)
+void mm_sketch(void *km, const uint8_t *str, int len, int w, int k, uint32_t rid, int is_hpc, int both_strand, ab_u128_v *p)
 {
     uint64_t shift1 = 2 * (k - 1), mask = (1ULL<<2*k) - 1, kmer[2] = {0,0};
     int i, j, l, buf_pos, min_pos, kmer_span = 0;
-    u128_t buf[256], min = { UINT64_MAX, UINT64_MAX };
+    ab_u128_t buf[256], min = { UINT64_MAX, UINT64_MAX };
     tiny_queue_t tq;
 
     assert(len > 0 && (w > 0 && w < 256) && (k > 0 && k <= 28)); // 56 bits for k-mer; could use long k-mers, but 28 enough in practice
     memset(buf, 0xff, w * 16);
     memset(&tq, 0, sizeof(tiny_queue_t));
-    kv_resize(u128_t, km, *p, p->n + len/w);
+    kv_resize(ab_u128_t, km, *p, p->n + len/w);
 
     for (i = l = buf_pos = min_pos = 0; i < len; ++i) {
         int c = str[i];
-        u128_t info = { UINT64_MAX, UINT64_MAX };
+        ab_u128_t info = { UINT64_MAX, UINT64_MAX };
         if (c < 4) { // not an ambiguous base
             uint32_t z;
             if (is_hpc) {
@@ -128,30 +128,30 @@ void mm_sketch(void *km, const uint8_t *str, int len, int w, int k, uint32_t rid
         buf[buf_pos] = info; // need to do this here as appropriate buf_pos and buf[buf_pos] are needed below
         if (l == w + k - 1 && min.x != UINT64_MAX) { // special case for the first window - because identical k-mers are not stored yet
             for (j = buf_pos + 1; j < w; ++j)
-                if (min.x == buf[j].x && buf[j].y != min.y) kv_push(u128_t, km, *p, buf[j]);
+                if (min.x == buf[j].x && buf[j].y != min.y) kv_push(ab_u128_t, km, *p, buf[j]);
             for (j = 0; j < buf_pos; ++j)
-                if (min.x == buf[j].x && buf[j].y != min.y) kv_push(u128_t, km, *p, buf[j]);
+                if (min.x == buf[j].x && buf[j].y != min.y) kv_push(ab_u128_t, km, *p, buf[j]);
         }
         if (info.x <= min.x) { // a new minimum; then write the old min
-            if (l >= w + k && min.x != UINT64_MAX) kv_push(u128_t, km, *p, min);
+            if (l >= w + k && min.x != UINT64_MAX) kv_push(ab_u128_t, km, *p, min);
             min = info, min_pos = buf_pos;
         } else if (buf_pos == min_pos) { // old min has moved outside the window
-            if (l >= w + k - 1 && min.x != UINT64_MAX) kv_push(u128_t, km, *p, min);
+            if (l >= w + k - 1 && min.x != UINT64_MAX) kv_push(ab_u128_t, km, *p, min);
             for (j = buf_pos + 1, min.x = UINT64_MAX; j < w; ++j) // the two loops are necessary when there are identical k-mers
                 if (min.x >= buf[j].x) min = buf[j], min_pos = j; // >= is important s.t. min is always the closest k-mer
             for (j = 0; j <= buf_pos; ++j)
                 if (min.x >= buf[j].x) min = buf[j], min_pos = j;
             if (l >= w + k - 1 && min.x != UINT64_MAX) { // write identical k-mers
                 for (j = buf_pos + 1; j < w; ++j) // these two loops make sure the output is sorted
-                    if (min.x == buf[j].x && min.y != buf[j].y) kv_push(u128_t, km, *p, buf[j]);
+                    if (min.x == buf[j].x && min.y != buf[j].y) kv_push(ab_u128_t, km, *p, buf[j]);
                 for (j = 0; j <= buf_pos; ++j)
-                    if (min.x == buf[j].x && min.y != buf[j].y) kv_push(u128_t, km, *p, buf[j]);
+                    if (min.x == buf[j].x && min.y != buf[j].y) kv_push(ab_u128_t, km, *p, buf[j]);
             }
         }
         if (++buf_pos == w) buf_pos = 0;
     }
     if (min.x != UINT64_MAX)
-        kv_push(u128_t, km, *p, min);
+        kv_push(ab_u128_t, km, *p, min);
 }
 /************ end *************/
 
@@ -160,7 +160,7 @@ void mm_sketch(void *km, const uint8_t *str, int len, int w, int k, uint32_t rid
  * a.x = kMer<<8 | kmerSpan
  * a.y = rid<<32 | strand<<31 | lastPos
  */
-int abpoa_build_guide_tree(int n_seq, u128_v *mm, int *tree_id_map) {
+int abpoa_build_guide_tree(int n_seq, ab_u128_v *mm, int *tree_id_map) {
     size_t i, _i, j, k; int rid1, rid2;                                                  // mm_hit_n: mimizer hits between each two sequences
                                                                                          // 0: 0
                                                                                          // 1: 0 1
@@ -170,7 +170,7 @@ int abpoa_build_guide_tree(int n_seq, u128_v *mm, int *tree_id_map) {
                                                                                          // 
                                                                                          // # total mimizers of i: mm_hit_n[(i*(i+1))/2+i]
                                                                                          // # total hits for i and j (i>j): mm_hit_n[(i*(i+1)/2)+j]
-    radix_sort_128x(mm->a, mm->a + mm->n); // sort mm by k-mer hash values
+    radix_sort_ab_128x(mm->a, mm->a + mm->n); // sort mm by k-mer hash values
     uint64_t last_x = mm->a[0].x;
     for (_i = 0, i = 1; i < mm->n; ++i) { // collect mm hits
         if (mm->a[i].x != last_x) {
@@ -248,11 +248,11 @@ int abpoa_build_guide_tree(int n_seq, u128_v *mm, int *tree_id_map) {
 // mm_c: | 0 | n_r1_mm | n_r1..2_mm | ... | n_r1..n-1_mm | n_r1..n_mm |
 // t is already in the graph, q is query sequence
 // merge sort for t and q's minimizer buckets
-int collect_anchors1(void *km, u64_v *anchors, u128_v mm, int *mm_c, int tid, int qid, int qlen, int k) {
+int collect_anchors1(void *km, ab_u64_v *anchors, ab_u128_v mm, int *mm_c, int tid, int qid, int qlen, int k) {
     int i, j, _i, _j; uint64_t xi, xj, _xi, _xj, _yi, _yj, a;
     i = mm_c[tid], j = mm_c[qid];
     // t's mm is already sorted XXX
-    radix_sort_128x(mm.a + j, mm.a + mm_c[qid+1]);
+    radix_sort_ab_128x(mm.a + j, mm.a + mm_c[qid+1]);
 
     while (i < mm_c[tid+1] && j < mm_c[qid+1]) {
         xi = mm.a[i].x, xj = mm.a[j].x;
@@ -283,7 +283,7 @@ int collect_anchors1(void *km, u64_v *anchors, u128_v mm, int *mm_c, int tid, in
     return anchors->n;
 }
 
-int get_local_chain_score(int j_end_tpos, int j_end_qpos, int i_end_anchor_i, u64_v *anchors, int *pre_id, int *score) {
+int get_local_chain_score(int j_end_tpos, int j_end_qpos, int i_end_anchor_i, ab_u64_v *anchors, int *pre_id, int *score) {
     int i = i_end_anchor_i, chain_score = 0;
     int i_tpos, i_qpos;
     do {
@@ -302,7 +302,7 @@ int get_local_chain_score(int j_end_tpos, int j_end_qpos, int i_end_anchor_i, u6
 // local chains:
 //   x: strand | end_tpos | end_qpos
 //   y: end_anchor_i | start_anchor_i
-int abpoa_dp_chaining_of_local_chains(void *km, u128_t *local_chains, int n_local_chains, u64_v *anchors, int *score, int *pre_id, u64_v *par_anchors, int min_w, int tlen, int qlen) {
+int abpoa_dp_chaining_of_local_chains(void *km, ab_u128_t *local_chains, int n_local_chains, ab_u64_v *anchors, int *score, int *pre_id, ab_u64_v *par_anchors, int min_w, int tlen, int qlen) {
     int i, j, st, score1, global_max_score=INT32_MIN, global_max_i=-1;
     int *chain_score = (int*)kmalloc(km, n_local_chains * 4), *pre_chain_id = (int*)kmalloc(km, n_local_chains * 4);
     size_t _n = par_anchors->n;
@@ -402,7 +402,7 @@ static int get_chain_score(int max_bw, int *score, int i_qpos, int i_tpos, int j
 // Dynamic Programming-based Chaining for global alignment mode
 // anchors:
 //          strand<<63 | tpos<<32 | qpos
-int abpoa_dp_chaining(void *km, u64_v *anchors, u64_v *par_anchors, abpoa_para_t *abpt, int tlen, int qlen) {
+int abpoa_dp_chaining(void *km, ab_u64_v *anchors, ab_u64_v *par_anchors, abpoa_para_t *abpt, int tlen, int qlen) {
     int i, j, st, n_a = anchors->n;
     int *score = (int32_t*)kmalloc(km, n_a * 4), *pre_id = (int32_t*)kmalloc(km, n_a * 4), *end_pos = (int32_t*)kmalloc(km, n_a * 4);
     memset(end_pos, 0, n_a * 4);
@@ -454,14 +454,14 @@ int abpoa_dp_chaining(void *km, u64_v *anchors, u64_v *par_anchors, abpoa_para_t
     // collect local chains
     // x: score
     // y: e_a_i
-    u128_t *local_chains = (u128_t*)kmalloc(km, n_local_chains * sizeof(u128_t));
+    ab_u128_t *local_chains = (ab_u128_t*)kmalloc(km, n_local_chains * sizeof(ab_u128_t));
     for (i = n_local_chains = 0; i < n_a; ++i) {
         if (end_pos[i] == 2) {
             local_chains[n_local_chains].x = score[i];
             local_chains[n_local_chains++].y = i;
         }
     }
-    radix_sort_128x(local_chains, local_chains + n_local_chains);
+    radix_sort_ab_128x(local_chains, local_chains + n_local_chains);
 
     // collect local chains
     // x: strand | endpos | score
@@ -489,7 +489,7 @@ int abpoa_dp_chaining(void *km, u64_v *anchors, u64_v *par_anchors, abpoa_para_t
         }*/
     }
 
-    radix_sort_128x(local_chains+tot_chain_i+1, local_chains + n_local_chains);
+    radix_sort_ab_128x(local_chains+tot_chain_i+1, local_chains + n_local_chains);
     abpoa_dp_chaining_of_local_chains(km, local_chains+tot_chain_i+1, n_local_chains-1-tot_chain_i, anchors, score, pre_id, par_anchors, min_w, tlen, qlen);
 
     kfree(km, score); kfree(km, pre_id); kfree(km, end_pos); kfree(km, local_chains);
@@ -550,7 +550,7 @@ int LIS(void *km, int tot_n, uint64_t *rank, int n) {
 // output:
 //   anchor list size: n
 //   list of anchors: anchors
-int LIS_chaining(void *km, u64_v *anchors, u64_v *par_anchors, int min_w) {
+int LIS_chaining(void *km, ab_u64_v *anchors, ab_u64_v *par_anchors, int min_w) {
     size_t i, j, n_a = anchors->n, n_for, n_rev;
     uint64_t *for_rank = (uint64_t*)kmalloc(km, sizeof(uint64_t) * n_a);
     uint64_t *rev_rank = (uint64_t*)kmalloc(km, sizeof(uint64_t) * n_a);
@@ -605,7 +605,7 @@ int LIS_chaining(void *km, u64_v *anchors, u64_v *par_anchors, int min_w) {
     return 0;
 }
 
-int abpoa_collect_mm(void *km, uint8_t **seqs, int *seq_lens, int n_seq, abpoa_para_t *abpt, u128_v *mm, int *mm_c) {
+int abpoa_collect_mm(void *km, uint8_t **seqs, int *seq_lens, int n_seq, abpoa_para_t *abpt, ab_u128_v *mm, int *mm_c) {
     int i;
     mm_c[0] = 0;
     for (i = 0; i < n_seq; ++i) { // collect minimizers
@@ -615,7 +615,7 @@ int abpoa_collect_mm(void *km, uint8_t **seqs, int *seq_lens, int n_seq, abpoa_p
     return mm->n;
 }
 
-int abpoa_build_guide_tree_partition(uint8_t **seqs, int *seq_lens, int n_seq, abpoa_para_t *abpt, int *read_id_map, u64_v *par_anchors, int *par_c) {
+int abpoa_build_guide_tree_partition(uint8_t **seqs, int *seq_lens, int n_seq, abpoa_para_t *abpt, int *read_id_map, ab_u64_v *par_anchors, int *par_c) {
     int i;
     if (abpt->disable_seeding || abpt->align_mode != ABPOA_GLOBAL_MODE) { // for local and extension mode, do whole sequence alignment
         for (i = 0; i < n_seq; ++i) read_id_map[i] = i;
@@ -623,13 +623,13 @@ int abpoa_build_guide_tree_partition(uint8_t **seqs, int *seq_lens, int n_seq, a
     }
     // err_func_format_printf(__func__, "Seeding and chaining ...");
     void *km = km_init();
-    u128_v mm1 = {0, 0, 0}; int *mm_c = (int*)_err_malloc((n_seq+1) * sizeof(int));
+    ab_u128_v mm1 = {0, 0, 0}; int *mm_c = (int*)_err_malloc((n_seq+1) * sizeof(int));
     abpoa_collect_mm(km, seqs, seq_lens, n_seq, abpt, &mm1, mm_c);
 
     if (abpt->progressive_poa) {
         // copy mm1 to mm2
-        u128_v mm2 = {0, 0, 0};
-        for (i = 0; i < (int)mm1.n; ++i) kv_push(u128_t, km, mm2, mm1.a[i]);
+        ab_u128_v mm2 = {0, 0, 0};
+        for (i = 0; i < (int)mm1.n; ++i) kv_push(ab_u128_t, km, mm2, mm1.a[i]);
         // use mm2 to build guide tree
         abpoa_build_guide_tree(n_seq, &mm2, read_id_map);
         kfree(km, mm2.a);
@@ -640,12 +640,12 @@ int abpoa_build_guide_tree_partition(uint8_t **seqs, int *seq_lens, int n_seq, a
     // partition into small windows
     int qid, tid;
     tid = read_id_map[0];
-    radix_sort_128x(mm1.a + mm_c[tid], mm1.a + mm_c[tid+1]);
+    radix_sort_ab_128x(mm1.a + mm_c[tid], mm1.a + mm_c[tid+1]);
 
     par_c[0] = 0;
     for (i = 1; i < n_seq; ++i) {
         tid = read_id_map[i-1]; qid = read_id_map[i];
-        u64_v anchors = {0, 0, 0};
+        ab_u64_v anchors = {0, 0, 0};
         // collect minimizer hit anchors between t and q
         collect_anchors1(km, &anchors, mm1, mm_c, tid, qid, seq_lens[qid], abpt->k);
         // filtering and only keep LIS anchors

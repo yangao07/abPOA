@@ -10,6 +10,7 @@ extern char char256_table[256];
 char LogTable65536[65536];
 char bit_table16[65536];
 
+#define NAT_E 2.718281828459045
 static const char LogTable256[256] = {
 #define LT(n) n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n
     -1, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
@@ -451,12 +452,12 @@ int output_consensus(int out_fq, abpoa_graph_t *abg, int src_id, int sink_id, in
     if (out_fq) {
         fprintf(out_fp, "+Consensus_sequence\n");
         if (cons_cov == NULL) err_fatal_simple("No coverage information available.");
-        int i, phred;
+        int i, phred; double x, p;
         for (i = 0; i < cons_l; ++i) {
-            if (cons_cov[0][i] == n_seq) phred = 73; // max q-score: 33+40=73, min score: 33+0=33
-            else {
-                phred = 33 + (int)(-10 * log10((n_seq-cons_cov[0][i]+0.0) / n_seq));
-            }
+            // max q-score: 33+60=93, min score: 33+0=33
+            x = 13.8 * (1.25 * cons_cov[0][i] / n_seq - 0.25);
+            p = 1 - 1.0 / (1.0 + pow(NAT_E, -1 * x));
+            phred = 33 + (int)(-10 * log10(p) + 0.499);
             fprintf(out_fp, "%c", phred);
         } fprintf(out_fp, "\n");
     }
