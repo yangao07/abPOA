@@ -46,7 +46,8 @@ void parse_mat_score_line(char *l, int *order, int m, int *mat) {
             if (_i >= m) err_fatal(__func__, "Unknown base: \"%c\" (%d).\n", *str, _i);
             is_base = 0;
         } else { // get score
-            if (n == m) err_fatal_simple("Too many scores in matrix.\n");
+            if (n == m) 
+                err_fatal_simple("Too many scores in matrix.\n");
             s = strtol(str, &pEnd, 10);
             str = pEnd;
             mat[_i *m + order[n]] = s;
@@ -55,9 +56,9 @@ void parse_mat_score_line(char *l, int *order, int m, int *mat) {
     }
 }
 
-void abpoa_set_mat_from_file(abpoa_para_t *abpt, char *mtx_fn) {
+void abpoa_set_mat_from_file(abpoa_para_t *abpt) {
     char *l = (char*)_err_malloc(1024 * sizeof(char)); FILE *fp;
-    if ((fp = fopen(mtx_fn, "r")) == NULL) err_fatal(__func__, "Unable to open scoring matrix file: \"%s\"\n", mtx_fn);
+    if ((fp = fopen(abpt->mat_fn, "r")) == NULL) err_fatal(__func__, "Unable to open scoring matrix file: \"%s\"\n", abpt->mat_fn);
     int first_line = 1;
     int *order = (int*)_err_malloc(abpt->m * sizeof(int));
     while (fgets(l, 1024, fp) != NULL) {
@@ -122,6 +123,7 @@ abpoa_para_t *abpoa_init_para(void) {
 
     // score matrix
     abpt->use_score_matrix = 0;
+    abpt->mat_fn = NULL;
     abpt->match = ABPOA_MATCH;
     abpt->mismatch = ABPOA_MISMATCH;
     abpt->gap_open1 = ABPOA_GAP_OPEN1;
@@ -142,6 +144,7 @@ abpoa_para_t *abpoa_init_para(void) {
 
 void abpoa_post_set_para(abpoa_para_t *abpt) {
     if (abpt->use_score_matrix == 0) gen_simple_mat(abpt);
+    else abpoa_set_mat_from_file(abpt);
     abpoa_set_gap_mode(abpt);
     if (abpt->cons_agrm == ABPOA_HC || abpt->out_msa || abpt->out_gfa || abpt->is_diploid) {
         abpt->use_read_ids = 1;
@@ -149,17 +152,21 @@ void abpoa_post_set_para(abpoa_para_t *abpt) {
         if (abpt->cons_agrm == ABPOA_HC || abpt->is_diploid) set_bit_table16();
     }
     if (abpt->align_mode == ABPOA_LOCAL_MODE) abpt->wb = -1;
-    if (abpt->m > 5) {
+    if (abpt->m > 5) { // for aa sequence
         int i;
         for (i = 0; i < 256; ++i) {
             char26_table[i] = aa26_table[i];
             char256_table[i] = aa256_table[i];
+        }
+        if (abpt->k > 11) {
+            abpt->k = 7, abpt->w = 4;
         }
     }
 }
 
 void abpoa_free_para(abpoa_para_t *abpt) {
     if (abpt->mat != NULL) free(abpt->mat);
+    if (abpt->mat_fn != NULL) free(abpt->mat_fn);
     if (abpt->out_pog != NULL) free(abpt->out_pog);
     if (abpt->incr_fn != NULL) free(abpt->incr_fn);
     free(abpt);

@@ -167,7 +167,7 @@ int main(int argc, char **argv) {
                       } abpt->align_mode=m; break;
             case 'M': abpt->match = atoi(optarg); break;
             case 'X': abpt->mismatch = atoi(optarg); break;
-            case 't': abpt->use_score_matrix = 1; abpoa_set_mat_from_file(abpt, optarg); break;
+            case 't': abpt->use_score_matrix = 1; abpt->mat_fn = strdup(optarg); break;
             case 'O': abpt->gap_open1 = strtol(optarg, &s, 10); if (*s == ',') abpt->gap_open2 = strtol(s+1, &s, 10); break;
             case 'E': abpt->gap_ext1 = strtol(optarg, &s, 10); if (*s == ',') abpt->gap_ext2 = strtol(s+1, &s, 10); break;
 
