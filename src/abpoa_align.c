@@ -22,7 +22,13 @@ void gen_simple_mat(abpoa_para_t *abpt) {
     abpt->min_mis = -mismatch;
 }
 
+extern char nt4_table[256];
+extern char nt256_table[256];
+extern char aa26_table[256];
+extern char aa256_table[256];
 extern char char26_table[256];
+extern char char256_table[256];
+
 void parse_mat_first_line(char *l, int *order) {
     int i, n;
     for (i = n = 0; l[i]; ++i) {
@@ -107,6 +113,11 @@ abpoa_para_t *abpoa_init_para(void) {
 
     // number of residue types
     abpt->m = 5; // nucleotide
+    int i;
+    for (i = 0; i < 256; ++i) {
+        char26_table[i] = nt4_table[i];
+        char256_table[i] = nt256_table[i];
+    }
     abpt->mat = (int*)_err_malloc(abpt->m * abpt->m * sizeof(int));
 
     // score matrix
@@ -138,6 +149,13 @@ void abpoa_post_set_para(abpoa_para_t *abpt) {
         if (abpt->cons_agrm == ABPOA_HC || abpt->is_diploid) set_bit_table16();
     }
     if (abpt->align_mode == ABPOA_LOCAL_MODE) abpt->wb = -1;
+    if (abpt->m > 5) {
+        int i;
+        for (i = 0; i < 256; ++i) {
+            char26_table[i] = aa26_table[i];
+            char256_table[i] = aa256_table[i];
+        }
+    }
 }
 
 void abpoa_free_para(abpoa_para_t *abpt) {

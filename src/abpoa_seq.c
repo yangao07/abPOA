@@ -8,12 +8,53 @@
 #include "kstring.h"
 #include "khash.h"
 
-KHASH_MAP_INIT_STR(str, uint32_t)
+KHASH_MAP_INIT_STR(abstr, uint32_t)
 
-// for nt and aa
+// for nt
+// AaCcGgTtNn ==> 0,1,2,3,4
+unsigned char nt4_table[256] = {
+       0, 1, 2, 3,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+       4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+       4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 5 /*'-'*/, 4, 4,
+       4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+       4, 0, 4, 1,  4, 4, 4, 2,  4, 4, 4, 4,  4, 4, 4, 4, 
+       4, 4, 4, 4,  3, 3, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+       4, 0, 4, 1,  4, 4, 4, 2,  4, 4, 4, 4,  4, 4, 4, 4, 
+       4, 4, 4, 4,  3, 3, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+       4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+       4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+       4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+       4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+       4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+       4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+       4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
+       4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4
+};
+
+// 65,97=>A, 67,99=>C, 71,103=>G, 84,85,116,117=>T, else=>N
+const char nt256_table[256] = {
+       'A', 'C', 'G', 'T',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',
+       'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',
+       'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',
+       'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',
+       'N', 'A', 'N', 'C',  'N', 'N', 'N', 'G',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',
+       'N', 'N', 'N', 'N',  'T', 'T', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',
+       'N', 'A', 'N', 'C',  'N', 'N', 'N', 'G',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',
+       'N', 'N', 'N', 'N',  'T', 'T', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',
+       'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',
+       'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',
+       'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',
+       'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',
+       'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',
+       'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',
+       'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',
+       'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N'
+};
+
+// for aa
 // AaCcGgTtNn ... ==> 0,1,2,3,4 ...
 // BbDdEeFf   ... ==> 5,6,7,8 ...
-unsigned char char26_table[256] = {
+unsigned char aa26_table[256] = {
 	 0,  1,  2,  3,   4,  5,  6,  7,   8,  9, 10, 11,  12, 13, 14, 15, 
 	16, 17, 18, 19,  20, 21, 22, 23,  24, 25, 26, 26,  26, 26, 26, 26, 
 	26, 26, 26, 26,  26, 26, 26, 26,  26, 26, 26, 26,  26, 26, 26, 26,
@@ -34,7 +75,7 @@ unsigned char char26_table[256] = {
 
 // 0/1/2/3/4=>ACGTN
 // 5/6/7/8=>BDEF ...
-const char char256_table[256] = {
+const char aa256_table[256] = {
 	'A', 'C', 'G', 'T',  'N', 'B', 'D', 'E',  'F', 'H', 'I',  'J', 'K', 'L', 'M', 'O',
 	'P', 'Q', 'R', 'S',  'U', 'V', 'W', 'X',  'Y', 'Z', '*', '-',  '*', '*', '*', '*',
 	'*', '*', '*', '*',  '*', '*', '*', '*',  '*', '*', '*', '*',  '*', '*', '*', '*',
@@ -52,6 +93,9 @@ const char char256_table[256] = {
 	'*', '*', '*', '*',  '*', '*', '*', '*',  '*', '*', '*', '*',  '*', '*', '*', '*', 
 	'*', '*', '*', '*',  '*', '*', '*', '*',  '*', '*', '*', '*',  '*', '*', '*', '*'
 };
+
+char char26_table[256];
+char char256_table[256];
 
 abpoa_seq_t *abpoa_init_seq(void) {
     abpoa_seq_t *abs = (abpoa_seq_t*)_err_malloc(sizeof(abpoa_seq_t));
@@ -285,13 +329,13 @@ int abpoa_gfa_parse_H(abpoa_graph_t *abg, int *n_s, int *n_l, int *n_p, char *s)
 typedef struct {
     int n, m;
     kstring_t *seq, *name;
-    khash_t(str) *h;
+    khash_t(abstr) *h;
 } seg_seq_t;
 
 seg_seq_t *seg_seq_init(void) {
     seg_seq_t *s = (seg_seq_t*)_err_malloc(sizeof(seg_seq_t));
     s->n = s->m = 0; s->seq = 0, s->name = 0;
-    s->h = kh_init(str);
+    s->h = kh_init(abstr);
     return s;
 }
 
@@ -321,7 +365,7 @@ void seg_seq_free(seg_seq_t *s) {
         }
         free(s->seq); free(s->name);
     }
-    kh_destroy(str, s->h);
+    kh_destroy(abstr, s->h);
     free(s);
 }
 
@@ -354,7 +398,7 @@ int abpoa_gfa_parse_S(seg_seq_t *segs,  char *s) {
         kputsn(seg_name, seg_name_len, segs->name+segs->n);
         kputsn(seq, seq_len, segs->seq+segs->n);
         int absent;
-        khint_t pos = kh_put(str, segs->h, segs->name[segs->n].s, &absent);
+        khint_t pos = kh_put(abstr, segs->h, segs->name[segs->n].s, &absent);
         if (absent) kh_val(segs->h, pos) = segs->n;
         else err_fatal(__func__, "Duplicated chromosome: \"%s\".", seg_name);
         ++segs->n;
@@ -407,7 +451,7 @@ int abpoa_gfa_parse_S(seg_seq_t *segs,  char *s) {
     return 0;
 }*/
 
-int abpoa_gfa_parse_P(abpoa_graph_t *abg, abpoa_seq_t *abs, seg_seq_t *segs, int add_read_id, int p_i, int p_n, khash_t(str) *seg_name2in_id, khash_t(str) *seg_name2out_id, char *s) {
+int abpoa_gfa_parse_P(abpoa_graph_t *abg, abpoa_seq_t *abs, seg_seq_t *segs, int add_read_id, int p_i, int p_n, khash_t(abstr) *seg_name2in_id, khash_t(abstr) *seg_name2out_id, char *s) {
     if (s[1] != '\t' || s[2] == '\0') return -1;
     char *deli_s, *info_s, *path = 0;
     int i, is_ok = 0, is_rc = -1;
@@ -438,13 +482,13 @@ int abpoa_gfa_parse_P(abpoa_graph_t *abg, abpoa_seq_t *abs, seg_seq_t *segs, int
             if (*deli_s == '+') {
                 if (is_rc == 1) err_fatal(__func__, "Error: path has both \'+\' and \'-\' seg. (%s)", path_name);
                 is_rc = 0; *deli_s = 0; _seg_name = info_s;
-                seg_pos = kh_get(str, segs->h, _seg_name);
+                seg_pos = kh_get(abstr, segs->h, _seg_name);
                 if (seg_pos == kh_end(segs->h)) err_fatal(__func__, "Error: seg (%s) not exist.", info_s);
                 seg_name = segs->name + kh_val(segs->h, seg_pos);
                 seg_seq = segs->seq + kh_val(segs->h, seg_pos);
 
                 // check if seg already exist
-                pos = kh_put(str, seg_name2in_id, seg_name->s, &absent);
+                pos = kh_put(abstr, seg_name2in_id, seg_name->s, &absent);
                 if (absent) { // add node for seg_seq
                     for (i = 0; i < (int)seg_seq->l; ++i) {
                         id = abpoa_add_graph_node(abg, char26_table[(int)(seg_seq->s[i])]);
@@ -452,7 +496,7 @@ int abpoa_gfa_parse_P(abpoa_graph_t *abg, abpoa_seq_t *abs, seg_seq_t *segs, int
                         if (i == (int)seg_seq->l-1) out_id = id;
                     }
                     kh_val(seg_name2in_id, pos) = in_id;
-                    pos = kh_put(str, seg_name2out_id, seg_name->s, &absent);
+                    pos = kh_put(abstr, seg_name2out_id, seg_name->s, &absent);
                     kh_val(seg_name2out_id, pos) = out_id;
                 } else {
                     in_id = kh_val(seg_name2in_id, pos);
@@ -470,13 +514,13 @@ int abpoa_gfa_parse_P(abpoa_graph_t *abg, abpoa_seq_t *abs, seg_seq_t *segs, int
             } else if (*deli_s == '-') {
                 if (is_rc == 0) err_fatal(__func__, "Error: path has both \'+\' and \'-\' seg. (%s)", path_name);
                 is_rc = 1; *deli_s = 0; _seg_name = info_s;
-                seg_pos = kh_get(str, segs->h, _seg_name);
+                seg_pos = kh_get(abstr, segs->h, _seg_name);
                 if (seg_pos == kh_end(segs->h)) err_fatal(__func__, "Error: seg (%s) not exist.", info_s);
                 seg_name = segs->name + kh_val(segs->h, seg_pos);
                 seg_seq = segs->seq + kh_val(segs->h, seg_pos);
 
                 // check if seg exist
-                pos = kh_put(str, seg_name2in_id, seg_name->s, &absent);
+                pos = kh_put(abstr, seg_name2in_id, seg_name->s, &absent);
                 if (absent) { // add node for seg_seq
                     for (i = 0; i < (int)seg_seq->l; ++i) {
                         id = abpoa_add_graph_node(abg, char26_table[(int)(seg_seq->s[i])]);
@@ -484,7 +528,7 @@ int abpoa_gfa_parse_P(abpoa_graph_t *abg, abpoa_seq_t *abs, seg_seq_t *segs, int
                         if (i == (int)seg_seq->l-1) out_id = id;
                     }
                     kh_val(seg_name2in_id, pos) = in_id;
-                    pos = kh_put(str, seg_name2out_id, seg_name->s, &absent);
+                    pos = kh_put(abstr, seg_name2out_id, seg_name->s, &absent);
                     kh_val(seg_name2out_id, pos) = out_id;
                 } else {
                     in_id = kh_val(seg_name2in_id, pos); out_id = kh_val(seg_name2out_id, pos);
@@ -553,7 +597,7 @@ abpoa_t *abpoa_restore_graph(abpoa_t *ab, abpoa_para_t *abpt) {
     gzFile fp = fn && strcmp(fn, "-")? gzopen(fn, "r") : gzdopen(0, "r"); if (fp == 0) return NULL;
     kstream_t *ks = ks_init(fp); kstring_t s={0,0,0}; int dret, line_n=0, read_name_e; 
     seg_seq_t *seqs = seg_seq_init(); 
-    khash_t(str) *seg_name2in_id = kh_init(str), *seg_name2out_id = kh_init(str);
+    khash_t(abstr) *seg_name2in_id = kh_init(abstr), *seg_name2out_id = kh_init(abstr);
     int add_read_id = abpt->use_read_ids;
     int p_i = -1, is_fa = 0, *rank2node_id=0;
 
@@ -604,7 +648,7 @@ abpoa_t *abpoa_restore_graph(abpoa_t *ab, abpoa_para_t *abpt) {
     }
     if (s.m) free(s.s);
     ks_destroy(ks); gzclose(fp);
-    seg_seq_free(seqs); kh_destroy(str, seg_name2in_id); kh_destroy(str, seg_name2out_id);
+    seg_seq_free(seqs); kh_destroy(abstr, seg_name2in_id); kh_destroy(abstr, seg_name2out_id);
     if (rank2node_id) free(rank2node_id);
     if (abs->n_seq == 0) {
         err_func_printf(__func__, "Warning: no graph/sequence restored from file \'%s\'.\n", fn);
