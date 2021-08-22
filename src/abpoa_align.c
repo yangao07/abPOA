@@ -143,8 +143,6 @@ abpoa_para_t *abpoa_init_para(void) {
 }
 
 void abpoa_post_set_para(abpoa_para_t *abpt) {
-    if (abpt->use_score_matrix == 0) gen_simple_mat(abpt);
-    else abpoa_set_mat_from_file(abpt);
     abpoa_set_gap_mode(abpt);
     if (abpt->cons_agrm == ABPOA_HC || abpt->out_msa || abpt->out_gfa || abpt->is_diploid) {
         abpt->use_read_ids = 1;
@@ -162,6 +160,8 @@ void abpoa_post_set_para(abpoa_para_t *abpt) {
             abpt->k = 7, abpt->w = 4;
         }
     }
+    if (abpt->use_score_matrix == 0) gen_simple_mat(abpt);
+    else abpoa_set_mat_from_file(abpt);
 }
 
 void abpoa_free_para(abpoa_para_t *abpt) {
@@ -269,6 +269,9 @@ int abpoa_anchor_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int *seq_l
         }
         end_id = ABPOA_SINK_NODE_ID; end_qpos = seq_lens[i];
 
+#ifdef __DEBUG__
+            fprintf(stderr, "\tanchor: t: %d (id: %d), q: %d\n", end_tpos, end_id, end_qpos);
+#endif
         res.graph_cigar = 0; res.n_cigar = 0;
         abpoa_align_sequence_to_subgraph(ab, abpt, beg_id, end_id, qseq+beg_qpos, end_qpos-beg_qpos, &res);
         abpoa_push_whole_cigar(&whole_res.n_cigar, &whole_res.m_cigar, &whole_res.graph_cigar, res.n_cigar, res.graph_cigar);
