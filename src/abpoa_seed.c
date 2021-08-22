@@ -153,6 +153,74 @@ void mm_sketch(void *km, const uint8_t *str, int len, int w, int k, uint32_t rid
     if (min.x != UINT64_MAX)
         kv_push(ab_u128_t, km, *p, min);
 }
+
+// For amino acid sequence
+void mm_aa_sketch(void *km, const uint8_t *str, int len, int w, int k, uint32_t rid, int is_hpc, ab_u128_v *p)
+{
+    uint64_t mask = (1ULL<<5*k) - 1, kmer[2] = {0,0};
+    int i, j, l, buf_pos, min_pos, kmer_span = 0;
+    ab_u128_t buf[256], min = { UINT64_MAX, UINT64_MAX };
+    tiny_queue_t tq;
+
+    assert(len > 0 && (w > 0 && w < 256) && (k > 0 && k <= 11)); // 56 / 5 == 11
+    memset(buf, 0xff, w * 16);
+    memset(&tq, 0, sizeof(tiny_queue_t));
+    kv_resize(ab_u128_t, km, *p, p->n + len/w);
+
+    for (i = l = buf_pos = min_pos = 0; i < len; ++i) {
+        int c = str[i];
+        ab_u128_t info = { UINT64_MAX, UINT64_MAX };
+        if (c < 26) { // not an ambiguous base
+            uint32_t z;
+            if (is_hpc) {
+                int skip_len = 1;
+                if (i + 1 < len && str[i + 1] == c) {
+                    for (skip_len = 2; i + skip_len < len; ++skip_len)
+                        if (str[i + skip_len] != c)
+                            break;
+                    i += skip_len - 1; // put $i at the end of the current homopolymer run
+                }
+                tq_push(&tq, skip_len);
+                kmer_span += skip_len;
+                if (tq.count > k) kmer_span -= tq_shift(&tq);
+            } else kmer_span = l + 1 < k? l + 1 : k;
+            
+            kmer[0] = (kmer[0] << 5 | c) & mask; // only forward k-mer for aa seq
+            z = 0;
+            ++l;
+            if (l >= k && kmer_span < 256) {
+                info.x = hash64(kmer[z], mask) << 8 | kmer_span;
+                info.y = (uint64_t)rid<<32 | (uint32_t)i<<1 | z;
+            }
+        } else l = 0, tq.count = tq.front = 0, kmer_span = 0;
+        buf[buf_pos] = info; // need to do this here as appropriate buf_pos and buf[buf_pos] are needed below
+        if (l == w + k - 1 && min.x != UINT64_MAX) { // special case for the first window - because identical k-mers are not stored yet
+            for (j = buf_pos + 1; j < w; ++j)
+                if (min.x == buf[j].x && buf[j].y != min.y) kv_push(ab_u128_t, km, *p, buf[j]);
+            for (j = 0; j < buf_pos; ++j)
+                if (min.x == buf[j].x && buf[j].y != min.y) kv_push(ab_u128_t, km, *p, buf[j]);
+        }
+        if (info.x <= min.x) { // a new minimum; then write the old min
+            if (l >= w + k && min.x != UINT64_MAX) kv_push(ab_u128_t, km, *p, min);
+            min = info, min_pos = buf_pos;
+        } else if (buf_pos == min_pos) { // old min has moved outside the window
+            if (l >= w + k - 1 && min.x != UINT64_MAX) kv_push(ab_u128_t, km, *p, min);
+            for (j = buf_pos + 1, min.x = UINT64_MAX; j < w; ++j) // the two loops are necessary when there are identical k-mers
+                if (min.x >= buf[j].x) min = buf[j], min_pos = j; // >= is important s.t. min is always the closest k-mer
+            for (j = 0; j <= buf_pos; ++j)
+                if (min.x >= buf[j].x) min = buf[j], min_pos = j;
+            if (l >= w + k - 1 && min.x != UINT64_MAX) { // write identical k-mers
+                for (j = buf_pos + 1; j < w; ++j) // these two loops make sure the output is sorted
+                    if (min.x == buf[j].x && min.y != buf[j].y) kv_push(ab_u128_t, km, *p, buf[j]);
+                for (j = 0; j <= buf_pos; ++j)
+                    if (min.x == buf[j].x && min.y != buf[j].y) kv_push(ab_u128_t, km, *p, buf[j]);
+            }
+        }
+        if (++buf_pos == w) buf_pos = 0;
+    }
+    if (min.x != UINT64_MAX)
+        kv_push(ab_u128_t, km, *p, min);
+}
 /************ end *************/
 
 // tree_id_map: guide tree node id -> original input order id
@@ -584,7 +652,9 @@ int LIS_chaining(void *km, ab_u64_v *anchors, ab_u64_v *par_anchors, int min_w) 
     }
     // filter anchors
     int last_tpos = -1, last_qpos = -1, cur_tpos, cur_qpos;
+#ifdef __DEBUG__
     size_t _n = par_anchors->n;
+#endif
     for (i = 0; i < n; ++i) {
         j = (int)rank[i]-1;
         cur_tpos = (anchors->a[j] >> 32) & 0x7fffffff;
@@ -609,7 +679,8 @@ int abpoa_collect_mm(void *km, uint8_t **seqs, int *seq_lens, int n_seq, abpoa_p
     int i;
     mm_c[0] = 0;
     for (i = 0; i < n_seq; ++i) { // collect minimizers
-        mm_sketch(km, seqs[i], seq_lens[i], abpt->w, abpt->k, i, 0, abpt->amb_strand, mm);
+        if (abpt->m > 5) mm_aa_sketch(km, seqs[i], seq_lens[i], abpt->w, abpt->k, i, 0, mm);
+        else mm_sketch(km, seqs[i], seq_lens[i], abpt->w, abpt->k, i, 0, abpt->amb_strand, mm);
         mm_c[i+1] = mm->n;
     }
     return mm->n;
