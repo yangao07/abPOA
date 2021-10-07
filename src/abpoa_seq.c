@@ -500,6 +500,7 @@ int abpoa_gfa_parse_P(abpoa_graph_t *abg, abpoa_seq_t *abs, seg_seq_t *segs, int
                     kh_val(seg_name2out_id, pos) = out_id;
                 } else {
                     in_id = kh_val(seg_name2in_id, pos);
+                    pos = kh_put(abstr, seg_name2out_id, seg_name->s, &absent);
                     out_id = kh_val(seg_name2out_id, pos);
                 }
                 // add edge
