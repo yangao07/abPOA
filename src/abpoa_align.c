@@ -22,18 +22,18 @@ void gen_simple_mat(abpoa_para_t *abpt) {
     abpt->min_mis = -mismatch;
 }
 
-extern char nt4_table[256];
-extern char nt256_table[256];
-extern char aa26_table[256];
-extern char aa256_table[256];
-extern char char26_table[256];
-extern char char256_table[256];
+extern char ab_nt4_table[256];
+extern char ab_nt256_table[256];
+extern char ab_aa26_table[256];
+extern char ab_aa256_table[256];
+extern char ab_char26_table[256];
+extern char ab_char256_table[256];
 
 void parse_mat_first_line(char *l, int *order) {
     int i, n;
     for (i = n = 0; l[i]; ++i) {
         if (isspace(l[i])) continue;
-        order[n++] = char26_table[(int)l[i]];
+        order[n++] = ab_char26_table[(int)l[i]];
     }
 }
 
@@ -42,7 +42,7 @@ void parse_mat_score_line(char *l, int *order, int m, int *mat) {
     for (n = 0; *str; ++str) {
         if (!isalpha(*str) && !isdigit(*str) && *str != '+' && *str != '-') continue;
         if (is_base) { // get base
-            _i = char26_table[(int)*str];
+            _i = ab_char26_table[(int)*str];
             if (_i >= m) err_fatal(__func__, "Unknown base: \"%c\" (%d).\n", *str, _i);
             is_base = 0;
         } else { // get score
@@ -116,8 +116,8 @@ abpoa_para_t *abpoa_init_para(void) {
     abpt->m = 5; // nucleotide
     int i;
     for (i = 0; i < 256; ++i) {
-        char26_table[i] = nt4_table[i];
-        char256_table[i] = nt256_table[i];
+        ab_char26_table[i] = ab_nt4_table[i];
+        ab_char256_table[i] = ab_nt256_table[i];
     }
     abpt->mat = (int*)_err_malloc(abpt->m * abpt->m * sizeof(int));
 
@@ -153,8 +153,8 @@ void abpoa_post_set_para(abpoa_para_t *abpt) {
     if (abpt->m > 5) { // for aa sequence
         int i;
         for (i = 0; i < 256; ++i) {
-            char26_table[i] = aa26_table[i];
-            char256_table[i] = aa256_table[i];
+            ab_char26_table[i] = ab_aa26_table[i];
+            ab_char256_table[i] = ab_aa256_table[i];
         }
         if (abpt->k > 11) {
             abpt->k = 7, abpt->w = 4;
@@ -426,12 +426,12 @@ int abpoa_msa1(abpoa_t *ab, abpoa_para_t *abpt, char *read_fn, FILE *out_fp, uin
     }
 
     // set seqs, seq_lens
-    extern char char26_table[256];
+    extern char ab_char26_table[256];
     uint8_t **seqs = (uint8_t**)_err_malloc(n_seq * sizeof(uint8_t*)); int *seq_lens = (int*)_err_malloc(n_seq * sizeof(int));
     for (i = 0; i < n_seq; ++i) {
         seq_lens[i] = abs->seq[exist_n_seq+i].l;
         seqs[i] = (uint8_t*)_err_malloc(sizeof(uint8_t) * seq_lens[i]);
-        for (j = 0; j < seq_lens[i]; ++j) seqs[i][j] = char26_table[(int)abs->seq[exist_n_seq+i].s[j]];
+        for (j = 0; j < seq_lens[i]; ++j) seqs[i][j] = ab_char26_table[(int)abs->seq[exist_n_seq+i].s[j]];
     }
     if (abpt->disable_seeding || abpt->align_mode != ABPOA_GLOBAL_MODE) {
         abpoa_poa(ab, abpt, seqs, seq_lens, exist_n_seq, n_seq);

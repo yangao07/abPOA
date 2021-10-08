@@ -6,12 +6,12 @@
 #include "simd_abpoa_align.h"
 #include "kdq.h"
 
-extern char char256_table[256];
-char LogTable65536[65536];
-char bit_table16[65536];
+extern char ab_char256_table[256];
+char ab_LogTable65536[65536];
+char ab_bit_table16[65536];
 
 #define NAT_E 2.718281828459045
-static const char LogTable256[256] = {
+static const char ab_LogTable256[256] = {
 #define LT(n) n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n
     -1, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
     LT(4), LT(5), LT(5), LT(6), LT(6), LT(6), LT(6),
@@ -21,28 +21,28 @@ static const char LogTable256[256] = {
 static inline int ilog2_32(uint32_t v)
 {
     uint32_t t, tt;
-    if ((tt = v>>16)) return (t = tt>>8) ? 24 + LogTable256[t] : 16 + LogTable256[tt];
-    return (t = v>>8) ? 8 + LogTable256[t] : LogTable256[v];
+    if ((tt = v>>16)) return (t = tt>>8) ? 24 + ab_LogTable256[t] : 16 + ab_LogTable256[tt];
+    return (t = v>>8) ? 8 + ab_LogTable256[t] : ab_LogTable256[v];
 }
 
 void set_65536_table(void) {
     int i;
     for (i = 0; i < 65536; ++i) {
-        LogTable65536[i] = ilog2_32(i);
+        ab_LogTable65536[i] = ilog2_32(i);
     }
 }
 
 void set_bit_table16(void) {
-    int i; bit_table16[0] = 0;
-    for (i = 0; i != 65536; ++i) bit_table16[i] = (i&1) + bit_table16[i>>1];
+    int i; ab_bit_table16[0] = 0;
+    for (i = 0; i != 65536; ++i) ab_bit_table16[i] = (i&1) + ab_bit_table16[i>>1];
 }
 
 #define get_bit_cnt4(table, b) (table[(b)&0xffff] + table[(b)>>16&0xffff] + table[(b)>>32&0xffff] + table[(b)>>48&0xffff])
 
 static inline int ilog2_64(uint64_t v) {
     uint64_t t, tt;
-    if ((tt = v >> 32)) return (t = tt >> 16) ? 48 + LogTable65536[t] : 32 + LogTable65536[tt];
-    return (t = v>>16) ? 16 + LogTable65536[t] : LogTable65536[v];
+    if ((tt = v >> 32)) return (t = tt >> 16) ? 48 + ab_LogTable65536[t] : 32 + ab_LogTable65536[tt];
+    return (t = v>>16) ? 16 + ab_LogTable65536[t] : ab_LogTable65536[v];
 }
 
 KDQ_INIT(int)
@@ -351,7 +351,7 @@ void abpoa_set_row_column_weight(abpoa_graph_t *abg, int **rc_weight, int **msa_
         // assign seq
         for (k = 0; k < abg->node[i].read_ids_n; ++k) {
             b = abg->node[i].read_ids[k];
-            rc_weight[rank-1][abg->node[i].base] += get_bit_cnt4(bit_table16, b);
+            rc_weight[rank-1][abg->node[i].base] += get_bit_cnt4(ab_bit_table16, b);
         }
         rc_weight[rank-1][4] -= rc_weight[rank-1][abg->node[i].base];
         msa_node_id[rank-1][abg->node[i].base] = i;
@@ -380,7 +380,7 @@ void abpoa_set_row_column_ids_weight(abpoa_graph_t *abg, uint64_t ***read_ids, i
         // assign seq
         for (k = 0; k < abg->node[i].read_ids_n; ++k) {
             b = abg->node[i].read_ids[k];
-            rc_weight[rank-1][abg->node[i].base] += get_bit_cnt4(bit_table16, b);
+            rc_weight[rank-1][abg->node[i].base] += get_bit_cnt4(ab_bit_table16, b);
             read_ids[rank-1][abg->node[i].base][k] = b;
             read_ids[rank-1][4][k] ^= b;
         }
@@ -416,7 +416,7 @@ void abpoa_heaviest_column_multip_consensus(uint64_t ***read_ids, int **cluster_
                 w = 0;
                 for (m = 0; m < read_ids_n; ++m) {
                     b = read_ids[j][k][m] & read_ids_mask[m];
-                    cnt = get_bit_cnt4(bit_table16, b);
+                    cnt = get_bit_cnt4(ab_bit_table16, b);
                     w += cnt, gap_w -= cnt;
                 }
                 if (w > max_w) {
@@ -428,7 +428,7 @@ void abpoa_heaviest_column_multip_consensus(uint64_t ***read_ids, int **cluster_
             }
         }
         if (out_fp) {
-            for (j = 0; j < cons_l; ++j) fprintf(out_fp, "%c", char256_table[cons_seq[j]]); fprintf(out_fp, "\n");
+            for (j = 0; j < cons_l; ++j) fprintf(out_fp, "%c", ab_char256_table[cons_seq[j]]); fprintf(out_fp, "\n");
         }
         if (_cons_n) {
             (*_cons_l)[i] = cons_l;
@@ -445,7 +445,7 @@ int output_consensus(int out_fq, abpoa_graph_t *abg, int src_id, int sink_id, in
     else fprintf(out_fp, ">Consensus_sequence\n");
     int id = abg->node[src_id].max_out_id;
     while (id != sink_id) {
-        fprintf(out_fp, "%c", char256_table[abg->node[id].base]);
+        fprintf(out_fp, "%c", ab_char256_table[abg->node[id].base]);
         id = abg->node[id].max_out_id;
         cons_l++;
     } fprintf(out_fp, "\n");
@@ -665,7 +665,7 @@ void add_het_read_ids(int *init, uint64_t **het_read_ids, uint8_t **het_cons_bas
             ovlp_n = 0; 
             for (j = 0; j < read_ids_n; ++j) {
                 b = het_read_ids[i][j] & ids[j];
-                ovlp_n += get_bit_cnt4(bit_table16, b);
+                ovlp_n += get_bit_cnt4(ab_bit_table16, b);
             }
             if (ovlp_n > max_ovlp_n) {
                 max_ovlp_n = ovlp_n;
@@ -889,7 +889,7 @@ void abpoa_generate_rc_msa(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp, uint8_
                 if (abs->is_rc[i]) fprintf(out_fp, ">%s_reverse_complement\n", abs->name[i].s);
                 else fprintf(out_fp, ">%s\n", abs->name[i].s);
             }
-            for (j = 0; j < _msa_l; ++j) fprintf(out_fp, "%c", char256_table[_msa_seq[i][j]]);
+            for (j = 0; j < _msa_l; ++j) fprintf(out_fp, "%c", ab_char256_table[_msa_seq[i][j]]);
             fprintf(out_fp, "\n");
         }
         if (abpt->out_cons) { // RC-MSA for consensus sequence
@@ -906,7 +906,7 @@ void abpoa_generate_rc_msa(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp, uint8_
                 // last_rank -> rank : -
                 for (k = last_rank; k < rank; ++k) fprintf(out_fp, "-");
                 // rank : base
-                fprintf(out_fp, "%c", char256_table[abg->node[i].base]);
+                fprintf(out_fp, "%c", ab_char256_table[abg->node[i].base]);
                 last_rank = rank+1;
                 i = abg->node[i].max_out_id;
             }
@@ -951,7 +951,7 @@ void abpoa_generate_gfa(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp) {
         } else {
             if (cur_id != ABPOA_SRC_NODE_ID) {
                 // output node
-                fprintf(out_fp, "S\t%d\t%c\n", cur_id-1, char256_table[abg->node[cur_id].base]);
+                fprintf(out_fp, "S\t%d\t%c\n", cur_id-1, ab_char256_table[abg->node[cur_id].base]);
                 // output all links based pre_ids
                 for (i = 0; i < abg->node[cur_id].in_edge_n; ++i) {
                     pre_id = abg->node[cur_id].in_id[i];

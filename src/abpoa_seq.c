@@ -12,7 +12,7 @@ KHASH_MAP_INIT_STR(abstr, uint32_t)
 
 // for nt
 // AaCcGgTtNn ==> 0,1,2,3,4
-unsigned char nt4_table[256] = {
+unsigned char ab_nt4_table[256] = {
        0, 1, 2, 3,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
        4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
        4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4 /*'-'*/, 4, 4,
@@ -32,7 +32,7 @@ unsigned char nt4_table[256] = {
 };
 
 // 65,97=>A, 67,99=>C, 71,103=>G, 84,85,116,117=>T, else=>N
-const char nt256_table[256] = {
+const char ab_nt256_table[256] = {
        'A', 'C', 'G', 'T',  'N', '-', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',
        'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', '-',  'N', 'N', 'N', 'N',
        'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',  'N', 'N', 'N', 'N',
@@ -54,7 +54,7 @@ const char nt256_table[256] = {
 // for aa
 // AaCcGgTtNn ... ==> 0,1,2,3,4 ...
 // BbDdEeFf   ... ==> 5,6,7,8 ...
-unsigned char aa26_table[256] = {
+unsigned char ab_aa26_table[256] = {
 	 0,  1,  2,  3,   4,  5,  6,  7,   8,  9, 10, 11,  12, 13, 14, 15, 
 	16, 17, 18, 19,  20, 21, 22, 23,  24, 25, 26, 26,  26, 26, 26, 26, 
 	26, 26, 26, 26,  26, 26, 26, 26,  26, 26, 26, 26,  26, 26, 26, 26,
@@ -75,7 +75,7 @@ unsigned char aa26_table[256] = {
 
 // 0/1/2/3/4=>ACGTN
 // 5/6/7/8=>BDEF ...
-const char aa256_table[256] = {
+const char ab_aa256_table[256] = {
 	'A', 'C', 'G', 'T',  'N', 'B', 'D', 'E',  'F', 'H', 'I',  'J', 'K', 'L', 'M', 'O',
 	'P', 'Q', 'R', 'S',  'U', 'V', 'W', 'X',  'Y', 'Z', '*', '-',  '*', '*', '*', '*',
 	'*', '*', '*', '*',  '*', '*', '*', '*',  '*', '*', '*', '*',  '*', '*', '*', '*',
@@ -94,8 +94,8 @@ const char aa256_table[256] = {
 	'*', '*', '*', '*',  '*', '*', '*', '*',  '*', '*', '*', '*',  '*', '*', '*', '*'
 };
 
-char char26_table[256];
-char char256_table[256];
+char ab_char26_table[256];
+char ab_char256_table[256];
 
 abpoa_seq_t *abpoa_init_seq(void) {
     abpoa_seq_t *abs = (abpoa_seq_t*)_err_malloc(sizeof(abpoa_seq_t));
@@ -435,7 +435,7 @@ int abpoa_gfa_parse_S(seg_seq_t *segs,  char *s) {
     if (is_ok) {
         int seg_id, absent;
         for (i = 0; i < seq_len; ++i) {
-            seg_id = abpoa_add_graph_node(abg, char26_table[(int)(seq[i])]);
+            seg_id = abpoa_add_graph_node(abg, ab_char26_table[(int)(seq[i])]);
             if (i == 0) {
                 khint_t pos = kh_put(str, seg_name2in_id, seg_names->name[seg_names->n_seq-1].s, &absent);
                 if (absent) kh_val(seg_name2in_id, pos) = seg_id;
@@ -491,7 +491,7 @@ int abpoa_gfa_parse_P(abpoa_graph_t *abg, abpoa_seq_t *abs, seg_seq_t *segs, int
                 pos = kh_put(abstr, seg_name2in_id, seg_name->s, &absent);
                 if (absent) { // add node for seg_seq
                     for (i = 0; i < (int)seg_seq->l; ++i) {
-                        id = abpoa_add_graph_node(abg, char26_table[(int)(seg_seq->s[i])]);
+                        id = abpoa_add_graph_node(abg, ab_char26_table[(int)(seg_seq->s[i])]);
                         if (i == 0) in_id = id;
                         if (i == (int)seg_seq->l-1) out_id = id;
                     }
@@ -524,7 +524,7 @@ int abpoa_gfa_parse_P(abpoa_graph_t *abg, abpoa_seq_t *abs, seg_seq_t *segs, int
                 pos = kh_put(abstr, seg_name2in_id, seg_name->s, &absent);
                 if (absent) { // add node for seg_seq
                     for (i = 0; i < (int)seg_seq->l; ++i) {
-                        id = abpoa_add_graph_node(abg, char26_table[(int)(seg_seq->s[i])]);
+                        id = abpoa_add_graph_node(abg, ab_char26_table[(int)(seg_seq->s[i])]);
                         if (i == 0) in_id = id;
                         if (i == (int)seg_seq->l-1) out_id = id;
                     }
@@ -566,7 +566,7 @@ int abpoa_fa_parse_seq(abpoa_graph_t *abg, abpoa_seq_t *abs, kstring_t *seq, kst
     for (i = 0; s[i]; ++i) {
         if (s[i] == '-') continue; // gap
         else {
-            base = char26_table[(int)(s[i])];
+            base = ab_char26_table[(int)(s[i])];
             rank = i;
             cur_id = (*rank2node_id)[rank];
             if (cur_id == 0) {
