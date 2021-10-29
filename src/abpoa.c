@@ -217,6 +217,10 @@ int main(int argc, char **argv) {
     if (argc - optind != 1) return abpoa_usage();
 
     abpoa_post_set_para(abpt);
+	fprintf(stderr, "[%s] CMD: ", __func__);
+    for (c = 0; c < argc; ++c)
+        fprintf(stderr, " %s", argv[c]);
+    fprintf(stderr, "\n");
     abpoa_main(argv[optind], in_list, abpt);
 
 End:
