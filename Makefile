@@ -1,6 +1,20 @@
 #CC          = gcc
-EXTRA_FLAGS = -Wno-unused-function -Wno-misleading-indentation
+EXTRA_FLAGS = -Wno-unused-function -Wno-misleading-indentation -DSIMDE_ENABLE_NATIVE_ALIASES
 CFLAGS      = -Wall -O3 $(EXTRA_FLAGS)
+
+SIMD_FLAG   = -march=native
+
+ifneq ($(armv7),) # for ARMv7
+	SIMD_FLAG   =  -march=armv7-a -mfpu=neon
+else
+ifneq ($(armv8),) # for ARMv8
+ifneq ($(aarch64),) # for Aarch64 
+	SIMD_FLAG   =  -march=armv8-a+simd
+else # for Aarch32
+	SIMD_FLAG   =  -march=armv8-a+simd -mfpu=auto
+endif
+endif
+endif
 
 # for debug
 ifneq ($(debug),)
@@ -43,7 +57,6 @@ FLAG_SSE41    = -msse4.1
 FLAG_AVX2     = -mavx2
 FLAG_AVX512F  = -mavx512f
 FLAG_AVX512BW = -mavx512bw
-SIMD_FLAG     = -march=native
 
 ifneq ($(sse2),)
 	SIMD_FLAG=$(FLAG_SSE2)

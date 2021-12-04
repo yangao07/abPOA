@@ -1,0 +1,3 @@
+[submodule "simde"]
+	path = include/simde
+	url = git@github.com:simd-everywhere/simde.git
