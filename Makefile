@@ -76,7 +76,7 @@ else ifneq ($(avx512bw),)
 endif
 
 .c.o:
-		$(CC) -c $(CFLAGS) $< -o $@
+		$(CC) -c $(CFLAGS) $< -I$(INC_DIR) -o $@
 
 BIN      = $(BIN_DIR)/abpoa
 ifneq ($(gdb),)
@@ -94,10 +94,10 @@ example:   $(EXAMPLE)
 
 $(BIN):$(SRC_DIR)/abpoa.o $(ABPOALIB)
 	if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi
-	$(CC) $(CFLAGS) $< -L$(LIB_DIR) -labpoa $(LIB) -o $@ $(PG_FLAG)
+	$(CC) $(CFLAGS) $< -I$(INC_DIR) -L$(LIB_DIR) -labpoa $(LIB) -o $@ $(PG_FLAG)
 
 $(EXAMPLE):example.c $(ABPOALIB)
-	$(CC) $(CFLAGS) $< -o $@ -I $(INC_DIR) -L $(LIB_DIR) -labpoa $(LIB)
+	$(CC) $(CFLAGS) $< -o $@ -I$(INC_DIR) -L$(LIB_DIR) -labpoa $(LIB)
 
 $(ABPOALIB):$(OBJS)
 	if [ ! -d $(LIB_DIR) ]; then mkdir $(LIB_DIR); fi
@@ -105,13 +105,13 @@ $(ABPOALIB):$(OBJS)
 
 $(SRC_DIR)/abpoa.o:$(SRC_DIR)/abpoa.c $(SRC_DIR)/abpoa.h $(SRC_DIR)/abpoa_graph.h $(SRC_DIR)/abpoa_align.h \
                    $(SRC_DIR)/abpoa_seq.h $(SRC_DIR)/utils.h $(SRC_DIR)/simd_instruction.h
-	$(CC) -c $(CFLAGS) $(SIMD_FLAG) $< -o $@
+	$(CC) -c $(CFLAGS) $(SIMD_FLAG) -I$(INC_DIR) $< -o $@
 
 $(SRC_DIR)/simd_check.o:$(SRC_DIR)/simd_check.c $(SRC_DIR)/simd_instruction.h
-	$(CC) -c $(CFLAGS) $(SIMD_FLAG) $< -o $@
+	$(CC) -c $(CFLAGS) $(SIMD_FLAG) -I$(INC_DIR) $< -o $@
 
 $(SRC_DIR)/simd_abpoa_align.o:$(SRC_DIR)/simd_abpoa_align.c $(SRC_DIR)/abpoa_graph.h $(SRC_DIR)/abpoa_align.h $(SRC_DIR)/simd_instruction.h $(SRC_DIR)/utils.h
-	$(CC) -c $(CFLAGS) $(SIMD_FLAG) $< -o $@
+	$(CC) -c $(CFLAGS) $(SIMD_FLAG) -I$(INC_DIR) $< -o $@
 
 install_py: python/cabpoa.pxd python/pyabpoa.pyx python/README.md
 	${py_SIMD_FLAG} python setup.py install

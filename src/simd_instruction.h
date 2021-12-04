@@ -12,22 +12,23 @@
 // #include <immintrin.h>
 // use SIMDE
 #ifdef __AVX512BW__
-#include "/home/yan/software/minimap2/lib/simde/simde/x86/avx512bw.h"
+#include "simde/simde/x86/avx512bw.h"
 #else
 #ifdef __AVX512F__
-#include "/home/yan/software/minimap2/lib/simde/simde/x86/avx512f.h"
+#include "simde/simde/x86/avx512f.h"
 #else
 #ifdef __AVX2__
-#include "/home/yan/software/minimap2/lib/simde/simde/x86/avx2.h"
+#include "simde/simde/x86/avx2.h"
 #else
 #ifdef __SSE4_1__
-#include "/home/yan/software/minimap2/lib/simde/simde/x86/sse4.1.h"
+#include "simde/simde/x86/sse4.1.h"
 #else
-#include "/home/yan/software/minimap2/lib/simde/simde/x86/sse2.h"
+#include "simde/simde/x86/sse2.h"
 #endif // end of sse41
 #endif // end of AVX2
 #endif // end of 512F
 #endif // end of 512BW
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <cpuid.h>
