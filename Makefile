@@ -1,5 +1,5 @@
 #CC          = gcc
-EXTRA_FLAGS = -Wno-unused-function -Wno-misleading-indentation -DSIMDE_ENABLE_NATIVE_ALIASES
+EXTRA_FLAGS = -Wno-unused-function -Wno-misleading-indentation -DUSE_SIMDE -DSIMDE_ENABLE_NATIVE_ALIASES
 CFLAGS      = -Wall -O3 $(EXTRA_FLAGS)
 
 SIMD_FLAG   = -march=native

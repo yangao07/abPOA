@@ -9,8 +9,9 @@
 #ifndef SIMD_INSTRUCTION_H
 #define SIMD_INSTRUCTION_H
 
-// #include <immintrin.h>
-// use SIMDE
+#ifndef USE_SIMDE
+#include <immintrin.h>
+#else // use SIMDE
 #ifdef __AVX512BW__
 #include "simde/simde/x86/avx512bw.h"
 #else
@@ -28,6 +29,7 @@
 #endif // end of AVX2
 #endif // end of 512F
 #endif // end of 512BW
+#endif // end of USE_SIMDE
 
 #include <stdio.h>
 #include <stdlib.h>
