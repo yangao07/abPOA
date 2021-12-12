@@ -5,6 +5,9 @@
 // AVX512F: quardruple speed
 // AVX512BW: byte and word operation
 
+#include <stdlib.h>
+#include <errno.h>
+
 #pragma once
 #ifndef SIMD_INSTRUCTION_H
 #define SIMD_INSTRUCTION_H
@@ -33,7 +36,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <cpuid.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -48,7 +50,9 @@
 #define SIMD_AVX512F  0x100
 #define SIMD_AVX512BW 0x200
 
-#define SIMDFree(x) _mm_free(x)
+// #define SIMDFree(x) _mm_free(x)
+// posix_memalign and free
+#define SIMDFree(x) free(x)
 
 // Shift, Blend, ... for 8/16 and 32/64
 #ifdef __AVX512BW__
@@ -595,6 +599,7 @@ extern "C" {
 
 int simd_check(void);
 
+/*
 static void *SIMDMalloc(size_t size, size_t align) {
     void *ret = (void*)_mm_malloc(size, align);
     if (ret == NULL) {
@@ -602,8 +607,23 @@ static void *SIMDMalloc(size_t size, size_t align) {
         exit(1);
     }
     else return ret;
-}
+}*/
 
+// use posix_memalign
+static void *SIMDMalloc(size_t size, size_t align) {
+    void *ret; int res;
+    res = posix_memalign(&ret, align, size);
+    if (res != 0) {
+        char error[10];
+        if (res == EINVAL) strcpy(error, "EINVAR");
+        else if (res == ENOMEM)
+            strcpy(error, "ENOMEM");
+        else strcpy(error, "Unknown");
+        fprintf(stderr, "[%s] posix_memalign fail!\nSize: %ld, Error: %s\n", __func__, size, error);
+        exit(1);
+    }
+    else return ret;
+}
 #ifdef __cplusplus
 }
 #endif
