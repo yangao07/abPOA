@@ -5,13 +5,13 @@ CFLAGS      = -Wall -O3 $(EXTRA_FLAGS)
 SIMD_FLAG   = -march=native
 
 ifneq ($(armv7),) # for ARMv7
-	SIMD_FLAG   =  -march=armv7-a -mfpu=neon
+	SIMD_FLAG   =  -march=armv7-a -mfpu=neon -D__AVX2__
 else
 ifneq ($(armv8),) # for ARMv8
 ifneq ($(aarch64),) # for Aarch64 
-	SIMD_FLAG   =  -march=armv8-a+simd
+	SIMD_FLAG   =  -march=armv8-a+simd -D__AVX2__
 else # for Aarch32
-	SIMD_FLAG   =  -march=armv8-a+simd -mfpu=auto
+	SIMD_FLAG   =  -march=armv8-a+simd -mfpu=auto -D__AVX2__
 endif
 endif
 endif
