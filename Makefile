@@ -55,8 +55,8 @@ SIMD_CHECK_D = -D __CHECK_SIMD_MAIN__
 FLAG_SSE2     = -msse2
 FLAG_SSE41    = -msse4.1
 FLAG_AVX2     = -mavx2
-FLAG_AVX512F  = -mavx512f
-FLAG_AVX512BW = -mavx512bw
+# FLAG_AVX512F  = -mavx512f
+# FLAG_AVX512BW = -mavx512bw
 
 ifneq ($(sse2),)
 	SIMD_FLAG=$(FLAG_SSE2)
@@ -67,12 +67,12 @@ else ifneq ($(sse41),)
 else ifneq ($(avx2),)
 	SIMD_FLAG=$(FLAG_AVX2)
 	py_SIMD_FLAG = AVX2=1
-else ifneq ($(avx512f),)
-	SIMD_FLAG=$(FLAG_AVX512F)
-	py_SIMD_FLAG = AVX512f=1
-else ifneq ($(avx512bw),)
-	SIMD_FLAG=$(FLAG_AVX512BW)
-	py_SIMD_FLAG = AVX512BW=1
+#else ifneq ($(avx512f),)
+#	SIMD_FLAG=$(FLAG_AVX512F)
+#	py_SIMD_FLAG = AVX512f=1
+#else ifneq ($(avx512bw),)
+#	SIMD_FLAG=$(FLAG_AVX512BW)
+#	py_SIMD_FLAG = AVX512BW=1
 endif
 
 .c.o:
