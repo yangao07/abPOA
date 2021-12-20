@@ -71,7 +71,7 @@ cdef class msa_aligner:
         if score_matrix != '':
             self.abpt.use_score_matrix = 1
             if isinstance(score_matrix, str): score_matrix = bytes(score_matrix, 'utf-8')
-            abpoa_set_mat_from_file(&self.abpt, score_matrix)
+            self.abpt.mat_fn = score_matrix
         else: self.abpt.use_score_matrix = 0
         self.abpt.gap_open1 = gap_open1
         self.abpt.gap_open2 = gap_open2
@@ -88,7 +88,7 @@ cdef class msa_aligner:
         self.abpt.is_diploid = is_diploid 
         self.abpt.min_freq = min_freq
 
-        self.abpt.simd_flag = simd_check()
+        # self.abpt.simd_flag = simd_check()
 
 
         self.seq_nt4_dict = dd(lambda:4)
