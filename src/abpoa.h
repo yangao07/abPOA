@@ -67,7 +67,7 @@ typedef struct {
     int k, w, min_w;
     int wb; float wf; // extra band width
     int zdrop, end_bonus; // from minimap2
-    int simd_flag; // available SIMD instruction
+    // int simd_flag; // available SIMD instruction
     // alignment mode
     uint8_t ret_cigar:1, rev_cigar:1, out_msa:1, out_msa_header:1, out_cons:1, out_gfa:1, is_diploid:1, use_read_ids:1;
     uint8_t amb_strand:1, disable_seeding:1, progressive_poa:1, out_fq:1;

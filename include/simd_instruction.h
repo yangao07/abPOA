@@ -2,6 +2,8 @@
 // <immintrin.h> is inlucded for SSE2, SSE41, AVX2 and AVX512F, AVX512BW
 // SSE4.1: floor and blend is available)
 // AVX2: double speed
+
+// do not support AVX512F/AVX512BW 12/20/2021 - Yan Gao
 // AVX512F: quardruple speed
 // AVX512BW: byte and word operation
 
@@ -11,6 +13,9 @@
 #pragma once
 #ifndef SIMD_INSTRUCTION_H
 #define SIMD_INSTRUCTION_H
+
+#undef __AVX512F__
+#undef __AVX512BW__
 
 #ifndef USE_SIMDE
 #include <immintrin.h>
@@ -597,7 +602,7 @@ typedef __m128i SIMDi; //for integers
 extern "C" {
 #endif
 
-int simd_check(void);
+// int simd_check(void);
 
 /*
 static void *SIMDMalloc(size_t size, size_t align) {
