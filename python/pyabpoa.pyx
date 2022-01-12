@@ -45,12 +45,33 @@ cdef class msa_result:
             print(s)
         return 
 
+
+def set_seq_int_dict(m):
+    if m == 5: # ACGTN ==> 01234, U ==> 4
+        seqs = 'ACGUTN'
+        ints = [0, 1, 2, 3, 3, 4]
+    elif m == 27: # ACGTN    ==> 01234, BDEFH... ==> 56789...
+        seqs = 'ACGTNBDEFHIJKLMOPQRSUVWXYZ*'
+        ints = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+    else:
+        print('Unexpected m: {}'.format(m))
+        sys.exit(1)
+
+    seq2int_dict = dd(lambda: m-1)
+    int2seq_dict = dd(lambda: '-')
+    for s, i in zip(seqs, ints):
+        seq2int_dict[s] = i
+        seq2int_dict[s.lower()] = i
+        int2seq_dict[i] = s
+    return seq2int_dict, int2seq_dict
+
 cdef class msa_aligner:
     cdef abpoa_t *ab
     cdef abpoa_para_t abpt
-    cdef seq_nt4_dict, nt4_seq_dict
+    cdef seq2int_dict, int2seq_dict
+    cdef mat_fn
 
-    def __cinit__(self, aln_mode='g', match=2, mismatch=4, score_matrix='', gap_open1=4, gap_open2=24, gap_ext1=2, gap_ext2=1,
+    def __cinit__(self, aln_mode='g', is_aa=False, match=2, mismatch=4, score_matrix=b'', gap_open1=4, gap_open2=24, gap_ext1=2, gap_ext2=1,
             extra_b=10, extra_f=0.01, end_bonus=-1, zdrop=-1, cons_agrm=ABPOA_HB, is_diploid=0, min_freq=0.3):
         self.ab = abpoa_init()
 
@@ -63,16 +84,20 @@ cdef class msa_aligner:
         else:
             print('Unknown align mode: {}'.format(aln_mode))
             sys.exit(1)
+        if is_aa:
+            self.abpt.m = 27
+            self.abpt.mat = <int*>malloc(27 * 27 * cython.sizeof(int))
+        else:
+            self.abpt.m = 5
+            self.abpt.mat = <int*>malloc(25 * cython.sizeof(int))
         self.abpt.match = match
         self.abpt.mismatch = mismatch
-        self.abpt.m = 5
-        self.abpt.mat = <int*>malloc(25 * cython.sizeof(int))
 
-        if score_matrix != '':
+        if score_matrix:
             self.abpt.use_score_matrix = 1
-            if isinstance(score_matrix, str): score_matrix = bytes(score_matrix, 'utf-8')
-            self.abpt.mat_fn = score_matrix
+            if isinstance(score_matrix, str): self.mat_fn = bytes(score_matrix, 'utf-8')
         else: self.abpt.use_score_matrix = 0
+
         self.abpt.gap_open1 = gap_open1
         self.abpt.gap_open2 = gap_open2
         self.abpt.gap_ext1 = gap_ext1
@@ -88,24 +113,7 @@ cdef class msa_aligner:
         self.abpt.is_diploid = is_diploid 
         self.abpt.min_freq = min_freq
 
-        # self.abpt.simd_flag = simd_check()
-
-
-        self.seq_nt4_dict = dd(lambda:4)
-        self.seq_nt4_dict['A'] = 0
-        self.seq_nt4_dict['a'] = 0
-        self.seq_nt4_dict['C'] = 1
-        self.seq_nt4_dict['c'] = 1
-        self.seq_nt4_dict['G'] = 2
-        self.seq_nt4_dict['g'] = 2
-        self.seq_nt4_dict['T'] = 3
-        self.seq_nt4_dict['t'] = 3
-        self.nt4_seq_dict = dd(lambda:'-')
-        self.nt4_seq_dict[0] = 'A'
-        self.nt4_seq_dict[1] = 'C'
-        self.nt4_seq_dict[2] = 'G'
-        self.nt4_seq_dict[3] = 'T'
-        self.nt4_seq_dict[4] = 'N'
+        self.seq2int_dict, self.int2seq_dict = set_seq_int_dict(self.abpt.m)
 
     def __dealloc__(self):
         free(self.abpt.mat)
@@ -115,7 +123,7 @@ cdef class msa_aligner:
         return self.ab != NULL
 
 
-    def msa(self, seqs, out_cons, out_msa, out_pog='', incr_fn=''):
+    def msa(self, seqs, out_cons, out_msa, out_pog=b'', incr_fn=b''):
         cdef int seq_n = len(seqs)
         cdef int exist_n = 0
         cdef int tot_n = seq_n
@@ -138,15 +146,19 @@ cdef class msa_aligner:
             self.abpt.out_pog = out_pog
         else: self.abpt.out_pog = NULL
 
+        if self.abpt.use_score_matrix == 1:
+            self.abpt.mat_fn = self.mat_fn
         abpoa_post_set_para(&self.abpt)
         abpoa_reset_graph(self.ab, &self.abpt, len(seqs[0]))
         if incr_fn:
-            if isinstance(incr_fn, str): incr_fn = bytes(incr_fn, 'utf-8')
+            if isinstance(incr_fn, str):
+                incr_fn = bytes(incr_fn, 'utf-8')
             self.abpt.incr_fn = incr_fn
             abpoa_restore_graph(self.ab, &self.abpt)
             exist_n = self.ab[0].abs[0].n_seq
             tot_n += exist_n
-        else: self.abpt.incr_fn = NULL
+        else:
+            self.abpt.incr_fn = NULL
 
         self.ab[0].abs[0].n_seq += seq_n
 
@@ -156,7 +168,7 @@ cdef class msa_aligner:
             seq_l = len(seq)
             bseq = <uint8_t*>malloc(seq_l * cython.sizeof(uint8_t))
             for i in range(seq_l):
-                bseq[i] = self.seq_nt4_dict[seq[i]]
+                bseq[i] = self.seq2int_dict[seq[i]]
             res.n_cigar = 0
             abpoa_align_sequence_to_graph(self.ab, &self.abpt, bseq, seq_l, &res)
 
@@ -171,7 +183,7 @@ cdef class msa_aligner:
                 cons_seq1 = ''
                 for c in cons_seq[i][:cons_len[i]]:
                     if isinstance(c, bytes): c = ord(c)
-                    cons_seq1 += self.nt4_seq_dict[c]
+                    cons_seq1 += self.int2seq_dict[c]
                 _cons_seq.append(cons_seq1)
             if cons_n > 0:
                 for i in range(cons_n):
@@ -184,7 +196,7 @@ cdef class msa_aligner:
                 msa_seq1 = ''
                 for c in msa_seq[i][:msa_l]:
                     if isinstance(c, bytes): c = ord(c)
-                    msa_seq1 += self.nt4_seq_dict[c]
+                    msa_seq1 += self.int2seq_dict[c]
                 _msa_seq.append(msa_seq1)
             if msa_l > 0:
                 for i in range(tot_n):

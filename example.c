@@ -72,6 +72,7 @@ int main(void) {
 
     // alignment parameters
     // abpt->align_mode = 0; // 0:global 1:local, 2:extension
+    // abpt->mat_fn = strdup("HOXD70.mtx"); abpt->use_score_matrix = 1; // score matrix instead of constant match/mismatch score
     // abpt->match = 2;      // match score
     // abpt->mismatch = 4;   // mismatch penalty
     // abpt->gap_mode = ABPOA_CONVEX_GAP; // gap penalty mode

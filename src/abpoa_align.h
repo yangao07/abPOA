@@ -15,7 +15,7 @@
 
 #define ABPOA_MMK 19
 #define ABPOA_MMW 10
-#define ABPOA_MIN_POA_WIN 50
+#define ABPOA_MIN_POA_WIN 500
 
 #define ABPOA_M_OP   0x1
 #define ABPOA_E1_OP  0x2

@@ -54,6 +54,7 @@ pyabpoa.msa_aligner(aln_mode='g', ...)
 This constructs a multiple sequence alignment handler of pyabpoa, it accepts the following arguments:
 
 * **aln_mode**: alignment mode. 'g': global, 'l': local, 'e': extension; default: **'g'**
+* **is_aa**: input is amino acid sequence; default: **False**
 * **match**: match score; default: **2**
 * **mismatch**: match penaty; default: **4**
 * **score_matrix**: scoring matrix file, **match** and **mismatch** are not used when **score_matrix** is used; default: **''**

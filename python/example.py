@@ -2,6 +2,8 @@ import pyabpoa as pa
 
 #@parameters of msa_aligner:
 #   aln_mode='g' # g: global, l: local, e: extension
+#   is_aa=False # set as True if input is amino acid sequence
+#   score_matrix='' # file of score matrix, e.g. HOXD70.mtx/BLOSUM62.mtx
 #   match=2
 #   mismatch=4
 #   gap_open1=4

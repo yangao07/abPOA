@@ -14,6 +14,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=native") # SIMD
 
 # build abPOA as a static library by default
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build all libraries as shared")
+SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 
 add_library(abpoa
     src/abpoa_align.c
