@@ -13,6 +13,7 @@ include src/kvec.h
 include src/simd_abpoa_align.h
 include src/simd_instruction.h
 include src/utils.h
+recursive-include include/ *.h
 include python/cabpoa.pxd
 include python/pyabpoa.c
 include python/pyabpoa.pyx

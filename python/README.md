@@ -15,7 +15,7 @@ pip install pyabpoa
 ### Install pyabpoa from source
 Alternatively, you can install pyabpoa from source (cython is required):
 ```
-git clone https://github.com/yangao07/abPOA.git
+git clone --recursive https://github.com/yangao07/abPOA.git
 cd abPOA
 make install_py
 ```

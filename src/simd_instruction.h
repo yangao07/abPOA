@@ -20,11 +20,8 @@
 #ifndef USE_SIMDE
 #include <immintrin.h>
 #else // use SIMDE
-#ifdef __AVX512BW__
-#include "simde/simde/x86/avx512bw.h"
-#else
 #ifdef __AVX512F__
-#include "simde/simde/x86/avx512f.h"
+#include "simde/simde/x86/avx512.h"
 #else
 #ifdef __AVX2__
 #include "simde/simde/x86/avx2.h"
@@ -36,7 +33,6 @@
 #endif // end of sse41
 #endif // end of AVX2
 #endif // end of 512F
-#endif // end of 512BW
 #endif // end of USE_SIMDE
 
 #include <stdio.h>

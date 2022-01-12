@@ -1,4 +1,4 @@
-import re, sys
+import re, sys, os
 from libc.stdlib cimport malloc, free
 from libc.stdint cimport uint8_t
 from collections import defaultdict as dd
@@ -54,8 +54,7 @@ def set_seq_int_dict(m):
         seqs = 'ACGTNBDEFHIJKLMOPQRSUVWXYZ*'
         ints = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
     else:
-        print('Unexpected m: {}'.format(m))
-        sys.exit(1)
+        raise Exception('Unexpected m: {}'.format(m))
 
     seq2int_dict = dd(lambda: m-1)
     int2seq_dict = dd(lambda: '-')
@@ -69,7 +68,6 @@ cdef class msa_aligner:
     cdef abpoa_t *ab
     cdef abpoa_para_t abpt
     cdef seq2int_dict, int2seq_dict
-    cdef mat_fn
 
     def __cinit__(self, aln_mode='g', is_aa=False, match=2, mismatch=4, score_matrix=b'', gap_open1=4, gap_open2=24, gap_ext1=2, gap_ext2=1,
             extra_b=10, extra_f=0.01, end_bonus=-1, zdrop=-1, cons_agrm=ABPOA_HB, is_diploid=0, min_freq=0.3):
@@ -82,8 +80,7 @@ cdef class msa_aligner:
         elif aln_mode == 'e':
             self.abpt.align_mode = ABPOA_EXTEND_MODE
         else:
-            print('Unknown align mode: {}'.format(aln_mode))
-            sys.exit(1)
+            raise Exception('Unknown align mode: {}'.format(aln_mode))
         if is_aa:
             self.abpt.m = 27
             self.abpt.mat = <int*>malloc(27 * 27 * cython.sizeof(int))
@@ -94,9 +91,12 @@ cdef class msa_aligner:
         self.abpt.mismatch = mismatch
 
         if score_matrix:
-            self.abpt.use_score_matrix = 1
-            if isinstance(score_matrix, str): self.mat_fn = bytes(score_matrix, 'utf-8')
-        else: self.abpt.use_score_matrix = 0
+            if isinstance(score_matrix, str): 
+                score_matrix = bytes(score_matrix, 'utf-8')
+            if os.path.exists(score_matrix.decode('utf-8')):
+                abpoa_set_mat_from_file(&self.abpt, score_matrix)
+            else:
+                raise Exception('Matrix file not exist: {}'.format(score_matrix.decode('utf-8')))
 
         self.abpt.gap_open1 = gap_open1
         self.abpt.gap_open2 = gap_open2
@@ -146,8 +146,6 @@ cdef class msa_aligner:
             self.abpt.out_pog = out_pog
         else: self.abpt.out_pog = NULL
 
-        if self.abpt.use_score_matrix == 1:
-            self.abpt.mat_fn = self.mat_fn
         abpoa_post_set_para(&self.abpt)
         abpoa_reset_graph(self.ab, &self.abpt, len(seqs[0]))
         if incr_fn:

@@ -56,9 +56,9 @@ void parse_mat_score_line(char *l, int *order, int m, int *mat) {
     }
 }
 
-void abpoa_set_mat_from_file(abpoa_para_t *abpt) {
+void abpoa_set_mat_from_file(abpoa_para_t *abpt, char *mat_fn) {
     char *l = (char*)_err_malloc(1024 * sizeof(char)); FILE *fp;
-    if ((fp = fopen(abpt->mat_fn, "r")) == NULL) err_fatal(__func__, "Unable to open scoring matrix file: \"%s\"\n", abpt->mat_fn);
+    if ((fp = fopen(mat_fn, "r")) == NULL) err_fatal(__func__, "Unable to open scoring matrix file: \"%s\"\n", mat_fn);
     int first_line = 1;
     int *order = (int*)_err_malloc(abpt->m * sizeof(int));
     while (fgets(l, 1024, fp) != NULL) {
@@ -161,7 +161,7 @@ void abpoa_post_set_para(abpoa_para_t *abpt) {
         }
     }
     if (abpt->use_score_matrix == 0) gen_simple_mat(abpt);
-    else abpoa_set_mat_from_file(abpt);
+    else abpoa_set_mat_from_file(abpt, abpt->mat_fn);
 }
 
 void abpoa_free_para(abpoa_para_t *abpt) {

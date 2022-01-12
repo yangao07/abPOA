@@ -121,7 +121,7 @@ typedef struct {
 
 // init for abpoa parameters
 abpoa_para_t *abpoa_init_para(void);
-void abpoa_set_mat_from_file(abpoa_para_t *abpt);
+void abpoa_set_mat_from_file(abpoa_para_t *abpt, char *mat_fn);
 void abpoa_post_set_para(abpoa_para_t *abpt);
 void abpoa_free_para(abpoa_para_t *abpt);
 
