@@ -67,8 +67,7 @@ abPOA can generate high-quality consensus sequences from error-prone long reads 
 significant speed improvement over existing tools.
 
 abPOA supports three alignment modes (global, local, extension) and flexible scoring schemes that allow linear, affine and convex gap penalties. 
-It right now supports SSE2/SSE4.1/AVX2/AVX512F/AVX512BW vectorization and more advanced instructions 
-will be supported in the future.
+It right now supports SSE2/SSE4.1/AVX2 vectorization.
 
 For more information, please refer to our [paper](https://dx.doi.org/10.1093/bioinformatics/btaa963) published in Bioinformatics .
 
