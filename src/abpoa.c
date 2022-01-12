@@ -102,7 +102,7 @@ int abpoa_usage(void)
     // err_printf("    -n --par-size           minimal partition size [%d]\n", ABPOA_W);
 
     err_printf("  Input/Output:\n");
-    err_printf("    -c --amino-acid          input sequences are amino acid (default is nucleotide) [False]\n");
+    err_printf("    -c --amino-acid         input sequences are amino acid (default is nucleotide) [False]\n");
     err_printf("    -l --in-list            input file is a list of sequence file names [False]\n");
     err_printf("                            each line is one sequence file containing a set of sequences\n");
     err_printf("                            which will be aligned by abPOA to generate a consensus sequence\n");
