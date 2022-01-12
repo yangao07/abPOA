@@ -49,6 +49,7 @@ cdef extern from "abpoa.h":
     ctypedef struct abpoa_para_t:
         int m
         int *mat # score matrix
+        char *mat_fn
         int use_score_matrix
         int match, max_mat, mismatch, min_mis, gap_open1, gap_open2, gap_ext1, gap_ext2
         int inf_min
@@ -56,10 +57,10 @@ cdef extern from "abpoa.h":
         int wb # 1st part of extra band width
         float wf # 2nd part of extra band width. w=wb+wf*L (L is sequence length)
         int zdrop, end_bonus # from minimap2
-        int simd_flag # available SIMD instruction
+        # int simd_flag # available SIMD instruction
         # alignment mode
         uint8_t ret_cigar, rev_cigar, out_msa, out_msa_header, out_cons, out_gfa, is_diploid, use_read_ids # mode: 0: global, 1: local, 2: extend
-        uint8_t amb_strand, disable_seeding, progressive_poa
+        uint8_t amb_strand, disable_seeding, progressive_poa, out_fq
         char *incr_fn
         char *out_pog
         int align_mode, gap_mode, cons_agrm

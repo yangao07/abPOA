@@ -60,14 +60,14 @@ typedef struct {
 } abpoa_res_t;
 
 typedef struct {
-    int m; int *mat; // score matrix
+    int m; int *mat; char *mat_fn; // score matrix
     int use_score_matrix; // set _mat_ based on score matrix file, then _match_/_mismatch_ is not used.
     int match, max_mat, mismatch, min_mis, gap_open1, gap_open2, gap_ext1, gap_ext2; int inf_min;
     // minimizer seeding parameter
     int k, w, min_w;
     int wb; float wf; // extra band width
     int zdrop, end_bonus; // from minimap2
-    int simd_flag; // available SIMD instruction
+    // int simd_flag; // available SIMD instruction
     // alignment mode
     uint8_t ret_cigar:1, rev_cigar:1, out_msa:1, out_msa_header:1, out_cons:1, out_gfa:1, is_diploid:1, use_read_ids:1;
     uint8_t amb_strand:1, disable_seeding:1, progressive_poa:1, out_fq:1;
@@ -121,7 +121,7 @@ typedef struct {
 
 // init for abpoa parameters
 abpoa_para_t *abpoa_init_para(void);
-void abpoa_set_mat_from_file(abpoa_para_t *abpt, char *mtx_fn);
+void abpoa_set_mat_from_file(abpoa_para_t *abpt);
 void abpoa_post_set_para(abpoa_para_t *abpt);
 void abpoa_free_para(abpoa_para_t *abpt);
 

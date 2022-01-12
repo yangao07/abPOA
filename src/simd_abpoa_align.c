@@ -1581,7 +1581,7 @@ int abpoa_cg_global_align_sequence_to_graph_core(abpoa_t *ab, int beg_node_id, i
 // align query to subgraph between beg_node_id and end_node_id (both are excluded)
 // generally: beg/end are the SRC/SINK_node
 int simd_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *query, int qlen, abpoa_res_t *res) {
-    if (abpt->simd_flag == 0) err_fatal_simple("No SIMD instruction available.");
+    // if (abpt->simd_flag == 0) err_fatal_simple("No SIMD instruction available.");
 
     int i, j, beg_index = ab->abg->node_id_to_index[beg_node_id], end_index = ab->abg->node_id_to_index[end_node_id];
     int gn = end_index - beg_index + 1;
@@ -1604,12 +1604,12 @@ int simd_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int b
 #else
     int32_t max_score, bits, mem_ret=0, gap_ext1 = abpt->gap_ext1, gap_ext2 = abpt->gap_ext2;
     int32_t gap_oe1 = abpt->gap_open1+gap_ext1, gap_oe2 = abpt->gap_open2+gap_ext2;
-    if (abpt->simd_flag & SIMD_AVX512F && !(abpt->simd_flag & SIMD_AVX512BW))
-        max_score = INT16_MAX + 1; // AVX512F has no 8/16 bits operations
-    else {
-        int len = qlen > gn ? qlen : gn;
-        max_score = MAX_OF_TWO(qlen * abpt->max_mat, len * abpt->gap_ext1 + abpt->gap_open1);
-    }
+    // if (abpt->simd_flag & SIMD_AVX512F && !(abpt->simd_flag & SIMD_AVX512BW))
+    //    max_score = INT16_MAX + 1; // AVX512F has no 8/16 bits operations
+    // else {
+    int len = qlen > gn ? qlen : gn;
+    max_score = MAX_OF_TWO(qlen * abpt->max_mat, len * abpt->gap_ext1 + abpt->gap_open1);
+    // }
     if (max_score <= INT16_MAX - abpt->min_mis - gap_oe1 - gap_oe2) {
         _simd_p16.inf_min = MAX_OF_THREE(INT16_MIN + abpt->min_mis, INT16_MIN + gap_oe1, INT16_MIN + gap_oe2) + 31 * MAX_OF_TWO(gap_ext1, gap_ext2);
         mem_ret = simd_abpoa_realloc(ab, gn, qlen, abpt, _simd_p16);

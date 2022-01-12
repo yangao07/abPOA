@@ -2,17 +2,45 @@
 // <immintrin.h> is inlucded for SSE2, SSE41, AVX2 and AVX512F, AVX512BW
 // SSE4.1: floor and blend is available)
 // AVX2: double speed
+
+// do not support AVX512F/AVX512BW 12/20/2021 - Yan Gao
 // AVX512F: quardruple speed
 // AVX512BW: byte and word operation
+
+#include <stdlib.h>
+#include <errno.h>
 
 #pragma once
 #ifndef SIMD_INSTRUCTION_H
 #define SIMD_INSTRUCTION_H
 
+#undef __AVX512F__
+#undef __AVX512BW__
+
+#ifndef USE_SIMDE
 #include <immintrin.h>
+#else // use SIMDE
+#ifdef __AVX512BW__
+#include "simde/simde/x86/avx512bw.h"
+#else
+#ifdef __AVX512F__
+#include "simde/simde/x86/avx512f.h"
+#else
+#ifdef __AVX2__
+#include "simde/simde/x86/avx2.h"
+#else
+#ifdef __SSE4_1__
+#include "simde/simde/x86/sse4.1.h"
+#else
+#include "simde/simde/x86/sse2.h"
+#endif // end of sse41
+#endif // end of AVX2
+#endif // end of 512F
+#endif // end of 512BW
+#endif // end of USE_SIMDE
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <cpuid.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -27,7 +55,9 @@
 #define SIMD_AVX512F  0x100
 #define SIMD_AVX512BW 0x200
 
-#define SIMDFree(x) _mm_free(x)
+// #define SIMDFree(x) _mm_free(x)
+// posix_memalign and free
+#define SIMDFree(x) free(x)
 
 // Shift, Blend, ... for 8/16 and 32/64
 #ifdef __AVX512BW__
@@ -572,8 +602,9 @@ typedef __m128i SIMDi; //for integers
 extern "C" {
 #endif
 
-int simd_check(void);
+// int simd_check(void);
 
+/*
 static void *SIMDMalloc(size_t size, size_t align) {
     void *ret = (void*)_mm_malloc(size, align);
     if (ret == NULL) {
@@ -581,8 +612,23 @@ static void *SIMDMalloc(size_t size, size_t align) {
         exit(1);
     }
     else return ret;
-}
+}*/
 
+// use posix_memalign
+static void *SIMDMalloc(size_t size, size_t align) {
+    void *ret; int res;
+    res = posix_memalign(&ret, align, size);
+    if (res != 0) {
+        char error[10];
+        if (res == EINVAL) strcpy(error, "EINVAR");
+        else if (res == ENOMEM)
+            strcpy(error, "ENOMEM");
+        else strcpy(error, "Unknown");
+        fprintf(stderr, "[%s] posix_memalign fail!\nSize: %ld, Error: %s\n", __func__, size, error);
+        exit(1);
+    }
+    else return ret;
+}
 #ifdef __cplusplus
 }
 #endif
