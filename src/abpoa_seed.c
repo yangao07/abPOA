@@ -229,15 +229,15 @@ void mm_aa_sketch(void *km, const uint8_t *str, int len, int w, int k, uint32_t 
  * a.y = rid<<32 | strand<<31 | lastPos
  */
 int abpoa_build_guide_tree(int n_seq, ab_u128_v *mm, int *tree_id_map) {
-    size_t i, _i, j, k; int rid1, rid2;                                                  // mm_hit_n: mimizer hits between each two sequences
-                                                                                         // 0: 0
-                                                                                         // 1: 0 1
-                                                                                         // 2: 0 1 2
-    int *mm_hit_n = (int*)_err_calloc((n_seq * (n_seq+1)) >> 1, sizeof(int));  //  ...
-                                                                                         // n: 0 1 ... n-1 n
-                                                                                         // 
-                                                                                         // # total mimizers of i: mm_hit_n[(i*(i+1))/2+i]
-                                                                                         // # total hits for i and j (i>j): mm_hit_n[(i*(i+1)/2)+j]
+    size_t i, _i, j, k; int rid1, rid2;                                       // mm_hit_n: mimizer hits between each two sequences
+                                                                              // 0: 0
+                                                                              // 1: 0 1
+                                                                              // 2: 0 1 2
+    int *mm_hit_n = (int*)_err_calloc((n_seq * (n_seq+1)) >> 1, sizeof(int)); //  ...
+                                                                              // n: 0 1 ... n-1 n
+                                                                              // 
+                                                                              // # total mimizers of i: mm_hit_n[(i*(i+1))/2+i]
+                                                                              // # total hits for i and j (i>j): mm_hit_n[(i*(i+1)/2)+j]
     radix_sort_ab_128x(mm->a, mm->a + mm->n); // sort mm by k-mer hash values
     uint64_t last_x = mm->a[0].x;
     for (_i = 0, i = 1; i < mm->n; ++i) { // collect mm hits
@@ -273,7 +273,7 @@ int abpoa_build_guide_tree(int n_seq, ab_u128_v *mm, int *tree_id_map) {
 
     // calculate jaccard similarity between each two sequences
     double *jac_sim = (double*)_err_calloc((n_seq * (n_seq-1)) >> 1, sizeof(double));
-    double max_jac = 0.0, jac; int max_i=-1, max_j=-1;
+    double max_jac = -1.0, jac; int max_i=-1, max_j=-1;
     for (i = 1; i < (size_t)n_seq; ++i) {
         for (j = 0; j < i; ++j) {
             jac = mm_hit_n[((i*(i+1))>>1)+j] / (0.0 + mm_hit_n[((i*(i+1))>>1)+i] + mm_hit_n[((j*(j+1))>>1)+j] - mm_hit_n[((i*(i+1))>>1)+j]);

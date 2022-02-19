@@ -691,7 +691,7 @@ int set_clu_read_ids(int **clu_read_ids, int *clu_read_ids_n, int n_seq, double 
     }
     uint64_t seq_b, one = 1; int seq_bit;
     for (seq_i = 0; seq_i < n_seq; ++seq_i) {
-        seq_bit = seq_i / 64; seq_b = one << (seq_i & 0x3f); 
+        seq_bit = seq_i / 64; seq_b = one << (seq_i & 0x3f);
         for (i = 0; i < het_n; ++i) {
             pos = het_pos[i];
             for (j = 0; j < 2; ++j) {
