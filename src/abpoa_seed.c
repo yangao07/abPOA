@@ -229,6 +229,8 @@ void mm_aa_sketch(void *km, const uint8_t *str, int len, int w, int k, uint32_t 
  * a.y = rid<<32 | strand<<31 | lastPos
  */
 int abpoa_build_guide_tree(int n_seq, ab_u128_v *mm, int *tree_id_map) {
+    if (mm->n == 0) return 0;
+
     size_t i, _i, j, k; int rid1, rid2;                                       // mm_hit_n: mimizer hits between each two sequences
                                                                               // 0: 0
                                                                               // 1: 0 1
@@ -688,8 +690,8 @@ int abpoa_collect_mm(void *km, uint8_t **seqs, int *seq_lens, int n_seq, abpoa_p
 
 int abpoa_build_guide_tree_partition(uint8_t **seqs, int *seq_lens, int n_seq, abpoa_para_t *abpt, int *read_id_map, ab_u64_v *par_anchors, int *par_c) {
     int i;
+    for (i = 0; i < n_seq; ++i) read_id_map[i] = i;
     if (abpt->disable_seeding || abpt->align_mode != ABPOA_GLOBAL_MODE) { // for local and extension mode, do whole sequence alignment
-        for (i = 0; i < n_seq; ++i) read_id_map[i] = i;
         return 0;
     }
     // err_func_format_printf(__func__, "Seeding and chaining ...");
