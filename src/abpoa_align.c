@@ -289,6 +289,7 @@ int abpoa_anchor_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int *seq_l
     return 0;
 }
 
+// simply partial order alignment, no seeding-based anchor or progressive tree
 int abpoa_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int *seq_lens, int exist_n_seq, int n_seq) {
     // err_func_format_printf(__func__, "Performing POA ...");
     abpoa_seq_t *abs = ab->abs;
@@ -379,14 +380,14 @@ int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seq, char **seq_names, int 
     }
 
 
-    if (abpt->disable_seeding || abpt->align_mode != ABPOA_GLOBAL_MODE) {
+    if ((abpt->disable_seeding && abpt->progressive_poa==0) || abpt->align_mode != ABPOA_GLOBAL_MODE) {
         abpoa_poa(ab, abpt, seqs, seq_lens, exist_n_seq, n_seq);
     } else {
         // sequence pos to node id
         int *tpos_to_node_id = (int*)_err_calloc(max_len, sizeof(int)), *qpos_to_node_id = (int*)_err_calloc(max_len, sizeof(int));
         // seeding, build guide tree, and partition into small windows
         int *read_id_map = (int*)_err_malloc(sizeof(int) * n_seq); // guide tree order -> input order
-        ab_u64_v par_anchors = {0, 0, 0}; int *par_c = (int*)_err_malloc(sizeof(int) * n_seq);
+        ab_u64_v par_anchors = {0, 0, 0}; int *par_c = (int*)_err_calloc(n_seq, sizeof(int));
 
         abpoa_build_guide_tree_partition(seqs, seq_lens, n_seq, abpt, read_id_map, &par_anchors, par_c);
         if (abpt->incr_fn) { // collect anchors between last one path and first seq
@@ -433,7 +434,7 @@ int abpoa_msa1(abpoa_t *ab, abpoa_para_t *abpt, char *read_fn, FILE *out_fp, uin
         seqs[i] = (uint8_t*)_err_malloc(sizeof(uint8_t) * seq_lens[i]);
         for (j = 0; j < seq_lens[i]; ++j) seqs[i][j] = ab_char26_table[(int)abs->seq[exist_n_seq+i].s[j]];
     }
-    if (abpt->disable_seeding || abpt->align_mode != ABPOA_GLOBAL_MODE) {
+    if ((abpt->disable_seeding && abpt->progressive_poa==0) || abpt->align_mode != ABPOA_GLOBAL_MODE) {
         abpoa_poa(ab, abpt, seqs, seq_lens, exist_n_seq, n_seq);
     } else {
         // sequence pos to node id

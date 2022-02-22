@@ -94,7 +94,7 @@ int abpoa_usage(void)
     // err_printf("    -e --bonus    INT       end bonus score in extension alignment [-1]\n");
     // err_printf("                            set as <= 0 to disable end bounus\n");
     err_printf("  Minimizer-based seeding and partition (only effective in global alignment mode):\n");
-    err_printf("    -S --seeding            enable seeding [False]\n");
+    err_printf("    -S --seeding            enable minimizer-based seeding and anchoring [False]\n");
     err_printf("    -k --k-mer       INT    minimizer k-mer size [%d]\n", ABPOA_MMK);
     err_printf("    -w --window      INT    minimizer window size [%d]\n", ABPOA_MMW);
     err_printf("    -n --min-poa-win INT    min. size of window to perform POA [%d]\n", ABPOA_MIN_POA_WIN);
