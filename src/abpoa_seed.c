@@ -278,7 +278,9 @@ int abpoa_build_guide_tree(int n_seq, ab_u128_v *mm, int *tree_id_map) {
     double max_jac = -1.0, jac; int max_i=-1, max_j=-1;
     for (i = 1; i < (size_t)n_seq; ++i) {
         for (j = 0; j < i; ++j) {
-            jac = mm_hit_n[((i*(i+1))>>1)+j] / (0.0 + mm_hit_n[((i*(i+1))>>1)+i] + mm_hit_n[((j*(j+1))>>1)+j] - mm_hit_n[((i*(i+1))>>1)+j]);
+            int tot_n = mm_hit_n[((i*(i+1))>>1)+i] + mm_hit_n[((j*(j+1))>>1)+j] - mm_hit_n[((i*(i+1))>>1)+j];
+            if (tot_n == 0) jac = 0;
+            else jac = (0.0+mm_hit_n[((i*(i+1))>>1)+j]) / tot_n;
             jac_sim[((i * (i-1)) >> 1) + j] = jac;
             if (jac > max_jac) {
                 max_jac = jac; max_i = i, max_j = j;
@@ -688,6 +690,7 @@ int abpoa_collect_mm(void *km, uint8_t **seqs, int *seq_lens, int n_seq, abpoa_p
     return mm->n;
 }
 
+// split guide tree and seeding partition XXX
 int abpoa_build_guide_tree_partition(uint8_t **seqs, int *seq_lens, int n_seq, abpoa_para_t *abpt, int *read_id_map, ab_u64_v *par_anchors, int *par_c) {
     int i;
     for (i = 0; i < n_seq; ++i) read_id_map[i] = i;
@@ -706,8 +709,6 @@ int abpoa_build_guide_tree_partition(uint8_t **seqs, int *seq_lens, int n_seq, a
         // use mm2 to build guide tree
         abpoa_build_guide_tree(n_seq, &mm2, read_id_map);
         kfree(km, mm2.a);
-    } else {
-        for (i = 0; i < n_seq; ++i) read_id_map[i] = i;
     }
 
     // partition into small windows
