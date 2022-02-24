@@ -697,7 +697,7 @@ int abpoa_build_guide_tree_partition(uint8_t **seqs, int *seq_lens, int n_seq, a
     ab_u128_v mm1 = {0, 0, 0}; int *mm_c = (int*)_err_malloc((n_seq+1) * sizeof(int));
     abpoa_collect_mm(km, seqs, seq_lens, n_seq, abpt, &mm1, mm_c);
 
-    if (abpt->progressive_poa) {
+    if (abpt->progressive_poa && n_seq > 2) {
         // copy mm1 to mm2
         ab_u128_v mm2 = {0, 0, 0};
         for (i = 0; i < (int)mm1.n; ++i) kv_push(ab_u128_t, km, mm2, mm1.a[i]);
@@ -705,7 +705,7 @@ int abpoa_build_guide_tree_partition(uint8_t **seqs, int *seq_lens, int n_seq, a
         abpoa_build_guide_tree(n_seq, &mm2, read_id_map);
         kfree(km, mm2.a);
     }
-    if (abpt->disable_seeding) {
+    if (abpt->disable_seeding && n_seq < 2) {
         kfree(km, mm1.a); free(mm_c); km_destroy(km);
         return 0; // no anchor
     }
