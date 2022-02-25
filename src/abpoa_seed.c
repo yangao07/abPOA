@@ -231,7 +231,7 @@ void mm_aa_sketch(void *km, const uint8_t *str, int len, int w, int k, uint32_t 
 int abpoa_build_guide_tree(int n_seq, ab_u128_v *mm, int *tree_id_map) {
     if (mm->n == 0) return 0;
 
-    size_t i, _i, j, k; int rid1, rid2;                                       // mm_hit_n: mimizer hits between each two sequences
+    size_t i, _i, j; int rid1, rid2;                                          // mm_hit_n: mimizer hits between each two sequences
                                                                               // 0: 0
                                                                               // 1: 0 1
                                                                               // 2: 0 1 2
@@ -242,36 +242,40 @@ int abpoa_build_guide_tree(int n_seq, ab_u128_v *mm, int *tree_id_map) {
                                                                               // # total hits for i and j (i>j): mm_hit_n[(i*(i+1)/2)+j]
     radix_sort_ab_128x(mm->a, mm->a + mm->n); // sort mm by k-mer hash values
     uint64_t last_x = mm->a[0].x;
+    int *mm_cnt = (int*)_err_malloc(n_seq * sizeof(int));
     for (_i = 0, i = 1; i < mm->n; ++i) { // collect mm hits
         if (mm->a[i].x != last_x) {
-            // collect hits starting from _i to i-1
+            // now [_i, i-1] have the same minimizer k-mer
+            memset(mm_cnt, 0, n_seq * sizeof(int));
             for (j = _i; j < i; ++j) {
                 // count mm->a[j]
                 rid1 = mm->a[j].y >> 32;
+                ++mm_cnt[rid1];
                 ++mm_hit_n[((rid1 * (rid1+1)) >> 1) + rid1];
-                for (k = _i; k < j; ++k) {
-                    // count mm->a[j] and mm->a[k]
-                    rid2 = mm->a[k].y >> 32;
-                    if (rid1 > rid2) ++mm_hit_n[((rid1 * (rid1+1)) >> 1) + rid2];
-                    else if (rid1 < rid2) ++mm_hit_n[((rid2 * (rid2+1)) >> 1) + rid1];
+            }
+            for (rid1 = 0; rid1 < n_seq-1; ++rid1) {
+                for (rid2 = rid1+1; rid2 < n_seq; ++rid2) {
+                    mm_hit_n[((rid2 * (rid2 + 1)) >> 1) + rid1] += MIN_OF_TWO(mm_cnt[rid1], mm_cnt[rid2]);
                 }
             }
             // next minimizer
             last_x = mm->a[i].x, _i = i;
         }
     }
-    // collect hits starting from _i to i-1
+    // now [_i, i-1] have the same minimizer k-mer
+    memset(mm_cnt, 0, n_seq * sizeof(int));
     for (j = _i; j < i; ++j) {
         // count mm->a[j]
         rid1 = mm->a[j].y >> 32;
+        ++mm_cnt[rid1];
         ++mm_hit_n[((rid1 * (rid1+1)) >> 1) + rid1];
-        for (k = _i; k < j; ++k) {
-            // count mm->a[j] and mm->a[k]
-            rid2 = mm->a[k].y >> 32;
-            if (rid1 > rid2) ++mm_hit_n[((rid1 * (rid1+1)) >> 1) + rid2];
-            else if (rid1 < rid2) ++mm_hit_n[((rid2 * (rid2+1)) >> 1) + rid1];
+    }
+    for (rid1 = 0; rid1 < n_seq-1; ++rid1) {
+        for (rid2 = rid1+1; rid2 < n_seq; ++rid2) {
+            mm_hit_n[((rid2 * (rid2 + 1)) >> 1) + rid1] += MIN_OF_TWO(mm_cnt[rid1], mm_cnt[rid2]);
         }
     }
+    free(mm_cnt);
 
     // calculate jaccard similarity between each two sequences
     double *jac_sim = (double*)_err_calloc((n_seq * (n_seq-1)) >> 1, sizeof(double));
@@ -280,8 +284,9 @@ int abpoa_build_guide_tree(int n_seq, ab_u128_v *mm, int *tree_id_map) {
         for (j = 0; j < i; ++j) {
             int tot_n = mm_hit_n[((i*(i+1))>>1)+i] + mm_hit_n[((j*(j+1))>>1)+j] - mm_hit_n[((i*(i+1))>>1)+j];
             if (tot_n == 0) jac = 0;
+            else if (tot_n < 0) err_fatal(__func__, "Bug in progressive tree building. (1)");
             else jac = (0.0+mm_hit_n[((i*(i+1))>>1)+j]) / tot_n;
-            jac_sim[((i * (i-1)) >> 1) + j] = jac;
+            jac_sim[((i * (i-1)) >> 1) + j] = jac; // jac_sim[rid2*(rid2-1)/2 + rid1]
             if (jac > max_jac) {
                 max_jac = jac; max_i = i, max_j = j;
             }
@@ -308,6 +313,7 @@ int abpoa_build_guide_tree(int n_seq, ab_u128_v *mm, int *tree_id_map) {
                 max_i = rid1;
             }
         }
+        if (max_i == n_seq) err_fatal(__func__, "Bug in progressive tree building. (2)");
         tree_id_map[n_in_map++] = max_i;
     }
 
@@ -705,7 +711,7 @@ int abpoa_build_guide_tree_partition(uint8_t **seqs, int *seq_lens, int n_seq, a
         abpoa_build_guide_tree(n_seq, &mm2, read_id_map);
         kfree(km, mm2.a);
     }
-    if (abpt->disable_seeding && n_seq < 2) {
+    if (abpt->disable_seeding || n_seq < 2) {
         kfree(km, mm1.a); free(mm_c); km_destroy(km);
         return 0; // no anchor
     }
