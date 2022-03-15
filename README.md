@@ -116,10 +116,11 @@ abpoa seq.fa > cons.fa
 abpoa heter.fa -d2 > 2cons.fa
 ```
 
-### <a name="gen_msa"></a>To generate row-column multiple sequence alignment in PIR format
+### <a name="gen_msa"></a>To generate row-column multiple sequence alignment in FASTA format
 
 ```
-abpoa seq.fa -r2 > cons.out
+abpoa seq.fa -r1 > out.msa
+abpoa seq.fa -r2 > out_cons.msa
 ```
 
 ### <a name="gen_gfa"></a>To generate graph information in [GFA](https://github.com/GFA-spec/GFA-spec/blob/master/GFA1.md) format
@@ -139,8 +140,6 @@ abpoa -i in.msa seq.fa -r1 > out.msa
 ```
 For GFA input file, `S` and `P` lines are required and are used to reconstruct the alignment graph.
 For MSA input file, which is generally a FASTA format file, `-` in the sequence indicates the alignment gap.
-If you want to use abPOA to generate a MSA output file and then perform the incremental graph alignment, please do not forget `-A` to include the FASTA header of each sequence:
-
 ```
 abpoa seq1.fa -r1 > seq1.msa
 abpoa -i seq1.msa seq2.fa > cons.fa
@@ -172,13 +171,16 @@ For example:
 ACGTGTACACGTTGAC
 ```
 ### <a name="msa"></a>Row-column multiple sequence alignment
-abPOA can also output the row-column multiple sequence alignment (RC-MSA) of all the aligned sequences in PIR format
-with an additional FASTA header `>Multiple_sequence_alignment`. For example:
+abPOA can also output the row-column multiple sequence alignment (RC-MSA) of all the aligned sequences in FASTA format.
+For example:
 ```
->Multiple_sequence_alignment
+>1
 ACGTGTACA-GTTGAC
+>2
 A-G-GTACACGTT-AC
+>3
 A-GTGT-CACGTTGAC
+>4
 ACGTGTACA--TTGAC
 ```
 The `-` in the sequence stands for alignment gap. 
