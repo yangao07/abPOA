@@ -64,9 +64,6 @@ This constructs a multiple sequence alignment handler of pyabpoa, it accepts the
 * **gap_ext2**: second gap extension penalty; default: **1**
 * **extra_b**: first adaptive banding paremeter; set as < 0 to disable adaptive banded DP; default: **10**
 * **extra_f**: second adaptive banding paremete; the number of extra bases added on both sites of the band is *b+f\*L*, where *L* is the length of the aligned sequence; default : **0.01**
-* **is_diploid**: set as 1 if input is diploid datal default: **0**
-* **min_freq**: minimum frequency of each consensus to output for diploid datal default: **0.3**
-
 
 The `msa_aligner` handler provides one method which performs multiple sequence alignment and takes four arguments:
 ```
@@ -76,8 +73,10 @@ pyabpoa.msa_aligner.msa(seqs, out_cons, out_msa, out_pog='', incr_fn='')
 * **seqs**: a list variable containing a set of input sequences; **positional**
 * **out_cons**: a bool variable to ask pyabpoa to generate consensus sequence; **positional**
 * **out_msa**: a bool variable to ask pyabpoa to generate RC-MSA; **positional**
-* **out_pog**: name of a file (`.png` or `.pdf`) to store the plot of the final alignment graph; **optional**, default: **''**
-* **incr_fn**: name of an existing graph (GFA) or MSA (FASTA) file, incrementally align sequence to this graph/MSA; **optional**, default: **''**
+* **max_n_cons**: maximum number of consensus sequence to generate; default: **1**
+* **min_freq**: minimum frequency of each consensus to output (effective when **max_n_cons** > 1); default: **0.3**
+* **out_pog**: name of a file (`.png` or `.pdf`) to store the plot of the final alignment graph; default: **''**
+* **incr_fn**: name of an existing graph (GFA) or MSA (FASTA) file, incrementally align sequence to this graph/MSA; default: **''**
 
 ### Class pyabpoa.msa_result
 ```
@@ -85,12 +84,14 @@ pyabpoa.msa_result(seq_n, cons_n, cons_len, ...)
 ```
 This class describes the information of the generated consensus sequence and the RC-MSA. The returned result of `pyabpoa.msa_aligner.msa()` is an object of this class that has the following properties:
 
-* **seq_n**: number of input aligned sequences
-* **cons_n**: number of generated consensus sequences (generally 1, could be 2 if input is specified as diploid)
+* **n_seq**: number of input aligned sequences
+* **n_cons**: number of generated consensus sequences (generally 1, could be 2 or more if **max_n_cons** is set as > 1)
+* **clu_n_seq**: an array of sequence cluster size
 * **cons_len**: an array of consensus sequence length(s)
 * **cons_seq**: an array of consensus sequence(s)
+* **cons_cov**: an array of consensus sequence coverage for each base
 * **msa_len**: size of each row in the RC-MSA
-* **msa_seq**: an array containing `seq_n` strings that demonstrates the RC-MSA, each consisting of one input sequence and several `-` indicating the alignment gaps. 
+* **msa_seq**: an array containing `n_seq`+`n_cons` strings that demonstrates the RC-MSA, each consisting of one input sequence and several `-` indicating the alignment gaps. 
 
 `pyabpoa.msa_result()` has a function of `print_msa` which prints the RC-MSA to screen.
 

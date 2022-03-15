@@ -26,7 +26,7 @@
 #define ABPOA_F_OP   0x18
 #define ABPOA_ALL_OP 0x1f
 
-#define DIPLOID_MIN_FREQ    0.3
+#define MULTIP_MIN_FREQ    0.25
 
 // start and end of each band:
 //   range: (min_of_two(max_left, qlen-remain), max_of_two(max_right, qlen-remain))

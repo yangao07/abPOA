@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include "abpoa.h"
 #include "simd_abpoa_align.h"
 #include "abpoa_align.h"
 #include "abpoa_seq.h"
+#include "abpoa_output.h"
 #include "utils.h"
 #include "abpoa_seed.h"
 
@@ -104,10 +106,8 @@ abpoa_para_t *abpoa_init_para(void) {
     abpt->out_fq = 0;     // output consensus sequence in fastq
     abpt->out_gfa = 0;    // out graph in GFA format
     abpt->out_msa = 0;    // output msa
-    abpt->out_msa_header = 0; // output read ID in msa output
-    abpt->is_diploid = 0; // diploid data
-    abpt->min_freq = DIPLOID_MIN_FREQ; 
-    abpt->cons_agrm = ABPOA_HB;   // consensus calling algorithm 
+    abpt->max_n_cons = 1; // number of max. generated consensus sequence
+    abpt->min_freq = MULTIP_MIN_FREQ; 
     abpt->use_read_ids = 0;
     abpt->incr_fn = NULL; // incrementally align seq to an existing graph
     abpt->out_pog = NULL; // dump partial order graph to file
@@ -139,10 +139,10 @@ abpoa_para_t *abpoa_init_para(void) {
 
 void abpoa_post_set_para(abpoa_para_t *abpt) {
     abpoa_set_gap_mode(abpt);
-    if (abpt->cons_agrm == ABPOA_HC || abpt->out_msa || abpt->out_gfa || abpt->is_diploid) {
+    if (abpt->out_msa || abpt->out_gfa || abpt->max_n_cons > 1) {
         abpt->use_read_ids = 1;
         set_65536_table();
-        if (abpt->cons_agrm == ABPOA_HC || abpt->is_diploid) set_bit_table16();
+        if (abpt->max_n_cons > 1) set_bit_table16();
     }
     if (abpt->align_mode == ABPOA_LOCAL_MODE) abpt->wb = -1;
     int i;
@@ -202,7 +202,7 @@ int abpoa_anchor_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int *seq_l
         // seq-to-graph alignment and add alignment within each split window
         if (_i == 0) ai = 0; else ai = par_c[_i-1];
 
-        int beg_id = ABPOA_SRC_NODE_ID, beg_qpos = 0, end_id, end_tpos, end_qpos;
+        int beg_id = ABPOA_SRC_NODE_ID, beg_qpos = 0, end_id=-1, end_tpos=-1, end_qpos=-1;
         if (ai < par_c[_i]) {
             abs->is_rc[read_id] = (abs->is_rc[last_read_id] ^ (par_anchors.a[ai] >> 63));
             // construct rc qseq
@@ -327,21 +327,21 @@ int abpoa_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int *seq_lens, in
     return 0;
 }
 
-void abpoa_output(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp, uint8_t ***cons_seq, int ***cons_cov, int **cons_l, int *cons_n, uint8_t ***msa_seq, int *msa_l) {
+void abpoa_output(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp) {
+    // generate & output GFA
     if (abpt->out_gfa) abpoa_generate_gfa(ab, abpt, out_fp);
     else {
+        // generate rc-msa/cons
+        if (abpt->out_msa) abpoa_generate_rc_msa(ab, abpt);
         if (abpt->out_cons) {
-            if (abpt->out_msa) abpoa_generate_consensus(ab, abpt, NULL, cons_seq, cons_cov, cons_l, cons_n);
-            else abpoa_generate_consensus(ab, abpt, out_fp, cons_seq, cons_cov, cons_l, cons_n);
-            if (ab->abg->is_called_cons == 0)
-                err_printf("Warning: no consensus sequence generated.\n");
-        } else if (abpt->out_fq) {
-            abpoa_generate_consensus(ab, abpt, out_fp, cons_seq, cons_cov, cons_l, cons_n);
+            abpoa_generate_consensus(ab, abpt);
+            if (ab->abg->is_called_cons == 0) err_printf("Warning: no consensus sequence generated.\n");
         }
-        if (abpt->out_msa) {
-            abpoa_generate_rc_msa(ab, abpt, out_fp, msa_seq, msa_l);
-        }
+        // output cons/rc-msa
+        if (abpt->out_msa) abpoa_output_rc_msa(ab, abpt, out_fp);
+        else if (abpt->out_cons) abpoa_output_fx_consensus(ab, abpt, out_fp);
     }
+    // plot partial-order graph using dot
     if (abpt->out_pog) abpoa_dump_pog(ab, abpt);
 }
 
@@ -354,9 +354,9 @@ void abpoa_output(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp, uint8_t ***cons
 //    n_seq: number of input sequences
 //    seq_len: array of input sequence length, size: seq_n
 //    seqs: array of input sequences, 0123 for ACGT, size: seq_n * seq_len[]
-int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seq, char **seq_names, int *seq_lens, uint8_t **seqs, FILE *out_fp, uint8_t ***cons_seq, int ***cons_cov, int **cons_l, int *cons_n, uint8_t ***msa_seq, int *msa_l) {
+int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seq, char **seq_names, int *seq_lens, uint8_t **seqs, FILE *out_fp) {
     if ((!abpt->out_msa && !abpt->out_cons && !abpt->out_gfa) || n_seq <= 0) return 0;
-    abpoa_reset_graph(ab, abpt, 1024);
+    abpoa_reset(ab, abpt, 1024);
     if (abpt->incr_fn) abpoa_restore_graph(ab, abpt); // restore existing graph
     abpoa_seq_t *abs = ab->abs; int i, exist_n_seq = abs->n_seq;
 
@@ -406,13 +406,13 @@ int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seq, char **seq_names, int 
     }
 
     // output
-    abpoa_output(ab, abpt, out_fp, cons_seq, cons_cov, cons_l, cons_n, msa_seq, msa_l);
+    abpoa_output(ab, abpt, out_fp);
     return 0;
 }
 
-int abpoa_msa1(abpoa_t *ab, abpoa_para_t *abpt, char *read_fn, FILE *out_fp, uint8_t ***cons_seq, int ***cons_cov, int **cons_l, int *cons_n, uint8_t ***msa_seq, int *msa_l) {
+int abpoa_msa1(abpoa_t *ab, abpoa_para_t *abpt, char *read_fn, FILE *out_fp) {
     if (!abpt->out_msa && !abpt->out_cons && !abpt->out_gfa) return 0;
-    abpoa_reset_graph(ab, abpt, 1024);
+    abpoa_reset(ab, abpt, 1024);
     if (abpt->incr_fn) abpoa_restore_graph(ab, abpt); // restore existing graph
     abpoa_seq_t *abs = ab->abs; int exist_n_seq = abs->n_seq;
 
@@ -460,7 +460,7 @@ int abpoa_msa1(abpoa_t *ab, abpoa_para_t *abpt, char *read_fn, FILE *out_fp, uin
     }
 
     // output
-    abpoa_output(ab, abpt, out_fp, cons_seq, cons_cov, cons_l, cons_n, msa_seq, msa_l);
+    abpoa_output(ab, abpt, out_fp);
 
     kseq_destroy(ks); gzclose(readfp);
     for (i = 0; i < n_seq; ++i) free(seqs[i]); free(seqs); free(seq_lens);

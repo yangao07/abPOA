@@ -1,7 +1,8 @@
 /* sub_example.c libabpoa usage example
    To compile:
-      gcc -O2 sub_example.c -I ./include -L ./lib -labpoa -lz -o sub_example
-  Or: gcc -O2 sub_example.c -I ./include ./lib/libabpoa.a -lz -o sub_example
+gcc -g sub_example.c -I ./include -L ./lib -labpoa -lz -lm -o sub_example
+or:
+gcc -g sub_example.c -I ./include ./lib/libabpoa.a -lz -lm -o sub_example
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -115,15 +116,8 @@ int main(void) {
         abpoa_add_subgraph_alignment(ab, abpt, exc_beg, exc_end, bseqs[i], seq_lens[i], NULL, res, i, n_seqs, 0);
         if (res.n_cigar) free(res.graph_cigar);
     }
-    if (abpt->out_cons) {
-        abpoa_generate_consensus(ab, abpt, stdout, NULL, NULL, NULL, NULL);
-        if (ab->abg->is_called_cons == 0)
-            fprintf(stderr, "Warning: no consensus sequence generated.\n");
-    }
-    if (abpt->out_msa) {
-        abpoa_generate_rc_msa(ab, abpt, stdout, NULL, NULL);
-    }
-    // abpoa_reset_graph(ab, abpt, seq_lens[0]); // reset graph before re-use
+
+    abpoa_output(ab, abpt, stdout);
 
     /* generate DOT partial order graph plot */
     abpt->out_pog = strdup("sub_example.png"); // dump parital order graph to file

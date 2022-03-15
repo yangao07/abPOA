@@ -1,6 +1,7 @@
 include src/abpoa_align.h
 include src/abpoa_graph.h
 include src/abpoa.h
+include src/abpoa_output.h
 include src/abpoa_seed.h
 include src/abpoa_seq.h
 include src/kalloc.h

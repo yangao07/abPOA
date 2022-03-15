@@ -19,6 +19,7 @@ SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 add_library(abpoa
     src/abpoa_align.c
     src/abpoa_graph.c
+    src/abpoa_output.c
     src/abpoa_plot.c
     src/abpoa_seed.c
     src/abpoa_seq.c

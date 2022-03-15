@@ -7,31 +7,43 @@ from cabpoa cimport *
 
 
 cdef class msa_result:
-    cdef int seq_n
-    cdef int cons_n
-    cdef cons_len, cons_seq # _cons_len:[int], _cons_seq:['']
+    cdef int n_seq
+    cdef int n_cons
+    cdef clu_n_seq, clu_read_ids, cons_len, cons_seq, cons_cov  # _cons_len:[int], _cons_seq:['']
     cdef int msa_len
-    cdef msa_seq # _msa_seq:['']
+    cdef msa_seq  # _msa_seq:['']
 
-    def __cinit__(self, seq_n, cons_n, cons_len, cons_seq, msa_len, msa_seq):
-        self.seq_n = seq_n
-        self.cons_n = cons_n
+    def __cinit__(self, n_seq, n_cons, clu_n_seq, clu_read_ids, cons_len, cons_seq, cons_cov, msa_len, msa_seq):
+        self.n_seq = n_seq
+        self.n_cons = n_cons
+        self.clu_n_seq = clu_n_seq
+        self.clu_read_ids = clu_read_ids
         self.cons_len = cons_len
         self.cons_seq = cons_seq
+        self.cons_cov = cons_cov
         self.msa_len = msa_len
         self.msa_seq = msa_seq
 
     @property
-    def seq_n(self): return self.seq_n
+    def n_seq(self): return self.n_seq
 
     @property
-    def cons_n(self): return self.cons_n
+    def n_cons(self): return self.n_cons
+
+    @property
+    def clu_n_seq(self): return self.clu_n_seq
+
+    @property
+    def clu_read_ids(self): return self.clu_read_ids
 
     @property
     def cons_len(self): return self.cons_len
 
     @property
     def cons_seq(self): return self.cons_seq
+
+    @property
+    def cons_cov(self): return self.cons_cov
 
     @property
     def msa_len(self): return self.msa_len
@@ -41,16 +53,24 @@ cdef class msa_result:
 
     def print_msa(self): 
         if not self.msa_seq: return
-        for s in self.msa_seq:
+        for i, s in enumerate(self.msa_seq):
+            if i < self.n_seq:
+                print('>Seq_{}'.format(i+1))
+            else:
+                if self.n_cons > 1:
+                    cons_id = '_{} {}'.format(i-self.n_seq+1, ','.join(list(map(str, self.clu_read_ids[i-self.n_seq]))))
+                else:
+                    cons_id = ''
+                print('>Consensus_sequence{}'.format(cons_id))
             print(s)
-        return 
+        return
 
 
 def set_seq_int_dict(m):
-    if m == 5: # ACGTN ==> 01234, U ==> 4
+    if m == 5:  # ACGTN ==> 01234, U ==> 4
         seqs = 'ACGUTN'
         ints = [0, 1, 2, 3, 3, 4]
-    elif m == 27: # ACGTN    ==> 01234, BDEFH... ==> 56789...
+    elif m == 27:  # ACGTN    ==> 01234, BDEFH... ==> 56789...
         seqs = 'ACGTNBDEFHIJKLMOPQRSUVWXYZ*'
         ints = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
     else:
@@ -64,13 +84,14 @@ def set_seq_int_dict(m):
         int2seq_dict[i] = s
     return seq2int_dict, int2seq_dict
 
+
 cdef class msa_aligner:
     cdef abpoa_t *ab
     cdef abpoa_para_t abpt
     cdef seq2int_dict, int2seq_dict
 
     def __cinit__(self, aln_mode='g', is_aa=False, match=2, mismatch=4, score_matrix=b'', gap_open1=4, gap_open2=24, gap_ext1=2, gap_ext2=1,
-            extra_b=10, extra_f=0.01, end_bonus=-1, zdrop=-1, cons_agrm=ABPOA_HB, is_diploid=0, min_freq=0.3):
+            extra_b=10, extra_f=0.01):
         self.ab = abpoa_init()
 
         if aln_mode == 'g':
@@ -106,12 +127,8 @@ cdef class msa_aligner:
 
         self.abpt.wb = extra_b
         self.abpt.wf = extra_f 
-        self.abpt.end_bonus = end_bonus
-        self.abpt.zdrop = zdrop
-
-        self.abpt.cons_agrm = cons_agrm
-        self.abpt.is_diploid = is_diploid 
-        self.abpt.min_freq = min_freq
+        self.abpt.end_bonus = -1 # disable end_bonus/zdrop
+        self.abpt.zdrop = -1
 
         self.seq2int_dict, self.int2seq_dict = set_seq_int_dict(self.abpt.m)
 
@@ -123,31 +140,27 @@ cdef class msa_aligner:
         return self.ab != NULL
 
 
-    def msa(self, seqs, out_cons, out_msa, out_pog=b'', incr_fn=b''):
+    def msa(self, seqs, out_cons, out_msa, max_n_cons=1, min_freq=0.25, out_pog=b'', incr_fn=b''):
         cdef int seq_n = len(seqs)
         cdef int exist_n = 0
         cdef int tot_n = seq_n
         cdef uint8_t *bseq
         cdef abpoa_res_t res
-        cdef uint8_t **cons_seq
-        cdef uint8_t **msa_seq
-        cdef int *cons_len
-        cdef int cons_n=0
-        cdef int msa_l=0
-
-        _cons_len, _cons_seq, _msa_seq = [], [], []
+        cdef abpoa_cons_t abc
 
         if out_cons: self.abpt.out_cons = 1
         else: self.abpt.out_cons = 0
         if out_msa: self.abpt.out_msa = 1
         else: self.abpt.out_msa = 0
+        self.abpt.max_n_cons = max_n_cons
+        self.abpt.min_freq = min_freq
         if out_pog: 
             if isinstance(out_pog, str): out_pog = bytes(out_pog, 'utf-8')
             self.abpt.out_pog = out_pog
         else: self.abpt.out_pog = NULL
 
         abpoa_post_set_para(&self.abpt)
-        abpoa_reset_graph(self.ab, &self.abpt, len(seqs[0]))
+        abpoa_reset(self.ab, &self.abpt, len(seqs[0]))
         if incr_fn:
             if isinstance(incr_fn, str):
                 incr_fn = bytes(incr_fn, 'utf-8')
@@ -159,8 +172,6 @@ cdef class msa_aligner:
             self.abpt.incr_fn = NULL
 
         self.ab[0].abs[0].n_seq += seq_n
-
-        if tot_n < 2: return msa_result(tot_n, cons_n, _cons_len, _cons_seq, msa_l, _msa_seq)
 
         for read_i, seq in enumerate(seqs):
             seq_l = len(seq)
@@ -174,32 +185,39 @@ cdef class msa_aligner:
             free(bseq)
             if res.n_cigar: free(res.graph_cigar)
 
-        if self.abpt.out_cons:
-            abpoa_generate_consensus(self.ab, &self.abpt, NULL, &cons_seq, NULL, &cons_len, &cons_n)
-            for i in range(cons_n):
-                _cons_len.append(cons_len[i])
-                cons_seq1 = ''
-                for c in cons_seq[i][:cons_len[i]]:
-                    if isinstance(c, bytes): c = ord(c)
-                    cons_seq1 += self.int2seq_dict[c]
-                _cons_seq.append(cons_seq1)
-            if cons_n > 0:
-                for i in range(cons_n):
-                    free(cons_seq[i])
-                free(cons_seq)
-                free(cons_len)
         if self.abpt.out_msa:
-            abpoa_generate_rc_msa(self.ab, &self.abpt, NULL, &msa_seq, &msa_l)
-            for i in range(tot_n):
+            abpoa_generate_rc_msa(self.ab, &self.abpt)
+        elif self.abpt.out_cons:
+            abpoa_generate_consensus(self.ab, &self.abpt)
+        abc = self.ab[0].abc[0]
+
+        n_cons, clu_n_seq, clu_read_ids, cons_len, cons_seq, cons_cov, msa_len, msa_seq = 0, [], [], [], [], [], 0, []
+        n_cons = abc.n_cons
+        for i in range(n_cons):
+            clu_n_seq.append(abc.clu_n_seq[i])
+            cons_len.append(abc.cons_len[i])
+            clu_read_ids1, cons_seq1, cons_cov1 = [], '', []
+            for j in range(abc.clu_n_seq[i]):
+                clu_read_ids1.append(abc.clu_read_ids[i][j])
+            clu_read_ids.append(clu_read_ids1)
+            for j in range(abc.cons_len[i]):
+                c = abc.cons_base[i][j]
+                if isinstance(c, bytes): c = ord(c)
+                cons_seq1 += self.int2seq_dict[c]
+                cons_cov1.append(abc.cons_cov[i][j])
+            cons_seq.append(cons_seq1)
+            cons_cov.append(cons_cov1)
+
+        msa_len = abc.msa_len
+        if msa_len > 0:
+            for i in range(abc.n_seq + n_cons):
                 msa_seq1 = ''
-                for c in msa_seq[i][:msa_l]:
+                for c in abc.msa_base[i][:msa_len]:
                     if isinstance(c, bytes): c = ord(c)
                     msa_seq1 += self.int2seq_dict[c]
-                _msa_seq.append(msa_seq1)
-            if msa_l > 0:
-                for i in range(tot_n):
-                    free(msa_seq[i])
-                free(msa_seq)
+                msa_seq.append(msa_seq1)
+
         if self.abpt.out_pog:
             abpoa_dump_pog(self.ab, &self.abpt)
-        return msa_result(tot_n, int(cons_n), _cons_len, _cons_seq, int(msa_l), _msa_seq)
+        return msa_result(tot_n, n_cons, clu_n_seq, clu_read_ids, cons_len, cons_seq, cons_cov, msa_len, msa_seq)
+

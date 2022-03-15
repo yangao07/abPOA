@@ -59,11 +59,11 @@ cdef extern from "abpoa.h":
         int zdrop, end_bonus # from minimap2
         # int simd_flag # available SIMD instruction
         # alignment mode
-        uint8_t ret_cigar, rev_cigar, out_msa, out_msa_header, out_cons, out_gfa, is_diploid, use_read_ids # mode: 0: global, 1: local, 2: extend
-        uint8_t amb_strand, disable_seeding, progressive_poa, out_fq
+        uint8_t ret_cigar, rev_cigar, out_msa, out_cons, out_gfa, out_fq, use_read_ids, amb_strand # mode: 0: global, 1: local, 2: extend
+        uint8_t disable_seeding, progressive_poa
         char *incr_fn
         char *out_pog
-        int align_mode, gap_mode, cons_agrm
+        int align_mode, gap_mode, max_n_cons
         double min_freq # for diploid data
 
 
@@ -74,8 +74,7 @@ cdef extern from "abpoa.h":
         int out_edge_n, out_edge_m
         int *out_id
         int *out_weight
-        int max_out_id
-        uint64_t *read_ids
+        uint64_t **read_ids
         int read_ids_n # for diploid
         int aligned_node_n, aligned_node_m
         int *aligned_node_id # mismatch; aligned node will have same rank
@@ -91,6 +90,17 @@ cdef extern from "abpoa.h":
         int *node_id_to_max_remain
         int *node_id_to_msa_rank
         uint8_t is_topological_sorted, is_called_cons, is_set_msa_rank
+
+    ctypedef struct abpoa_cons_t:
+        int n_cons, n_seq, msa_len
+        int *clu_n_seq
+        int **clu_read_ids
+        int *cons_len
+        int **cons_node_ids
+        uint8_t **cons_base
+        uint8_t **msa_base
+        int **cons_cov
+        int **cons_phred_score;
 
     ctypedef struct abpoa_str_t:
         int l, m
@@ -111,6 +121,7 @@ cdef extern from "abpoa.h":
         abpoa_graph_t *abg
         abpoa_seq_t *abs
         abpoa_simd_matrix_t *abm
+        abpoa_cons_t *abc
 
     # init for abpoa parameters
     abpoa_para_t *abpoa_init_para()
@@ -124,11 +135,11 @@ cdef extern from "abpoa.h":
     void abpoa_free(abpoa_t *ab)
 
     # do msa for a set of input sequences
-    int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seqs, char **seq_names, int *seq_lens, uint8_t **seqs, FILE *out_fp, uint8_t ***cons_seq, uint8_t ***cons_cov, int **cons_l, int *cons_n, uint8_t ***msa_seq, int *msa_l)
-    int abpoa_msa1(abpoa_t *ab, abpoa_para_t *abpt, char *read_fn, FILE *out_fp, uint8_t ***cons_seq, int ***cons_cov, int **cons_l, int *cons_n, uint8_t ***msa_seq, int *msa_l)
+    int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seqs, char **seq_names, int *seq_lens, uint8_t **seqs, FILE *out_fp)
+    int abpoa_msa1(abpoa_t *ab, abpoa_para_t *abpt, char *read_fn, FILE *out_fp)
 
     # clean alignment graph
-    void abpoa_reset_graph(abpoa_t *ab, abpoa_para_t *abpt, int qlen)
+    void abpoa_reset(abpoa_t *ab, abpoa_para_t *abpt, int qlen)
 
     # restore graph from GFA/MSA file
     abpoa_t *abpoa_restore_graph(abpoa_t *ab, abpoa_para_t *abpt)
@@ -153,17 +164,19 @@ cdef extern from "abpoa.h":
     # generate consensus sequence from graph
     # para:
     #   out_fp: consensus sequence output in FASTA format, set as NULL to disable
-    #   cons_seq, cons_l, cons_n: store consensus sequences in variables, set cons_n as NULL to disable. 
-    #     cons_seq: store consensus sequences
-    #     cons_l: store consensus sequences length
-    #     cons_n: store number of consensus sequences
-    #     Note: cons_seq and cons_l need to be freed by user.
-    int abpoa_generate_consensus(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp, uint8_t ***cons_seq, int ***cons_cov, int **cons_l, int *cons_n)
+    void abpoa_generate_consensus(abpoa_t *ab, abpoa_para_t *abpt)
+    void abpoa_output_fx_consensus(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp)
+
+
     # generate column multiple sequence alignment from graph
-    void abpoa_generate_rc_msa(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp, uint8_t ***msa_seq, int *msa_l)
+    void abpoa_generate_rc_msa(abpoa_t *ab, abpoa_para_t *abpt)
+    void abpoa_output_rc_msa(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp)
 
     # generate full graph in GFA format
     void abpoa_generate_gfa(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp)
 
+    # output to out_fp
+    void abpoa_output(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp)
+
     # generate DOT graph plot 
-    int abpoa_dump_pog(abpoa_t *ab, abpoa_para_t *abpt)
+    void abpoa_dump_pog(abpoa_t *ab, abpoa_para_t *abpt)

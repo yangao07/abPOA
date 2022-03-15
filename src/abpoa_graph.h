@@ -18,11 +18,9 @@
 extern "C" {
 #endif
 
-void set_65536_table(void);
-void set_bit_table16(void);
-
 int abpoa_get_aligned_id(abpoa_graph_t *abg, int node_id, uint8_t base);
 void abpoa_add_graph_aligned_node(abpoa_graph_t *abg, int node_id, int aligned_id);
+void abpoa_set_msa_rank(abpoa_graph_t *abg, int src_id, int sink_id);
 abpoa_graph_t *abpoa_init_graph(void);
 void abpoa_free_graph(abpoa_graph_t *graph);
 

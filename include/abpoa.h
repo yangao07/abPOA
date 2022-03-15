@@ -69,10 +69,10 @@ typedef struct {
     int zdrop, end_bonus; // from minimap2
     // int simd_flag; // available SIMD instruction
     // alignment mode
-    uint8_t ret_cigar:1, rev_cigar:1, out_msa:1, out_msa_header:1, out_cons:1, out_gfa:1, is_diploid:1, use_read_ids:1;
-    uint8_t amb_strand:1, disable_seeding:1, progressive_poa:1, out_fq:1;
+    uint8_t ret_cigar:1, rev_cigar:1, out_msa:1, out_cons:1, out_gfa:1, out_fq:1, use_read_ids:1, amb_strand:1;
+    uint8_t disable_seeding:1, progressive_poa:1;
     char *incr_fn, *out_pog;
-    int align_mode, gap_mode, cons_agrm;
+    int align_mode, gap_mode, max_n_cons;
     double min_freq; // for multiploid data
 
     // char LogTable65536[65536];
@@ -82,8 +82,8 @@ typedef struct {
 typedef struct {
     int node_id;
     int in_edge_n, in_edge_m, *in_id;
-    int out_edge_n, out_edge_m, *out_id, max_out_id; int *out_weight;
-    uint64_t *read_ids; int read_ids_n; // for multiploid
+    int out_edge_n, out_edge_m, *out_id; int *out_weight;
+    uint64_t **read_ids; int read_ids_n; // for each edge
 
     int aligned_node_n, aligned_node_m, *aligned_node_id; // mismatch; aligned node will have same rank
     // int heaviest_weight, heaviest_out_id; // for consensus
@@ -97,6 +97,18 @@ typedef struct {
     int *node_id_to_index, *node_id_to_max_pos_left, *node_id_to_max_pos_right, *node_id_to_max_remain, *node_id_to_msa_rank;
     uint8_t is_topological_sorted:1, is_called_cons:1, is_set_msa_rank:1;
 } abpoa_graph_t;
+
+typedef struct {
+    int n_cons, n_seq, msa_len; // # cons, # of total seq, length of row-column MSA (including gaps)
+    int *clu_n_seq;      // # of reads in each read cluster/group, size: n_cons
+    int **clu_read_ids; // read ids for each cluster/group, size: n_cons * clu_n_seq[i]
+    int *cons_len;       // length of each consensus sequence, size: n_cons
+    int **cons_node_ids; // node id of each consensus, size: n_cons * cons_len[i]
+    uint8_t **cons_base; // sequence base of each consensus, size: n_cons * cons_len[i]
+    uint8_t **msa_base;  // sequence base of RC-MSA, size: (n_seq + n_cons) * msa_len
+    int **cons_cov;      // coverage of each consensus base, size: n_cons * cons_len[i]
+    int **cons_phred_score; // phred score for each consensus base, size: n_cons * cons_len[i]
+} abpoa_cons_t;
 
 typedef struct {
     int l, m; char *s;
@@ -117,6 +129,7 @@ typedef struct {
     abpoa_graph_t *abg;
     abpoa_seq_t *abs;
     abpoa_simd_matrix_t *abm;
+    abpoa_cons_t *abc;
 } abpoa_t;
 
 // init for abpoa parameters
@@ -130,12 +143,12 @@ abpoa_t *abpoa_init(void);
 void abpoa_free(abpoa_t *ab);
 
 // perform msa
-int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seqs, char **seq_names, int *seq_lens, uint8_t **seqs, FILE *out_fp, uint8_t ***cons_seq, int ***cons_cov, int **cons_l, int *cons_n, uint8_t ***msa_seq, int *msa_l);
+int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seqs, char **seq_names, int *seq_lens, uint8_t **seqs, FILE *out_fp);
 
-int abpoa_msa1(abpoa_t *ab, abpoa_para_t *abpt, char *read_fn, FILE *out_fp, uint8_t ***cons_seq, int ***cons_cov, int **cons_l, int *cons_n, uint8_t ***msa_seq, int *msa_l);
+int abpoa_msa1(abpoa_t *ab, abpoa_para_t *abpt, char *read_fn, FILE *out_fp);
 
 // clean alignment graph
-void abpoa_reset_graph(abpoa_t *ab, abpoa_para_t *abpt, int qlen);
+void abpoa_reset(abpoa_t *ab, abpoa_para_t *abpt, int qlen);
 
 // restore graph from GFA/FASTA file
 abpoa_t *abpoa_restore_graph(abpoa_t *ab, abpoa_para_t *abpt);
@@ -156,7 +169,7 @@ int abpoa_add_graph_node(abpoa_graph_t *abg, uint8_t base);
 // para:
 //   from_id/to_id: ids of from and to nodes
 //   check_edge: set as 1 if this edge maybe alread exist and only need to update weight, set as 0 if the edge is new
-//   add_read_id: set as 1 if read_id is used (to use row-column algorithm/generate MSA result/diploid consensus)
+//   add_read_id: set as 1 if read_id is used (to use row-column algorithm/generate MSA result/multiple consensus)
 //   read_id: is of sequence
 //   read_ids_n: size of read_id array, each one is 64-bit (1+(tot_read_n-1)/64)
 int abpoa_add_graph_edge(abpoa_graph_t *abg, int from_id, int to_id, int check_edge, int w, uint8_t add_read_id, int read_id, int read_ids_n);
@@ -185,16 +198,21 @@ void abpoa_topological_sort(abpoa_graph_t *abg, abpoa_para_t *abpt);
 //     cons_l: store consensus sequences length
 //     cons_n: store number of consensus sequences
 //     Note: cons_seq and cons_l need to be freed by user.
-int abpoa_generate_consensus(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp, uint8_t ***cons_seq, int ***cons_cov, int **cons_l, int *cons_n);
+void abpoa_generate_consensus(abpoa_t *ab, abpoa_para_t *abpt);
+void abpoa_output_fx_consensus(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp);
 
 // generate column multiple sequence alignment from graph
-void abpoa_generate_rc_msa(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp, uint8_t ***msa_seq, int *msa_l);
+void abpoa_generate_rc_msa(abpoa_t *ab, abpoa_para_t *abpt);
+void abpoa_output_rc_msa(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp);
 
 // generate graph in GFA format to _out_fp_
 void abpoa_generate_gfa(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp);
 
+// output cons/msa
+void abpoa_output(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp);
+
 // generate DOT graph plot and dump graph into PDF/PNG format file
-int abpoa_dump_pog(abpoa_t *ab, abpoa_para_t *abpt);
+void abpoa_dump_pog(abpoa_t *ab, abpoa_para_t *abpt);
 
 #ifdef __cplusplus
 }

@@ -1,7 +1,7 @@
 /* example.c libabpoa usage example
    To compile: 
 gcc -g example.c -I ./include -L ./lib -labpoa -lz -lm -o example
-   or:
+or:
 gcc -g example.c -I ./include ./lib/libabpoa.a -lz -lm -o example
 */
 #include <stdio.h>
@@ -53,17 +53,30 @@ const char nt256_table[256] = {
 
 int main(void) {
     int i, j, n_seqs = 10;
+    // char seqs[10][100] = {
+    //     "CGTCAATCTATCGAAGCATACGCGGGCAGAGCCGAAGACCTCGGCAATCCA",
+    //     "CCACGTCAATCTATCGAAGCATACGCGGCAGCCGAACTCGACCTCGGCAATCAC",
+    //     "CGTCAATCTATCGAAGCATACGCGGCAGAGCCCGGAAGACCTCGGCAATCAC",
+    //     "CGTCAATGCTAGTCGAAGCAGCTGCGGCAGAGCCGAAGACCTCGGCAATCAC",
+    //     "CGTCAATCTATCGAAGCATTCTACGCGGCAGAGCCGACCTCGGCAATCAC",
+    //     "CGTCAATCTAGAAGCATACGCGGCAAGAGCCGAAGACCTCGGCCAATCAC",
+    //     "CGTCAATCTATCGGTAAAGCATACGCTCTGTAGCCGAAGACCTCGGCAATCAC",
+    //     "CGTCAATCTATCTTCAAGCATACGCGGCAGAGCCGAAGACCTCGGCAATC",
+    //     "CGTCAATGGATCGAGTACGCGGCAGAGCCGAAGACCTCGGCAATCAC",
+    //     "CGTCAATCTAATCGAAGCATACGCGGCAGAGCCGTCTACCTCGGCAATCACGT"
+    //     };
+
     char seqs[10][100] = {
-        "CGTCAATCTATCGAAGCATACGCGGGCAGAGCCGAAGACCTCGGCAATCCA",
-        "CCACGTCAATCTATCGAAGCATACGCGGCAGCCGAACTCGACCTCGGCAATCAC",
-        "CGTCAATCTATCGAAGCATACGCGGCAGAGCCCGGAAGACCTCGGCAATCAC",
-        "CGTCAATGCTAGTCGAAGCAGCTGCGGCAGAGCCGAAGACCTCGGCAATCAC",
-        "CGTCAATCTATCGAAGCATTCTACGCGGCAGAGCCGACCTCGGCAATCAC",
-        "CGTCAATCTAGAAGCATACGCGGCAAGAGCCGAAGACCTCGGCCAATCAC",
-        "CGTCAATCTATCGGTAAAGCATACGCTCTGTAGCCGAAGACCTCGGCAATCAC",
-        "CGTCAATCTATCTTCAAGCATACGCGGCAGAGCCGAAGACCTCGGCAATC",
-        "CGTCAATGGATCGAGTACGCGGCAGAGCCGAAGACCTCGGCAATCAC",
-        "CGTCAATCTAATCGAAGCATACGCGGCAGAGCCGTCTACCTCGGCAATCACGT"
+        "CGATCGATCGATCGATGCATGCATCGATGCATCGATCGATGCATGCAT",
+        "CGATCGATCGATAAAAAAAAAAAAAAAAAAACGATGCATGCATCGATGCATCGATCGATGCATGCAT",
+        "CGATCGATCGATCGATGCATGCATCGATGCATCGATCGATGCATGCAT",
+        "CGATCGATCGATCGATGCATGCATCGATGCATCGATCGATGCATGCAT",
+        "CGATCGATCGATAAAAAAAAAAAAAAAAAAACGATGCATGCATCGATGCATCGATCGATGCATGCAT",
+        "CGATCGATCGATAAAAAAAAAAAAAAAAAAACGATGCATGCATCGATGCATCGATCGATGCATGCAT",
+        "CGATCGATCGATAAAAAAAAAAAAAAAAAAACGATGCATGCATCGATGCATCGATCGATGCATGCAT",
+        "CGATCGATCGATCGATGCATGCATCGATGCATCGATCGATGCATGCAT",
+        "CGATCGATCGATCGATGCATGCATCGATGCATCGATCGATGCATGCAT",
+        "CGATCGATCGATCGATGCATGCATCGATGCATCGATCGATGCATGCAT"
         };
 
     // initialize variables
@@ -89,6 +102,7 @@ int main(void) {
     abpt->out_cons = 1; // generate consensus sequence, set 0 to disable
     abpt->w = 6, abpt->k = 9; abpt->min_w = 10; // minimizer-based seeding and partition
     abpt->progressive_poa = 1;
+    abpt->max_n_cons = 2; // to generate 2 consensus sequences
 
     abpoa_post_set_para(abpt);
 
@@ -102,49 +116,45 @@ int main(void) {
             bseqs[i][j] = nt4_table[(int)seqs[i][j]];
     }
 
-    // 1. output to stdout
+    // 1. directly output to stdout
     fprintf(stdout, "=== output to stdout ===\n");
-
     // perform abpoa-msa
-    abpoa_msa(ab, abpt, n_seqs, NULL, seq_lens, bseqs, stdout, NULL, NULL, NULL, NULL, NULL, NULL);
+    abpoa_msa(ab, abpt, n_seqs, NULL, seq_lens, bseqs, stdout);
 
-    // 2. variables to store result
-    uint8_t **cons_seq; int **cons_cov, *cons_l, cons_n=0;
-    uint8_t **msa_seq; int msa_l=0;
-
-    // perform abpoa-msa
-    ab->abs->n_seq = 0; // To re-use ab, n_seq needs to be set as 0
-    abpoa_msa(ab, abpt, n_seqs, NULL, seq_lens, bseqs, NULL, &cons_seq, &cons_cov, &cons_l, &cons_n, &msa_seq, &msa_l);
-
-    fprintf(stdout, "=== output to variables ===\n");
-    for (i = 0; i < cons_n; ++i) {
-        fprintf(stdout, ">Consensus_sequence\n");
-        for (j = 0; j < cons_l[i]; ++j)
-            fprintf(stdout, "%c", nt256_table[cons_seq[i][j]]);
-        fprintf(stdout, "\n");
-    }
+    // 2. output MSA alignment and  consensus sequence stored in (abpoa_cons_t *)
+    abpoa_cons_t *abc = ab->abc;
+    fprintf(stdout, "=== stored in variables ===\n");
     fprintf(stdout, ">Multiple_sequence_alignment\n");
-    for (i = 0; i < n_seqs; ++i) {
-        for (j = 0; j < msa_l; ++j) {
-            fprintf(stdout, "%c", nt256_table[msa_seq[i][j]]);
+    for (i = 0; i < abc->n_seq; ++i) {
+        for (j = 0; j < abc->msa_len; ++j) {
+            fprintf(stdout, "%c", nt256_table[abc->msa_base[i][j]]);
         }
         fprintf(stdout, "\n");
     }
 
-    if (cons_n) {
-        for (i = 0; i < cons_n; ++i) {
-            free(cons_seq[i]); free(cons_cov[i]);
-        } free(cons_seq); free(cons_cov); free(cons_l);
-    }
-    if (msa_l) {
-        for (i = 0; i < n_seqs; ++i) free(msa_seq[i]); free(msa_seq);
+    for (i = 0; i < abc->n_cons; ++i) {
+        fprintf(stdout, ">Consensus_sequence");
+        if (abc->n_cons > 1) {
+            fprintf(stdout, "_%d ", i+1);
+            for (j = 0; j < abc->clu_n_seq[i]; ++j) { // output read ids for each cluster/group
+                fprintf(stdout, "%d", abc->clu_read_ids[i][j]);
+                if (j != abc->clu_n_seq[i]-1) fprintf(stdout, ",");
+            }
+        }
+        fprintf(stdout, "\n");
+        for (j = 0; j < abc->cons_len[i]; ++j)
+            fprintf(stdout, "%c", nt256_table[abc->cons_base[i][j]]);
+        fprintf(stdout, "\n");
     }
 
     /* generate DOT partial order graph plot */
     abpt->out_pog = strdup("example.png"); // dump parital order graph to file
     if (abpt->out_pog != NULL) abpoa_dump_pog(ab, abpt);
 
+    // free seq-related variables
     for (i = 0; i < n_seqs; ++i) free(bseqs[i]); free(bseqs); free(seq_lens);
+
+    // free abpoa-related variables
     abpoa_free(ab); abpoa_free_para(abpt); 
     return 0;
 }

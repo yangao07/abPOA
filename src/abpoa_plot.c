@@ -30,7 +30,7 @@
 extern char ab_nt256_table[256];
 // base (index, rank, node_id)
 // A (1, 1, 2) A: base 1: index 1: rank 2: node_id
-int abpoa_dump_pog(abpoa_t *ab, abpoa_para_t *abpt) {
+void abpoa_dump_pog(abpoa_t *ab, abpoa_para_t *abpt) {
     char PROG[20] = "abpoa"; int font_size=24;
 
     abpoa_graph_t *abg = ab->abg;
@@ -118,5 +118,4 @@ int abpoa_dump_pog(abpoa_t *ab, abpoa_para_t *abpt) {
     sprintf(cmd, "dot %s -T%s > %s", dot_fn, type+1, abpt->out_pog);
     free(dot_fn);
     if (system(cmd) != 0) err_fatal(__func__, "Fail to plot %s DAG.", PROG);
-    return 0;
 }
