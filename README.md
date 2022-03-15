@@ -70,7 +70,7 @@ significant speed improvement over existing tools.
 abPOA supports three alignment modes (global, local, extension) and flexible scoring schemes that allow linear, affine and convex gap penalties. 
 It right now supports SSE2/SSE4.1/AVX2 vectorization.
 
-For more information, please refer to our [paper](https://dx.doi.org/10.1093/bioinformatics/btaa963) published in Bioinformatics .
+For more information, please refer to our [paper](https://dx.doi.org/10.1093/bioinformatics/btaa963) published in Bioinformatics.
 
 ## <a name="install"></a>Installation
 
@@ -157,18 +157,30 @@ abPOA works with FASTA, FASTQ, gzip'd FASTA(.fa.gz) and gzip'd FASTQ(.fq.gz) for
 expected to contains multiple sequences which will be processed sequentially to perform the iterative 
 sequence-to-graph (partial order) alignment.
 
-abPOA can also take a list of file names as input with option `-l`, where each line is the path to one 
+abPOA can also take a list of filenames as input with option `-l`, where each line is the path to one 
 file containing multiple sequences. Each sequence file is then individually aligned by abPOA to generate a
 consensus sequence.
 
 ## <a name="output"></a>Output
 ### <a name="cons"></a>Consensus sequence 
-By default, abPOA only outputs the consensus sequence generated from the final alignment agraph.
+By default, abPOA only outputs the consensus sequence generated from the final alignment graph.
 It is in FASTA format with the name field set as "Consensus_sequence".
 For example:
 ```
 >Consensus_sequence
 ACGTGTACACGTTGAC
+```
+
+For diploid input sequences, you may want to generate two or more consensus sequences, simply set `-d/--max-num-cons` as a desired value:
+```
+abpoa heter.fa -d2
+```
+and this gives you two consensus sequences:
+```
+>Consensus_sequence_1
+CCATTCCCACCATCCTTACCATCAACATCACCATCCCCACCATCCCCAACACCATTCCCACCATCCCTACCATCACCATCACCATCCCCACCAACATCCCCACCACCATCCTCACTACCATCCCCACCACCATTTCCACCATTCCCACCACAGTCACCATCACCCCCACCATCCCCATCATCATCCGCACCATCCCCACCATCCCCACCACCATCTCCATTACCATCCCCACCACCATCTCCATTACCATCCCCACCACCATCCCCATTACCATCCCCACCACCATCCCCATTACCATCCCCACCACCATTTCCACCATTCCCACCATCATCCCCACCACCATCCTCGTTACCATCCCCACCACCTTTTCCACCATTCCCACCATCTCCAACACCTCCCCCACCATCATCCCCACCATCCCCACCACCTTCTCCACCATCATTCTCACCATCCCCACCACCATCTCCACCACCATTCTCACCATCTCCACCAACATCCCCACCATCCCCACCCCCATGCCCACCAACATCCCCACCATCCCCACCCCCATGCCCACCAACATCCCCACCATCCCCACCCCCATGCCCACCATCATCCCCACCATCC
+>Consensus_sequence_2
+CCATTCCCACCATCCTTACCATCAACATCACCATCCCCACCATCCCCAACACCATTCCCACCATCCCTACCATCACCATCACCATCCCCACCAACATCCCCACCACCATCCTCACTACCATCCCCACCACCATTTCCACCATTCCCACCACAGTCACCATCACCCCCACCATCCCCATCATCATCCGCACCATCCCCACCATCCCCACCACCATCTCCATTACCATCCCCACCACCATCCCCATTACCATCCCCACCACCATCCCCATTACCATCCCCACCACCATTTCCACCATTCCCACCATCATCCCCACCACCATCCTCGTTACCATCCCCACCACCATCCCCATTACCATCCCCACCACCATTTCCACCATTCCCACCATCATCCCCACCACCATCCCCATTACCATCCCCACCACCATCCCCATTACCATCCCCACCACCATTTCCACCATTCCCACCATCATCCCCACCACCATCCTCGTTACCATCCCCACCACCTTTTCCACCATTCCCACCATCATCCCCACCGCCATCCTCGTTACCATCCCCACCACCTTTTCCACCATTCCCACCATCTCCAACACCTCCCCCACCATCATCCCCACCATCCCCACCACCTTCTCCACCATCATTCTCACCATCCCCACCACCATCTCCACCACCATTCTCACCATCTCCACCAACATCCCCACCATCCCCACCCCCATGCCCACCAACATCCCCACCATCCCCACCCCCATGCCCACCATCATCCCCACCATCC
 ```
 ### <a name="msa"></a>Row-column multiple sequence alignment
 abPOA can also output the row-column multiple sequence alignment (RC-MSA) of all the aligned sequences in FASTA format.
@@ -205,7 +217,7 @@ For example:
 The numbers inside the nodes are the node IDs. The numbers on the edges are the edge weights.
 `S` and `E` are the auxiliary start and end nodes that have no sequence bases.
 
-Make sure you have `dot` installed beforing using abPOA to generate the plot.
+Make sure you have `dot` installed before using abPOA to generate the plot.
 For Linux/Unix systems: `sudo apt-get install graphviz`.
 
 ## <a name="description"></a>Algorithm description
@@ -219,7 +231,7 @@ To solve this issue, we develop a minimizer-based seeding and partition method t
 The full POA DP matrix can be split into several smaller ones and adaptive banded POA can be performed within each small window separately.
 
 In more detail, abPOA extracts all the minimizers from all the input sequences, then all the minimizer hits between each pair of two sequences can be found.
-For each pair of seqences, the minimizer hits are first chained together using relatively stringent criteria to make sure that no big gap exists in the chain.
+For each pair of sequences, the minimizer hits are first chained together using relatively stringent criteria to make sure that no big gap exists in the chain.
 This usually leads to several separated local chains of minimizer hits.
 A second round of chaining is then performed on all the local minimizer chains to generate a global chain going through the entire sequence.
 With this global chain, abPOA selects a series of minimizer hits as partition anchors which has at least a distance of 500 bp (by default, -n/--min-poa-win).
@@ -238,7 +250,7 @@ With all the similarity scores (minimizer-based Jaccard similarity), abPOA build
 Then, abPOA performs partial order alignment following the order of sequences in this progressive tree set.
 
 ### <a name="mcons"></a>Multiple consensus sequences
-Since v1.4.0, abPOA supports generation of multiple consensus sequences (set -d/--max-num-cons as >1).
+Since v1.4.0, abPOA supports generating multiple consensus sequences from the final alignment graph (set -d/--max-num-cons as >1).
 
 The general underlying idea is to group input sequences into multiple clusters based on the heterozygous bases in the graph,
 Then, one consensus sequence is separately generated for each cluster of input sequences.
