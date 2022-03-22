@@ -65,6 +65,7 @@ cdef extern from "abpoa.h":
         char *out_pog
         int align_mode, gap_mode, max_n_cons
         double min_freq # for diploid data
+        int verbose
 
 
     ctypedef struct abpoa_node_t:

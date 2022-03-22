@@ -193,8 +193,8 @@ int main(int argc, char **argv) {
             case 'q': abpt->min_freq = atof(optarg); break;
 
             case 'h': return abpoa_usage();
+            case 'V': abpt->verbose = atoi(optarg); break;
             case 'v': printf("%s\n", VERSION); goto End; break;
-            case 'V': abpt->verbose = atoi(optarg); goto End; break;
             default:
                       err_printf("Error: unknown option: %s.\n", optarg);
                       return abpoa_usage();
