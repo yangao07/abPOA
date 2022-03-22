@@ -74,6 +74,7 @@ typedef struct {
     char *incr_fn, *out_pog;
     int align_mode, gap_mode, max_n_cons;
     double min_freq; // for multiploid data
+    int verbose; // to control output msg
 
     // char LogTable65536[65536];
     // char bit_table16[65536];

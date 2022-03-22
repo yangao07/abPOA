@@ -228,9 +228,10 @@ void mm_aa_sketch(void *km, const uint8_t *str, int len, int w, int k, uint32_t 
  * a.x = kMer<<8 | kmerSpan
  * a.y = rid<<32 | strand<<31 | lastPos
  */
-int abpoa_build_guide_tree(int n_seq, ab_u128_v *mm, int *tree_id_map) {
+int abpoa_build_guide_tree(abpoa_para_t *abpt, int n_seq, ab_u128_v *mm, int *tree_id_map) {
     if (mm->n == 0) return 0;
 
+    if (abpt->verbose > 0) fprintf(stderr, "[%s] Building progressive guide tree ... ", __func__);
     size_t i, _i, j; int rid1, rid2;                                          // mm_hit_n: mimizer hits between each two sequences
                                                                               // 0: 0
                                                                               // 1: 0 1
@@ -318,6 +319,7 @@ int abpoa_build_guide_tree(int n_seq, ab_u128_v *mm, int *tree_id_map) {
     }
 
     free(mm_hit_n); free(jac_sim);
+    if (abpt->verbose > 0) fprintf(stderr, "done!\n");
     return 0;
 }
 
@@ -686,6 +688,7 @@ int LIS_chaining(void *km, ab_u64_v *anchors, ab_u64_v *par_anchors, int min_w) 
 }
 
 int abpoa_collect_mm(void *km, uint8_t **seqs, int *seq_lens, int n_seq, abpoa_para_t *abpt, ab_u128_v *mm, int *mm_c) {
+    if (abpt->verbose > 0) fprintf(stderr, "[%s] Collecting minimizers ... ", __func__);
     int i;
     mm_c[0] = 0;
     for (i = 0; i < n_seq; ++i) { // collect minimizers
@@ -693,6 +696,7 @@ int abpoa_collect_mm(void *km, uint8_t **seqs, int *seq_lens, int n_seq, abpoa_p
         else mm_sketch(km, seqs[i], seq_lens[i], abpt->w, abpt->k, i, 0, abpt->amb_strand, mm);
         mm_c[i+1] = mm->n;
     }
+    if (abpt->verbose > 0) fprintf(stderr, "done!\n");
     return mm->n;
 }
 
@@ -708,7 +712,7 @@ int abpoa_build_guide_tree_partition(uint8_t **seqs, int *seq_lens, int n_seq, a
         ab_u128_v mm2 = {0, 0, 0};
         for (i = 0; i < (int)mm1.n; ++i) kv_push(ab_u128_t, km, mm2, mm1.a[i]);
         // use mm2 to build guide tree
-        abpoa_build_guide_tree(n_seq, &mm2, read_id_map);
+        abpoa_build_guide_tree(abpt, n_seq, &mm2, read_id_map);
         kfree(km, mm2.a);
     }
     if (abpt->disable_seeding || n_seq < 2) {
@@ -737,6 +741,5 @@ int abpoa_build_guide_tree_partition(uint8_t **seqs, int *seq_lens, int n_seq, a
     }
 
     kfree(km, mm1.a); free(mm_c); km_destroy(km);
-
     return 0; // par_anchors->n;
 }

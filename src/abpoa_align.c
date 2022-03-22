@@ -132,6 +132,8 @@ abpoa_para_t *abpoa_init_para(void) {
     abpt->min_w = ABPOA_MIN_POA_WIN;
     abpt->progressive_poa = 0; // progressive partial order alignment
 
+    abpt->verbose = 0;
+
     // abpt->simd_flag = simd_check();
 
     return abpt;

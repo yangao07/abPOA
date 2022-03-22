@@ -147,7 +147,7 @@ int abpoa_main(char *file_fn, int is_list, abpoa_para_t *abpt){
 
 int main(int argc, char **argv) {
     int c, m, in_list=0; char *s; abpoa_para_t *abpt = abpoa_init_para();
-    while ((c = getopt_long(argc, argv, "m:M:X:t:O:E:b:f:z:e:Sk:w:n:i:clpso:r:g:d:q:hv", abpoa_long_opt, NULL)) >= 0) {
+    while ((c = getopt_long(argc, argv, "m:M:X:t:O:E:b:f:z:e:Sk:w:n:i:clpso:r:g:d:q:hvV:", abpoa_long_opt, NULL)) >= 0) {
         switch(c)
         {
             case 'm': m = atoi(optarg);
@@ -194,6 +194,7 @@ int main(int argc, char **argv) {
 
             case 'h': return abpoa_usage();
             case 'v': printf("%s\n", VERSION); goto End; break;
+            case 'V': abpt->verbose = atoi(optarg); goto End; break;
             default:
                       err_printf("Error: unknown option: %s.\n", optarg);
                       return abpoa_usage();
