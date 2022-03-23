@@ -852,8 +852,8 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
         } if (beg_sn < min_pre_beg_sn) beg_sn = min_pre_beg_sn;                                                                 \
         dp_beg_sn[dp_i] = beg_sn; beg = dp_beg[dp_i] = dp_beg_sn[dp_i] * pn;                                                    \
         end_sn = dp_end_sn[dp_i] = end/pn; end = dp_end[dp_i] = (dp_end_sn[dp_i]+1)*pn-1;                                       \
+     /* fprintf(stderr, "index: %d, beg: %d, end: %d, beg_sn: %d, end_sn: %d\n", index_i, beg, end, beg_sn, end_sn); */         \
     }                                                                                                                           \
- /* fprintf(stderr, "index_i: %d, beg_sn: %d, end_sn: %d\n", index_i, beg_sn, end_sn); */                                       \
  /* fprintf(stderr, "%d: beg, end: %d, %d\n", index_i, beg, end); */                                                            \
     /* tot_dp_sn += (end_sn - beg_sn + 1); */                                                                                   \
     /* loop query */                                                                                                            \
@@ -1164,10 +1164,7 @@ void abpoa_init_var(abpoa_para_t *abpt, uint8_t *query, int qlen, SIMDi *qp, SIM
     for (k = 0; k < abpt->m; ++k) { /* SIMD parallelization */
         int *p = &mat[k * abpt->m];
         int32_t *_qp = (int32_t*)(qp + k * qp_sn); _qp[0] = 0;
-        for (j = 0; j < qlen; ++j) {
-            fprintf(stderr, "query %d: %d\n", j, query[j]);
-            _qp[j+1] = (int32_t)p[query[j]];
-        }
+        for (j = 0; j < qlen; ++j) _qp[j+1] = (int32_t)p[query[j]];
         for (j = qlen+1; j < qp_sn * pn; ++j) _qp[j] = 0;
     }
     if (abpt->wb >= 0 || abpt->align_mode == ABPOA_EXTEND_MODE) { /* query index */
@@ -1269,11 +1266,11 @@ int abpoa_cg_dp(SIMDi *q, SIMDi *dp_h, SIMDi *dp_e1, SIMDi *dp_e2, SIMDi *dp_f1,
         } if (beg_sn < min_pre_beg_sn) beg_sn = min_pre_beg_sn;
         dp_beg_sn[dp_i] = beg_sn; beg = dp_beg[dp_i] = dp_beg_sn[dp_i] * pn;
         end_sn = dp_end_sn[dp_i] = end/pn; end = dp_end[dp_i] = (dp_end_sn[dp_i]+1)*pn-1;
+#ifdef __DEBUG__
+    fprintf(stderr, "index: %d (node: %d): beg: %d, end: %d, beg_sn: %d, end_sn: %d\n", index_i, node_id, beg, end, beg_sn, end_sn);
+#endif
     }
     tot_dp_sn += (end_sn - beg_sn + 1);
-#ifdef __DEBUG__
-    // fprintf(stderr, "index: %d (node: %d): beg, end: %d, %d\n", index_i, node_id, beg, end);
-#endif
     /* loop query */
     // new init start
     int _beg_sn, _end_sn;

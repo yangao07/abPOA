@@ -86,7 +86,13 @@ void abpoa_output_rc_msa(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp) {
         int cons_i;
         for (cons_i = 0; cons_i < abc->n_cons; cons_i++) {
             fprintf(out_fp, ">Consensus_sequence");
-            if (abc->n_cons > 1) fprintf(out_fp, "_%d", cons_i+1);
+            if (abc->n_cons > 1) {
+                fprintf(out_fp, "_%d ", cons_i+1);
+                for (j = 0; j < abc->clu_n_seq[cons_i]; ++j) { // cluter read_id
+                    if (j != 0) fprintf(out_fp, ",");
+                    fprintf(out_fp, "%d", abc->clu_read_ids[cons_i][j]);
+                }
+            }
             fprintf(out_fp, "\n");
             for (i = 0; i < abc->msa_len; ++i) fprintf(out_fp, "%c", ab_char256_table[abc->msa_base[abc->n_seq+cons_i][i]]);
             fprintf(out_fp, "\n");
@@ -493,14 +499,26 @@ void abpoa_output_fx_consensus(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp) {
     for (cons_i = 0; cons_i < abc->n_cons; ++cons_i) {
         if (abpt->out_fq) fprintf(out_fp, "@Consensus_sequence");
         else fprintf(out_fp, ">Consensus_sequence");
-        if (abc->n_cons > 1) fprintf(out_fp, "_%d", cons_i+1);
+        if (abc->n_cons > 1) {
+            fprintf(out_fp, "_%d ", cons_i+1); // cons_id
+            for (j = 0; j < abc->clu_n_seq[cons_i]; ++j) { // cluter read_id
+                if (j != 0) fprintf(out_fp, ",");
+                fprintf(out_fp, "%d", abc->clu_read_ids[cons_i][j]);
+            }
+        }
         fprintf(out_fp, "\n");
         for (j = 0; j < abc->cons_len[cons_i]; ++j) {
             fprintf(out_fp, "%c", ab_char256_table[abc->cons_base[cons_i][j]]);
         } fprintf(out_fp, "\n");
         if (abpt->out_fq) {
             fprintf(out_fp, "+Consensus_sequence");
-            if (abc->n_cons > 1) fprintf(out_fp, "_%d", cons_i+1);
+            if (abc->n_cons > 1) {
+                fprintf(out_fp, "_%d ", cons_i+1); // cons_id
+                for (j = 0; j < abc->clu_n_seq[cons_i]; ++j) { // cluter read_id
+                    if (j != 0) fprintf(out_fp, ",");
+                    fprintf(out_fp, "%d", abc->clu_read_ids[cons_i][j]);
+                }
+            }
             fprintf(out_fp, "\n");
             for (j = 0; j < abc->cons_len[cons_i]; ++j) {
                 fprintf(out_fp, "%c", abc->cons_phred_score[cons_i][j]);
@@ -587,7 +605,7 @@ int reassign_hap_by_min_w(int **clu_haps, int *clu_size, uint64_t **clu_read_ids
     for (i = 0; i < n_clu; ++i) {
         if (clu_size[i] >= min_w || clu_size[i] == 0) continue;
         int reassign_i = -1, max_iden_pos = 0;
-        for (j = 0; j < n_het_pos; ++j) {
+        for (j = 0; j < n_clu; ++j) {
             int n_iden_pos = 0;
             if (clu_size[j] < min_w) continue;
             // i < min_w, j >= min_w
@@ -661,7 +679,7 @@ int tup_cmpfunc (const void * a, const void * b) {
     return -(((clu_hap_tuple_t*)a)->size - ((clu_hap_tuple_t*)b)->size);
 }
 
-int reassign_max_n_hap(int **clu_haps, int *clu_size, uint64_t **clu_read_ids, int read_ids_n, int n_clu, int min_w, int max_n_cons, int n_het_pos) {
+int reassign_max_n_hap(int **clu_haps, int *clu_size, uint64_t **clu_read_ids, int read_ids_n, int n_clu, int min_w, int n_het_pos, int max_n_cons) {
     int i;
     clu_hap_tuple_t *tup = (clu_hap_tuple_t*)_err_malloc(n_clu * sizeof(clu_hap_tuple_t));
     int *clu_poss = (int*)_err_malloc(max_n_cons * sizeof(int));
@@ -681,7 +699,7 @@ int reassign_max_n_hap(int **clu_haps, int *clu_size, uint64_t **clu_read_ids, i
         }
         n_clu = new_n_clu;
     }
-    free(tup);
+    free(tup); free(clu_poss);
     return n_clu;
 }
 
@@ -694,9 +712,7 @@ int reassign_hap(int **clu_haps, int *clu_size, uint64_t **clu_read_ids, int rea
     int i, j, pos_i;
     for (i = pos_i = 0; i < n_clu; ++i) {
         if (clu_size[i] == 0) continue;
-        if (i == pos_i) {
-            pos_i++; continue;
-        }
+        if (i == pos_i) pos_i++; continue;
         // move i to pos_i
         for (j = 0; j < read_ids_n; ++j) {
             clu_read_ids[pos_i][j] = clu_read_ids[i][j];
@@ -775,6 +791,8 @@ int abpoa_set_het_row_column_ids_weight(abpoa_graph_t *abg, uint64_t ***read_ids
     return n_het_pos;
 }
 
+// group read into clusters based on all het bases
+// initial cluster size could be > max_n_cons
 int abpoa_collect_clu_hap_read_ids(int *het_poss, int n_het_pos, uint64_t ***read_ids, int read_ids_n, int n_seq, int m, int min_w, int max_n_cons, uint64_t ***clu_read_ids, int *_m_clu) {
     if (n_het_pos == 0) return 1;
     int i, j, k, n_clu = 0, m_clu = 2;

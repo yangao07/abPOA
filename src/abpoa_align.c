@@ -317,7 +317,7 @@ int abpoa_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int *seq_lens, in
                     abpoa_res_copy(&res, &rc_res);
                     qseq = rc_qseq;
                     abs->is_rc[read_id] = 1;
-                }
+                } else free(rc_qseq);
                 if (rc_res.n_cigar) free(rc_res.graph_cigar);
             } 
         }
