@@ -712,7 +712,9 @@ int reassign_hap(int **clu_haps, int *clu_size, uint64_t **clu_read_ids, int rea
     int i, j, pos_i;
     for (i = pos_i = 0; i < n_clu; ++i) {
         if (clu_size[i] == 0) continue;
-        if (i == pos_i) pos_i++; continue;
+        if (i == pos_i) {
+            pos_i++; continue;
+        }
         // move i to pos_i
         for (j = 0; j < read_ids_n; ++j) {
             clu_read_ids[pos_i][j] = clu_read_ids[i][j];
