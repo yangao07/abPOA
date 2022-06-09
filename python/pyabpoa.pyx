@@ -127,8 +127,11 @@ cdef class msa_aligner:
 
         self.abpt.wb = extra_b
         self.abpt.wf = extra_f 
+        self.abpt.use_qv = 0
         self.abpt.end_bonus = -1 # disable end_bonus/zdrop
         self.abpt.zdrop = -1
+        self.abpt.disable_seeding = 1
+        self.abpt.progressive_poa = 0
 
         self.seq2int_dict, self.int2seq_dict = set_seq_int_dict(self.abpt.m)
 
@@ -181,7 +184,7 @@ cdef class msa_aligner:
             res.n_cigar = 0
             abpoa_align_sequence_to_graph(self.ab, &self.abpt, bseq, seq_l, &res)
 
-            abpoa_add_graph_alignment(self.ab, &self.abpt, bseq, seq_l, NULL, res, exist_n+read_i, tot_n, 1)
+            abpoa_add_graph_alignment(self.ab, &self.abpt, bseq, NULL, seq_l, NULL, res, exist_n+read_i, tot_n, 1)
             free(bseq)
             if res.n_cigar: free(res.graph_cigar)
 

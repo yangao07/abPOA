@@ -60,7 +60,7 @@ cdef extern from "abpoa.h":
         # int simd_flag # available SIMD instruction
         # alignment mode
         uint8_t ret_cigar, rev_cigar, out_msa, out_cons, out_gfa, out_fq, use_read_ids, amb_strand # mode: 0: global, 1: local, 2: extend
-        uint8_t disable_seeding, progressive_poa
+        uint8_t use_qv, disable_seeding, progressive_poa
         char *incr_fn
         char *out_pog
         int align_mode, gap_mode, max_n_cons
@@ -75,6 +75,8 @@ cdef extern from "abpoa.h":
         int out_edge_n, out_edge_m
         int *out_id
         int *out_weight
+        int *read_weight
+        int n_read, m_read
         uint64_t **read_ids
         int read_ids_n # for diploid
         int aligned_node_n, aligned_node_m
@@ -136,7 +138,7 @@ cdef extern from "abpoa.h":
     void abpoa_free(abpoa_t *ab)
 
     # do msa for a set of input sequences
-    int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seqs, char **seq_names, int *seq_lens, uint8_t **seqs, FILE *out_fp)
+    int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seqs, char **seq_names, int *seq_lens, uint8_t **seqs, int ** qual_weights, FILE *out_fp)
     int abpoa_msa1(abpoa_t *ab, abpoa_para_t *abpt, char *read_fn, FILE *out_fp)
 
     # clean alignment graph
@@ -154,9 +156,9 @@ cdef extern from "abpoa.h":
 
     # add an alignment to a graph
     int abpoa_add_graph_node(abpoa_graph_t *abg, uint8_t base)
-    void abpoa_add_graph_edge(abpoa_graph_t *abg, int from_id, int to_id, int check_edge, int w, uint8_t add_read_id, int read_id, int read_ids_n)
-    int abpoa_add_graph_alignment(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int qlen, int *qpos_to_node_id, abpoa_res_t res, int read_id, int tot_read_n, int inc_both_ends)
-    int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *query, int qlen, int *qpos_to_node_id, abpoa_res_t res, int read_id, int tot_read_n, int inc_both_ends)
+    void abpoa_add_graph_edge(abpoa_graph_t *abg, int from_id, int to_id, int check_edge, int w, uint8_t add_read_id, uint8_t add_read_weight, int read_id, int read_ids_n, int tot_read_n)
+    int abpoa_add_graph_alignment(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int *weight, int qlen, int *qpos_to_node_id, abpoa_res_t res, int read_id, int tot_read_n, int inc_both_ends)
+    int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *query, int *weight, int qlen, int *qpos_to_node_id, abpoa_res_t res, int read_id, int tot_read_n, int inc_both_ends)
 
     void abpoa_BFS_set_node_index(abpoa_graph_t *abg, int src_id, int sink_id)
     void abpoa_BFS_set_node_remain(abpoa_graph_t *abg, int src_id, int sink_id)

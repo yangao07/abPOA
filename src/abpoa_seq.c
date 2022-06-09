@@ -504,10 +504,10 @@ int abpoa_gfa_parse_P(abpoa_graph_t *abg, abpoa_seq_t *abs, seg_seq_t *segs, int
                     out_id = kh_val(seg_name2out_id, pos);
                 }
                 // add edge
-                abpoa_add_graph_edge(abg, last_id, in_id, 1, 1, add_read_id, p_i, read_ids_n);
+                abpoa_add_graph_edge(abg, last_id, in_id, 1, 1, add_read_id, 0, p_i, read_ids_n, p_n);
                 if (in_id < out_id) {
                     for (i = 0; i < out_id - in_id; ++i)
-                        abpoa_add_graph_edge(abg, in_id+i, in_id+i+1, 1, 1, add_read_id, p_i, read_ids_n);
+                        abpoa_add_graph_edge(abg, in_id+i, in_id+i+1, 1, 1, add_read_id, 0, p_i, read_ids_n, p_n);
                 } else if (in_id > out_id) err_fatal(__func__, "Error: in_id (%d) > out_id (%d).", in_id, out_id);
 
                 last_id = out_id;
@@ -536,18 +536,18 @@ int abpoa_gfa_parse_P(abpoa_graph_t *abg, abpoa_seq_t *abs, seg_seq_t *segs, int
                 }
 
                 // add edge
-                abpoa_add_graph_edge(abg, out_id, next_id, 1, 1, add_read_id, p_i, read_ids_n);
+                abpoa_add_graph_edge(abg, out_id, next_id, 1, 1, add_read_id, 0, p_i, read_ids_n, p_n);
                 if (in_id < out_id) {
                     for (i = 0; i < out_id - in_id; ++i)
-                        abpoa_add_graph_edge(abg, in_id+i, in_id+i+1, 1, 1, add_read_id, p_i, read_ids_n);
+                        abpoa_add_graph_edge(abg, in_id+i, in_id+i+1, 1, 1, add_read_id, 0, p_i, read_ids_n, p_n);
                 } else if (in_id > out_id) err_fatal(__func__, "Error: in_id (%d) > out_id (%d).", in_id, out_id);
 
                 next_id = in_id;
                 info_s = deli_s + 2;
             } else if (*deli_s == 0 || *deli_s == '\t') break;
         }
-        if (is_rc) abpoa_add_graph_edge(abg, ABPOA_SRC_NODE_ID, next_id, 1, 1, add_read_id, p_i, read_ids_n);
-        else abpoa_add_graph_edge(abg, last_id, ABPOA_SINK_NODE_ID, 1, 1, add_read_id, p_i, read_ids_n);
+        if (is_rc) abpoa_add_graph_edge(abg, ABPOA_SRC_NODE_ID, next_id, 1, 1, add_read_id, 0, p_i, read_ids_n, p_n);
+        else abpoa_add_graph_edge(abg, last_id, ABPOA_SINK_NODE_ID, 1, 1, add_read_id, 0, p_i, read_ids_n, p_n);
         // set abs
         abpoa_realloc_seq(abs);
         abpoa_cpy_str(abs->name+abs->n_seq, path_name, path_name_len); 
@@ -582,11 +582,11 @@ int abpoa_fa_parse_seq(abpoa_graph_t *abg, abpoa_seq_t *abs, kstring_t *seq, kst
                     cur_id = aln_id;
                 }
             }
-            abpoa_add_graph_edge(abg, last_id, cur_id, 1, 1, add_read_id, p_i, read_ids_n);
+            abpoa_add_graph_edge(abg, last_id, cur_id, 1, 1, add_read_id, 0, p_i, read_ids_n, p_n);
             last_id = cur_id;
         }
     }
-    abpoa_add_graph_edge(abg, last_id, ABPOA_SINK_NODE_ID, 1, 1, add_read_id, p_i, read_ids_n);
+    abpoa_add_graph_edge(abg, last_id, ABPOA_SINK_NODE_ID, 1, 1, add_read_id, 0, p_i, read_ids_n, p_n);
     abpoa_realloc_seq(abs);
     abpoa_cpy_str(abs->name + abs->n_seq, name->s, name->l); abs->n_seq++;
     return 0;

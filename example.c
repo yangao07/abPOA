@@ -109,19 +109,26 @@ int main(void) {
     // collect sequence length, trasform ACGT to 0123
     int *seq_lens = (int*)malloc(sizeof(int) * n_seqs);
     uint8_t **bseqs = (uint8_t**)malloc(sizeof(uint8_t*) * n_seqs);
+    int **weights = (int**)malloc(sizeof(int*) * n_seqs);
     for (i = 0; i < n_seqs; ++i) {
         seq_lens[i] = strlen(seqs[i]);
         bseqs[i] = (uint8_t*)malloc(sizeof(uint8_t) * seq_lens[i]);
-        for (j = 0; j < seq_lens[i]; ++j)
+        weights[i] = (int*)malloc(sizeof(int) * seq_lens[i]);
+        for (j = 0; j < seq_lens[i]; ++j) {
             bseqs[i][j] = nt4_table[(int)seqs[i][j]];
+            if (j >= 12) weights[i][j] = 2;
+            else weights[i][j] = 0;
+        }
     }
 
     // 1. directly output to stdout
     fprintf(stdout, "=== output to stdout ===\n");
+    abpt->use_qv = 1;
     // perform abpoa-msa
-    abpoa_msa(ab, abpt, n_seqs, NULL, seq_lens, bseqs, stdout);
+    // set weights as NULL if no quality score weights are used
+    abpoa_msa(ab, abpt, n_seqs, NULL, seq_lens, bseqs, weights, stdout);
 
-    // 2. output MSA alignment and  consensus sequence stored in (abpoa_cons_t *)
+    // 2. output MSA alignment and consensus sequence stored in (abpoa_cons_t *)
     abpoa_cons_t *abc = ab->abc;
     fprintf(stdout, "=== stored in variables ===\n");
     fprintf(stdout, ">Multiple_sequence_alignment\n");
@@ -152,7 +159,8 @@ int main(void) {
     if (abpt->out_pog != NULL) abpoa_dump_pog(ab, abpt);
 
     // free seq-related variables
-    for (i = 0; i < n_seqs; ++i) free(bseqs[i]); free(bseqs); free(seq_lens);
+    for (i = 0; i < n_seqs; ++i) { free(bseqs[i]); free(weights[i]); }
+    free(bseqs); free(seq_lens); free(weights);
 
     // free abpoa-related variables
     abpoa_free(ab); abpoa_free_para(abpt); 

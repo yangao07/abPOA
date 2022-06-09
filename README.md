@@ -8,16 +8,15 @@
 [![Build Status](https://img.shields.io/travis/yangao07/abPOA/master.svg?label=Master)](https://travis-ci.org/yangao07/abPOA)
 [![License](https://img.shields.io/badge/License-MIT-black.svg)](https://github.com/yangao07/abPOA/blob/master/LICENSE)
 <!-- [![PyPI](https://img.shields.io/pypi/v/pyabpoa.svg?style=flat)](https://pypi.python.org/pypi/pyabpoa) -->
-## Updates (v1.4.0)
+## Updates (v1.4.1)
 
-- Allow to generate multiple consensus sequences from graph alignment (-d)
-- Output sequence name by default in MSA format, remove -A/--msa-header
+- Take quality score in FASTQ format file as weight (-Q)
 
 ## Getting started
 Download the [latest release](https://github.com/yangao07/abPOA/releases):
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.4.0/abPOA-v1.4.0.tar.gz
-tar -zxvf abPOA-v1.4.0.tar.gz && cd abPOA-v1.4.0
+wget https://github.com/yangao07/abPOA/releases/download/v1.4.1/abPOA-v1.4.1.tar.gz
+tar -zxvf abPOA-v1.4.1.tar.gz && cd abPOA-v1.4.1
 ```
 Make from source and run with test data:
 ```
@@ -85,9 +84,9 @@ You can also build abPOA from source files.
 Make sure you have gcc (>=6.4.0) and zlib installed before compiling.
 It is recommended to download the [latest release](https://github.com/yangao07/abPOA/releases).
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.4.0/abPOA-v1.4.0.tar.gz
-tar -zxvf abPOA-v1.4.0.tar.gz
-cd abPOA-v1.4.0; make
+wget https://github.com/yangao07/abPOA/releases/download/v1.4.1/abPOA-v1.4.1.tar.gz
+tar -zxvf abPOA-v1.4.1.tar.gz
+cd abPOA-v1.4.1; make
 ```
 Or, you can use `git clone` command to download the source code.
 This gives you the latest version of abPOA, which might be still under development.
@@ -99,8 +98,8 @@ cd abPOA; make
 ### <a name="binary"></a>Pre-built binary executable file for Linux/Unix 
 If you meet any compiling issue, please try the pre-built binary file:
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.4.0/abPOA-v1.4.0_x64-linux.tar.gz
-tar -zxvf abPOA-v1.4.0_x64-linux.tar.gz
+wget https://github.com/yangao07/abPOA/releases/download/v1.4.1/abPOA-v1.4.1_x64-linux.tar.gz
+tar -zxvf abPOA-v1.4.1_x64-linux.tar.gz
 ```
 
 ## <a name="usage"></a>General usage
@@ -250,7 +249,7 @@ With all the similarity scores (minimizer-based Jaccard similarity), abPOA build
 Then, abPOA performs partial order alignment following the order of sequences in this progressive tree set.
 
 ### <a name="mcons"></a>Multiple consensus sequences
-Since v1.4.0, abPOA supports generating multiple consensus sequences from the final alignment graph (set -d/--max-num-cons as >1).
+Since v1.4.1, abPOA supports generating multiple consensus sequences from the final alignment graph (set -d/--max-num-cons as >1).
 
 The general underlying idea is to group input sequences into multiple clusters based on the heterozygous bases in the graph,
 Then, one consensus sequence is separately generated for each cluster of input sequences.
@@ -265,9 +264,9 @@ abPOA also provides Python bindings to all the primary C APIs. Refer to [python/
 The evaluation datasets and scripts used in [abPOA paper](https://dx.doi.org/10.1093/bioinformatics/btaa963) can be found in [abPOA-v1.0.5](https://github.com/yangao07/abPOA/releases/tag/v1.0.5).
 
 ## <a name="contact"></a>Contact
-Yan Gao gaoy286@mail.sysu.edu.cn
+Yan Gao gaoy1@chop.edu
 
-Yi Xing xingyi@email.chop.edu
+Yi Xing xingyi@chop.edu
 
 Yadong Wang ydwang@hit.edu.cn
 

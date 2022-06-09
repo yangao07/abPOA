@@ -19,6 +19,7 @@ void abpoa_set_graph_node(abpoa_graph_t *abg, int node_i) {
     abg->node[node_i].in_edge_n = 0; abg->node[node_i].in_edge_m = 0;
     abg->node[node_i].out_edge_n = 0; abg->node[node_i].out_edge_m = 0;
     abg->node[node_i].aligned_node_n = 0; abg->node[node_i].aligned_node_m = 0;
+    abg->node[node_i].n_read = 0; abg->node[node_i].m_read = 0; abg->node[node_i].read_weight = NULL;
     abg->node[node_i].read_ids_n = 0;
 }
 
@@ -32,8 +33,10 @@ void abpoa_free_node(abpoa_node_t *node, int n) {
                 for (j = 0; j < node[i].out_edge_m; ++j) {
                     free(node[i].read_ids[j]);
                 } 
-            } free(node[i].read_ids);
+                free(node[i].read_ids);
+            }
         }
+        if (node[i].m_read > 0) free(node[i].read_weight);
         if (node[i].aligned_node_m > 0) free(node[i].aligned_node_id);
     }
     free(node);
@@ -49,22 +52,26 @@ abpoa_graph_t *abpoa_realloc_graph_edge(abpoa_graph_t *abg, int io, int id, int 
             abg->node[id].out_edge_m = MAX_OF_TWO(abg->node[id].out_edge_n, 1);
             abg->node[id].out_id = (int*)_err_malloc(abg->node[id].out_edge_m * sizeof(int));
             abg->node[id].out_weight = (int*)_err_malloc(abg->node[id].out_edge_m * sizeof(int));
-            abg->node[id].read_ids = (uint64_t**)_err_malloc(abg->node[id].out_edge_m * sizeof(uint64_t*));
-            if (abg->node[id].read_ids_n > 0) {
-                int i;
-                for (i = 0; i < abg->node[id].out_edge_m; ++i) {
-                    abg->node[id].read_ids[i] = (uint64_t*)_err_calloc(abg->node[id].read_ids_n, sizeof(uint64_t));
+            if (use_read_ids || abg->node[id].read_ids_n > 0) {
+                abg->node[id].read_ids = (uint64_t**)_err_malloc(abg->node[id].out_edge_m * sizeof(uint64_t*));
+                if (abg->node[id].read_ids_n > 0) {
+                    int i;
+                    for (i = 0; i < abg->node[id].out_edge_m; ++i) {
+                        abg->node[id].read_ids[i] = (uint64_t*)_err_calloc(abg->node[id].read_ids_n, sizeof(uint64_t));
+                    }
                 }
             }
         } else if (abg->node[id].out_edge_n >= edge_m) {
             abg->node[id].out_edge_m = abg->node[id].out_edge_n+1; kroundup32(abg->node[id].out_edge_m);
             abg->node[id].out_id = (int*)_err_realloc(abg->node[id].out_id, abg->node[id].out_edge_m * sizeof(int));
             abg->node[id].out_weight = (int*)_err_realloc(abg->node[id].out_weight, abg->node[id].out_edge_m * sizeof(int));
-            abg->node[id].read_ids = (uint64_t**)_err_realloc(abg->node[id].read_ids, abg->node[id].out_edge_m * sizeof(uint64_t*));
-            if (abg->node[id].read_ids_n > 0) {
-                int i;
-                for (i = edge_m; i < abg->node[id].out_edge_m; ++i) {
-                    abg->node[id].read_ids[i] = (uint64_t*)_err_calloc(abg->node[id].read_ids_n, sizeof(uint64_t));
+            if (use_read_ids || abg->node[id].read_ids_n > 0) {
+                abg->node[id].read_ids = (uint64_t**)_err_realloc(abg->node[id].read_ids, abg->node[id].out_edge_m * sizeof(uint64_t*));
+                if (abg->node[id].read_ids_n > 0) {
+                    int i;
+                    for (i = edge_m; i < abg->node[id].out_edge_m; ++i) {
+                        abg->node[id].read_ids[i] = (uint64_t*)_err_calloc(abg->node[id].read_ids_n, sizeof(uint64_t));
+                    }
                 }
             }
         }
@@ -393,10 +400,8 @@ void abpoa_add_graph_aligned_node(abpoa_graph_t *abg, int node_id, int aligned_i
     abpoa_add_graph_aligned_node1(abg->node + aligned_id, node_id);
 }
 
-//TODO
 void abpoa_set_read_id(uint64_t *read_ids, int read_id) {
     int n = read_id / 64;
-    // if ((n = read_id / 64) >= read_ids_n) err_fatal("abpoa_set_read_id", "Unexpected read id: %d\n", read_id);
     uint64_t one = 1; int b = read_id & 0x3f;
     read_ids[n] |= (one << b);
 }
@@ -410,9 +415,10 @@ int abpoa_add_graph_node(abpoa_graph_t *abg, uint8_t base) {
     return node_id;
 }
 
-int abpoa_add_graph_edge(abpoa_graph_t *abg, int from_id, int to_id, int check_edge, int w, uint8_t add_read_id, int read_id, int read_ids_n) {
+int abpoa_add_graph_edge(abpoa_graph_t *abg, int from_id, int to_id, int check_edge, int w, uint8_t add_read_id, uint8_t add_read_weight, int read_id, int read_ids_n, int tot_read_n) {
     int ret = 1;
     if (from_id < 0 || from_id >= abg->node_n || to_id < 0 || to_id >= abg->node_n) err_fatal(__func__, "node_n: %d\tfrom_id: %d\tto_id: %d.", abg->node_n, from_id, to_id);
+    // fprintf(stderr, "weigth: %d\n", w);
     int out_edge_n = abg->node[from_id].out_edge_n;
     int edge_exist = 0;
     int out_edge_i = -1;
@@ -464,10 +470,20 @@ int abpoa_add_graph_edge(abpoa_graph_t *abg, int from_id, int to_id, int check_e
         }
         abpoa_set_read_id(from_node->read_ids[out_edge_i], read_id);
     }
+    abg->node[from_id].n_read += 1;
+    if (add_read_weight) {
+        if (tot_read_n > abg->node[from_id].m_read) {
+            abg->node[from_id].read_weight = (int*)_err_realloc(abg->node[from_id].read_weight, tot_read_n * sizeof(int));
+            int i;
+            for (i = abg->node[from_id].m_read; i < tot_read_n; ++i) abg->node[from_id].read_weight[i] = 0;
+            abg->node[from_id].m_read = tot_read_n;
+        }
+        abg->node[from_id].read_weight[read_id] = w;
+    }
     return ret;
 }
 
-void abpoa_add_graph_sequence(abpoa_graph_t *abg, uint8_t *seq, int seq_l, int *qpos_to_node_id, int start, int end, uint8_t add_read_id, int read_id, int read_ids_n) {
+void abpoa_add_graph_sequence(abpoa_graph_t *abg, uint8_t *seq, int *weight, int seq_l, int *qpos_to_node_id, int start, int end, uint8_t add_read_id, uint8_t add_read_weight, int read_id, int read_ids_n, int tot_read_n) {
     if (start >= seq_l || end <= start) err_fatal(__func__, "seq_l: %d\tstart: %d\tend: %d.", seq_l, start, end);
     if (end > seq_l) end = seq_l;
 
@@ -476,11 +492,11 @@ void abpoa_add_graph_sequence(abpoa_graph_t *abg, uint8_t *seq, int seq_l, int *
     for (i = start; i < end; ++i) {
         cur_node_id = abpoa_add_graph_node(abg, seq[i]);
         if (qpos_to_node_id) qpos_to_node_id[i] = cur_node_id;
-        abpoa_add_graph_edge(abg, last_node_id, cur_node_id, 0, 1, add_read_id, read_id, read_ids_n);
+        abpoa_add_graph_edge(abg, last_node_id, cur_node_id, 0, weight[i], add_read_id, add_read_weight, read_id, read_ids_n, tot_read_n);
         last_node_id = cur_node_id;
     }
 
-    abpoa_add_graph_edge(abg, last_node_id, ABPOA_SINK_NODE_ID, 0, 1, add_read_id, read_id, read_ids_n);
+    abpoa_add_graph_edge(abg, last_node_id, ABPOA_SINK_NODE_ID, 0, weight[seq_l-1], add_read_id, add_read_weight, read_id, read_ids_n, tot_read_n);
     abg->is_called_cons = abg->is_set_msa_rank = abg->is_topological_sorted = 0;
     // abpoa_topological_sort(abg, abpt);
 }
@@ -577,25 +593,34 @@ void abpoa_subgraph_nodes(abpoa_t *ab, abpoa_para_t *abpt, int exc_beg0, int exc
 // 6. For all first/last node, link to virtual start/end node
 
 // inc_both_ends: set as 1 to add weight for edge between beg_node_id/end_node_id and internal node
-int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *seq, int seq_l, int *qpos_to_node_id, abpoa_res_t res, int read_id, int tot_read_n, int inc_both_ends) {
+int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *seq, int *_weight, int seq_l, int *qpos_to_node_id, abpoa_res_t res, int read_id, int tot_read_n, int inc_both_ends) {
     abpoa_graph_t *abg = ab->abg;
     int n_cigar = res.n_cigar; abpoa_cigar_t *abpoa_cigar = res.graph_cigar;
     int read_ids_n = 1 + ((tot_read_n-1) >> 6);
-    uint8_t add_read_id = abpt->use_read_ids, add, w=1;
+    uint8_t add_read_id = abpt->use_read_ids, add_read_weight = abpt->use_qv & (abpt->max_n_cons>1), add;
+    int i, *weight;
+    if (_weight == NULL) {
+        weight = (int*)_err_malloc(seq_l * sizeof(int));
+        for (i = 0; i < seq_l; ++i) weight[i] = 1;
+    } else weight = _weight;
+
     if (abg->node_n == 2) { // empty graph
-        abpoa_add_graph_sequence(abg, seq, seq_l, qpos_to_node_id, 0, seq_l, add_read_id, read_id, read_ids_n);
+        abpoa_add_graph_sequence(abg, seq, weight, seq_l, qpos_to_node_id, 0, seq_l, add_read_id, add_read_weight, read_id, read_ids_n, tot_read_n);
+        if (_weight == NULL) free(weight);
         return 0;
     } else {
         if (abg->node_n < 2) {
             err_fatal(__func__, "Graph node: %d.", abg->node_n);
         } else if (n_cigar == 0) {
+            if (_weight == NULL) free(weight);
             return 0;
             //err_fatal(__func__, "Empty graph cigar.");
         }
     }
     // normal graph, normal graph_cigar
-    int i, j; int op, len;
+    int j; int op, len;
     int node_id, query_id=-1, last_new = 0, last_id = beg_node_id, new_id, aligned_id;
+
 
     for (i = 0; i < n_cigar; ++i) {
         op = abpoa_cigar[i] & 0xf;
@@ -606,19 +631,19 @@ int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_i
                 // check if query base is identical to node_id's aligned node
                 if ((aligned_id = abpoa_get_aligned_id(abg, node_id, seq[query_id])) != -1) {
                     if (last_id != beg_node_id || inc_both_ends) add = 1; else add = 0;
-                    abpoa_add_graph_edge(abg, last_id, aligned_id, 1-last_new, w, add_read_id&add, read_id, read_ids_n);
+                    abpoa_add_graph_edge(abg, last_id, aligned_id, 1-last_new, weight[query_id], add_read_id&add, add_read_weight, read_id, read_ids_n, tot_read_n);
                     last_id = aligned_id; last_new = 0;
                 } else {
                     new_id = abpoa_add_graph_node(abg, seq[query_id]);
                     if (last_id != beg_node_id || inc_both_ends) add = 1; else add = 0;
-                    abpoa_add_graph_edge(abg, last_id, new_id, 0, w, add_read_id&add, read_id, read_ids_n);
+                    abpoa_add_graph_edge(abg, last_id, new_id, 0, weight[query_id], add_read_id&add, add_read_weight, read_id, read_ids_n, tot_read_n);
                     last_id = new_id; last_new = 1;
                     // add new_id to node_id's aligned node
                     abpoa_add_graph_aligned_node(abg, node_id, new_id);
                 }
             } else { // match
                 if (last_id != beg_node_id || inc_both_ends) add = 1; else add = 0;
-                abpoa_add_graph_edge(abg, last_id, node_id, 1-last_new, w, add_read_id&add, read_id, read_ids_n);
+                abpoa_add_graph_edge(abg, last_id, node_id, 1-last_new, weight[query_id], add_read_id&add, add_read_weight, read_id, read_ids_n, tot_read_n);
                 last_id = node_id; last_new = 0;
             }
             if (qpos_to_node_id) qpos_to_node_id[query_id] = last_id;
@@ -628,7 +653,7 @@ int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_i
             for (j = len-1; j >= 0; --j) { // XXX use dynamic id, instead of static query_id
                 new_id = abpoa_add_graph_node(abg, seq[query_id-j]);
                 if (last_id != beg_node_id || inc_both_ends) add = 1; else add = 0;
-                abpoa_add_graph_edge(abg, last_id, new_id, 0, w, add_read_id&add, read_id, read_ids_n);
+                abpoa_add_graph_edge(abg, last_id, new_id, 0, weight[query_id-j], add_read_id&add, add_read_weight, read_id, read_ids_n, tot_read_n);
                 last_id = new_id; last_new = 1;
                 if (qpos_to_node_id) qpos_to_node_id[query_id-j] = last_id;
             }
@@ -639,14 +664,15 @@ int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_i
     } 
     // if (inc_both_ends) add = 1; else add = 0; XXX end_node_id is always excluded when adding weight
     // abpoa_add_graph_edge(abg, last_id, end_node_id, 1-last_new, w, add_read_id&add, read_id, read_ids_n);
-    abpoa_add_graph_edge(abg, last_id, end_node_id, 1-last_new, w, add_read_id, read_id, read_ids_n);
+    abpoa_add_graph_edge(abg, last_id, end_node_id, 1-last_new, weight[seq_l-1], add_read_id, add_read_weight, read_id, read_ids_n, tot_read_n);
     abg->is_called_cons = abg->is_topological_sorted = 0;
     // abpoa_topological_sort(abg, abpt);
+    if (_weight == NULL) free(weight);
     return 0;
 }
 
-int abpoa_add_graph_alignment(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *seq, int seq_l, int *qpos_to_node_id, abpoa_res_t res, int read_id, int tot_read_n, int inc_both_ends) {
-    return abpoa_add_subgraph_alignment(ab, abpt, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, seq, seq_l, qpos_to_node_id, res, read_id, tot_read_n, inc_both_ends);
+int abpoa_add_graph_alignment(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *seq, int *weight, int seq_l, int *qpos_to_node_id, abpoa_res_t res, int read_id, int tot_read_n, int inc_both_ends) {
+    return abpoa_add_subgraph_alignment(ab, abpt, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, seq, weight, seq_l, qpos_to_node_id, res, read_id, tot_read_n, inc_both_ends);
 }
 
 // reset allocated memery everytime init the graph
@@ -661,6 +687,7 @@ void abpoa_reset(abpoa_t *ab, abpoa_para_t *abpt, int qlen) {
             for (k = 0; k < abg->node[i].read_ids_n; ++k) abg->node[i].read_ids[j][k] = 0;
         }
         abg->node[i].in_edge_n = abg->node[i].out_edge_n = abg->node[i].aligned_node_n = 0;
+        abg->node[i].n_read = 0;
             
     }
     abg->node_n = 2;

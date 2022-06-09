@@ -113,7 +113,7 @@ int main(void) {
         else exc_beg = 0, exc_end = 1;
         fprintf(stderr, "i: %d, beg: %d, end: %d\n", i, exc_beg, exc_end);
         abpoa_align_sequence_to_subgraph(ab, abpt, exc_beg, exc_end, bseqs[i], seq_lens[i], &res);
-        abpoa_add_subgraph_alignment(ab, abpt, exc_beg, exc_end, bseqs[i], seq_lens[i], NULL, res, i, n_seqs, 0);
+        abpoa_add_subgraph_alignment(ab, abpt, exc_beg, exc_end, bseqs[i], NULL, seq_lens[i], NULL, res, i, n_seqs, 0);
         if (res.n_cigar) free(res.graph_cigar);
     }
 

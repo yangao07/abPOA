@@ -275,32 +275,51 @@ int abpoa_cons_phred_score(int n_cov, int n_seq) {
     return (33 + (int)(-10 * log10(p) + 0.499));
 }
 
-int get_read_ids_clu_weight(uint64_t *cur_read_ids, int read_ids_n, uint64_t *clu_read_ids) {
+int get_read_ids_clu_count(uint64_t *cur_read_ids, int read_ids_n, uint64_t *clu_read_ids) {
+    int n = 0, i; uint64_t b;
+    for (i = 0; i < read_ids_n; ++i) {
+        b = cur_read_ids[i] & clu_read_ids[i];
+        n += get_bit_cnt4(ab_bit_table16, b);
+    }
+    return n;
+}
+
+int get_read_ids_clu_weight(uint64_t *cur_read_ids, int read_ids_n, uint64_t *clu_read_ids, uint8_t use_qv, int *read_weight, int m_read) {
+    if (use_qv == 0) return get_read_ids_clu_count(cur_read_ids, read_ids_n, clu_read_ids);
     int w = 0, i; uint64_t b;
     for (i = 0; i < read_ids_n; ++i) {
         b = cur_read_ids[i] & clu_read_ids[i];
+
         w += get_bit_cnt4(ab_bit_table16, b);
+    }
+    uint64_t one = 1;
+    for (i = 0; i < m_read; ++i) {
+        if (read_weight[i] > 0) {
+            int n = i / 64, b = i & 0x3f;
+            if ((cur_read_ids[n] & clu_read_ids[n] & (one << b)) > 0)
+                w += read_weight[i];
+        }
     }
     return w;
 }
 
 int abpoa_consensus_cov(abpoa_graph_t *abg, int id, uint64_t *clu_read_ids) {
-    int i, j, in_id, left_w, right_w;
+    int i, j, in_id, left_n, right_n;
     // for each id: get max{left_weigth, right_weight}
-    left_w = right_w = 0;
+    left_n = right_n = 0;
     for (i = 0; i < abg->node[id].in_edge_n; ++i) {
         in_id = abg->node[id].in_id[i];
         for (j = 0; j < abg->node[in_id].out_edge_n; ++j) {
             if (abg->node[in_id].out_id[j] == id) {
-                left_w += get_read_ids_clu_weight(abg->node[in_id].read_ids[j], abg->node[in_id].read_ids_n, clu_read_ids);
+                left_n += get_read_ids_clu_count(abg->node[in_id].read_ids[j], abg->node[in_id].read_ids_n, clu_read_ids);
                 break;
             }
         }
     }
     for (i = 0; i < abg->node[id].out_edge_n; ++i) {
-        right_w += get_read_ids_clu_weight(abg->node[id].read_ids[i], abg->node[id].read_ids_n, clu_read_ids);
+        right_n += get_read_ids_clu_count(abg->node[id].read_ids[i], abg->node[id].read_ids_n, clu_read_ids);
     }
-    return MAX_OF_TWO(left_w, right_w);
+    return MAX_OF_TWO(left_n, right_n);
 }
 
 void abpoa_set_hb_cons(abpoa_graph_t *abg, int **max_out_id, int n_cons, uint64_t **clu_read_ids, int src_id, int sink_id, abpoa_cons_t *abc) {
@@ -321,33 +340,14 @@ void abpoa_set_hb_cons(abpoa_graph_t *abg, int **max_out_id, int n_cons, uint64_
     }
 }
 
-int abpoa_consensus_cov1(abpoa_graph_t *abg, int id) {
-    int i, j, in_id, left_w, right_w;
-    // for each id: get max{left_weigth, right_weight}
-    left_w = right_w = 0;
-    for (i = 0; i < abg->node[id].in_edge_n; ++i) {
-        in_id = abg->node[id].in_id[i];
-        for (j = 0; j < abg->node[in_id].out_edge_n; ++j) {
-            if (abg->node[in_id].out_id[j] == id) {
-                left_w += abg->node[in_id].out_weight[j];
-                break;
-            }
-        }
-    }
-    for (i = 0; i < abg->node[id].out_edge_n; ++i) {
-        right_w += abg->node[id].out_weight[i];
-    }
-    return MAX_OF_TWO(left_w, right_w);
-}
-
 void abpoa_set_hb_cons1(abpoa_graph_t *abg, int *max_out_id, int src_id, int sink_id, abpoa_cons_t *abc) {
-    int i = 0, cur_id; 
+    int i = 0, cur_id;
     abc->n_cons = 1;
     cur_id = max_out_id[src_id];
     while (cur_id != sink_id) {
         abc->cons_node_ids[0][i] = cur_id;
         abc->cons_base[0][i] = abg->node[cur_id].base;
-        abc->cons_cov[0][i] = abpoa_consensus_cov1(abg, cur_id);
+        abc->cons_cov[0][i] = abg->node[cur_id].n_read;
         abc->cons_phred_score[0][i] = abpoa_cons_phred_score(abc->cons_cov[0][i], abc->n_seq);
         cur_id = max_out_id[cur_id];
         ++i;
@@ -426,7 +426,7 @@ void set_clu_read_ids(abpoa_cons_t *abc, uint64_t **read_ids, int cons_i, int n_
         err_fatal(__func__, "Error in set cluster read ids. (%d, %d)", n, abc->clu_n_seq[cons_i]);
 }
 
-void abpoa_multip_heaviest_bundling(abpoa_graph_t *abg, int src_id, int sink_id, int *out_degree, int n_clu, int read_ids_n, uint64_t **clu_read_ids, abpoa_cons_t *abc) {
+void abpoa_multip_heaviest_bundling(abpoa_graph_t *abg, abpoa_para_t *abpt, int src_id, int sink_id, int *out_degree, int n_clu, int read_ids_n, uint64_t **clu_read_ids, abpoa_cons_t *abc) {
     int *id, cons_i, i, cur_id, in_id, out_id, max_id; int max_w, out_w;
 
     int *_out_degree = (int*)_err_malloc(abg->node_n * sizeof(int));
@@ -452,8 +452,8 @@ void abpoa_multip_heaviest_bundling(abpoa_graph_t *abg, int src_id, int sink_id,
                     int path_score = -1, path_max_w = -1;
                     for (i = 0; i < abg->node[cur_id].out_edge_n; ++i) {
                         out_id = abg->node[cur_id].out_id[i];
-                        out_w = get_read_ids_clu_weight(abg->node[cur_id].read_ids[i], abg->node[cur_id].read_ids_n, clu_read_ids[cons_i]);
-                        out_w = abg->node[cur_id].out_weight[i];
+                        out_w = get_read_ids_clu_weight(abg->node[cur_id].read_ids[i], abg->node[cur_id].read_ids_n, clu_read_ids[cons_i], abpt->use_qv, abg->node[cur_id].read_weight, abg->node[cur_id].m_read);
+                        // out_w = abg->node[cur_id].out_weight[i];
                         if (out_w > path_max_w || (out_w == path_max_w && score[out_id] > path_score)) {
                             max_id = out_id;
                             path_score = score[out_id];
@@ -467,7 +467,7 @@ void abpoa_multip_heaviest_bundling(abpoa_graph_t *abg, int src_id, int sink_id,
                     max_w = INT32_MIN;
                     for (i = 0; i < abg->node[cur_id].out_edge_n; ++i) {
                         out_id = abg->node[cur_id].out_id[i];
-                        out_w = get_read_ids_clu_weight(abg->node[cur_id].read_ids[i], abg->node[cur_id].read_ids_n, clu_read_ids[cons_i]);
+                        out_w = get_read_ids_clu_weight(abg->node[cur_id].read_ids[i], abg->node[cur_id].read_ids_n, clu_read_ids[cons_i], abpt->use_qv, abg->node[cur_id].read_weight, abg->node[cur_id].m_read);
                         if (max_w < out_w) {
                             max_w = out_w;
                             max_id = out_id;
@@ -679,7 +679,7 @@ int tup_cmpfunc (const void * a, const void * b) {
     return -(((clu_hap_tuple_t*)a)->size - ((clu_hap_tuple_t*)b)->size);
 }
 
-int reassign_max_n_hap(int **clu_haps, int *clu_size, uint64_t **clu_read_ids, int read_ids_n, int n_clu, int min_w, int n_het_pos, int max_n_cons) {
+int reassign_max_n_hap(int **clu_haps, int *clu_size, uint64_t **clu_read_ids, int read_ids_n, int n_clu, int n_het_pos, int max_n_cons) {
     int i;
     clu_hap_tuple_t *tup = (clu_hap_tuple_t*)_err_malloc(n_clu * sizeof(clu_hap_tuple_t));
     int *clu_poss = (int*)_err_malloc(max_n_cons * sizeof(int));
@@ -707,7 +707,7 @@ int reassign_hap(int **clu_haps, int *clu_size, uint64_t **clu_read_ids, int rea
     // assign haplotype with reads < min_w to haplotype with reads >= min_w
     int new_n_clu = reassign_hap_by_min_w(clu_haps, clu_size, clu_read_ids, read_ids_n, n_clu, min_w, n_het_pos);
     if (new_n_clu > max_n_cons) // keep at most _max_n_cons_
-        new_n_clu = reassign_max_n_hap(clu_haps, clu_size, clu_read_ids, read_ids_n, n_clu, min_w, n_het_pos, max_n_cons);
+        new_n_clu = reassign_max_n_hap(clu_haps, clu_size, clu_read_ids, read_ids_n, n_clu, n_het_pos, max_n_cons);
     // move max_n_cons to the front
     int i, j, pos_i;
     for (i = pos_i = 0; i < n_clu; ++i) {
@@ -726,6 +726,7 @@ int reassign_hap(int **clu_haps, int *clu_size, uint64_t **clu_read_ids, int rea
     return pos_i;
 }
 
+// read_weight is NOT used here, no matter use_qv is set or not.
 // collect minimized set of het bases
 int abpoa_set_het_row_column_ids_weight(abpoa_graph_t *abg, uint64_t ***read_ids, int *het_poss, int **rc_weight, int msa_l, int n_seq, int m, int min_w, int read_ids_n) {
     int i, j, k, n, rank;
@@ -751,7 +752,7 @@ int abpoa_set_het_row_column_ids_weight(abpoa_graph_t *abg, uint64_t ***read_ids
             else node_map[out_id] = 1;
             int sum_out_w = 0;
             for (k = 0; k < abg->node[out_id].out_edge_n; ++k)
-                sum_out_w += abg->node[out_id].out_weight[k];
+                sum_out_w += abg->node[out_id].n_read;
             if (sum_out_w < min_w || sum_out_w > n_seq-min_w) continue;
             rank = abpoa_graph_node_id_to_msa_rank(abg, out_id); 
             n_branch[rank-1] += 1;
@@ -855,11 +856,12 @@ int abpoa_collect_clu_hap_read_ids(int *het_poss, int n_het_pos, uint64_t ***rea
     return n_clu;
 }
 
+// read_weight is NOT used here
 // cluster reads into _n_clu_ groups based on heterogeneous bases
 int abpoa_multip_read_clu(abpoa_graph_t *abg, int src_id, int sink_id, int n_seq, int m, int max_n_cons, double min_freq, uint64_t ***clu_read_ids, int *_m_clu) {
     abpoa_set_msa_rank(abg, src_id, sink_id);
     int i, j, n_clu, m_clu, read_ids_n = (n_seq-1)/64+1;
-    int msa_l = abg->node_id_to_msa_rank[sink_id]-1, min_w = MAX_OF_TWO(1, n_seq * min_freq);
+    int msa_l = abg->node_id_to_msa_rank[sink_id]-1, min_w = MAX_OF_TWO(1, n_seq * min_freq); // TODO fastq-qual weight
     
     // read_ids: support reads for each base (A/C/G/T) at each position
     uint64_t ***read_ids = (uint64_t***)_err_malloc(sizeof(uint64_t**) * msa_l);
@@ -910,7 +912,7 @@ void abpoa_generate_consensus(abpoa_t *ab, abpoa_para_t *abpt) {
     abpoa_cons_t *abc = ab->abc;
     abpoa_allocate_cons(abc, abg->node_n, ab->abs->n_seq, n_clu);
     if (n_clu > 1) {
-         abpoa_multip_heaviest_bundling(abg, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, out_degree, n_clu, read_ids_n, clu_read_ids, abc);
+         abpoa_multip_heaviest_bundling(abg, abpt, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, out_degree, n_clu, read_ids_n, clu_read_ids, abc);
         for (i = 0; i < m_clu; ++i) free(clu_read_ids[i]); free(clu_read_ids);
     } else {
         abpoa_heaviest_bundling(abg, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, out_degree, abc);

@@ -126,6 +126,7 @@ abpoa_para_t *abpoa_init_para(void) {
     abpt->gap_ext1 = ABPOA_GAP_EXT1;
     abpt->gap_ext2 = ABPOA_GAP_EXT2;
 
+    abpt->use_qv = 0;
     abpt->disable_seeding = 1; // no seeding by default
     abpt->k = ABPOA_MMK;
     abpt->w = ABPOA_MMW;
@@ -188,13 +189,13 @@ int abpoa_align_sequence_to_graph(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *quer
     return 0;
 }
 
-int abpoa_anchor_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int *seq_lens, ab_u64_v par_anchors, int *par_c, int *tpos_to_node_id, int *qpos_to_node_id, int *read_id_map, int exist_n_seq, int n_seq) {
+int abpoa_anchor_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int **weights, int *seq_lens, ab_u64_v par_anchors, int *par_c, int *tpos_to_node_id, int *qpos_to_node_id, int *read_id_map, int exist_n_seq, int n_seq) {
     // err_func_format_printf(__func__, "Performing POA between anchors ...");
     abpoa_res_t res; int read_id, last_read_id = -1, m_c = 0, k = abpt->k, qlen;
     abpoa_seq_t *abs = ab->abs;
     int *tmp;
     int i, _i, ai, j, tot_n_seq = exist_n_seq + n_seq;
-    uint8_t *qseq; abpoa_res_t whole_res;
+    uint8_t *qseq; int *weight; abpoa_res_t whole_res;
     // uint8_t *seq1;
     for (_i = 0; _i < n_seq; ++_i) {
         i = read_id_map[_i]; read_id = exist_n_seq + i; qlen = seq_lens[i]; whole_res.n_cigar = 0, whole_res.m_cigar = 0, whole_res.graph_cigar = 0;
@@ -210,9 +211,11 @@ int abpoa_anchor_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int *seq_l
             // construct rc qseq
             if (abs->is_rc[read_id]) {
                 qseq = (uint8_t*)_err_malloc(qlen * sizeof(uint8_t));
+                weight = (int*)_err_malloc(qlen * sizeof(int));
                 for (j = 0; j < qlen; ++j) {
                     if (seqs[i][qlen-j-1] < 4) qseq[j] = 3 - seqs[i][qlen-j-1];
                     else qseq[j] = 4;
+                    weight[j] = weights[i][qlen-j-1];
                 }
                 if (abs->is_rc[last_read_id]) { // reset tpos/qpos in par_anchors
                     int last_qlen = seq_lens[read_id_map[_i-1]];
@@ -228,6 +231,7 @@ int abpoa_anchor_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int *seq_l
                 }
             } else { 
                 qseq = seqs[i];
+                weight = weights[i];
                 if (abs->is_rc[last_read_id]) { // reset tpos/qpos in par_anchors 
                     int last_qlen = seq_lens[read_id_map[_i-1]];
                     for (j = ai; j < par_c[_i]; ++j) {
@@ -241,7 +245,9 @@ int abpoa_anchor_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int *seq_l
                     }
                 }
             }
-        } else abs->is_rc[read_id] = 0, qseq = seqs[i];
+        } else {
+            abs->is_rc[read_id] = 0, qseq = seqs[i]; weight = weights[i];
+        }
 
         for (; ai < par_c[_i]; ++ai) {
             end_tpos = ((par_anchors.a[ai] >> 32) & 0x7fffffff) - k + 1; end_id = tpos_to_node_id[end_tpos];
@@ -279,9 +285,10 @@ int abpoa_anchor_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int *seq_l
         abpoa_push_whole_cigar(&whole_res.n_cigar, &whole_res.m_cigar, &whole_res.graph_cigar, res.n_cigar, res.graph_cigar);
         if (res.n_cigar) free(res.graph_cigar);
 
-        abpoa_add_subgraph_alignment(ab, abpt, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, qseq, qlen, qpos_to_node_id, whole_res, read_id, tot_n_seq, 1);
-        if (abs->is_rc[read_id]) free(qseq);
-
+        abpoa_add_subgraph_alignment(ab, abpt, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, qseq, weight, qlen, qpos_to_node_id, whole_res, read_id, tot_n_seq, 1);
+        if (abs->is_rc[read_id]) {
+            free(qseq); free(weight);
+        }
         if (whole_res.n_cigar) free(whole_res.graph_cigar);
 
         tmp = qpos_to_node_id; qpos_to_node_id = tpos_to_node_id; tpos_to_node_id = tmp;
@@ -292,14 +299,14 @@ int abpoa_anchor_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int *seq_l
 }
 
 // simply partial order alignment, no seeding-based anchor or progressive tree
-int abpoa_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int *seq_lens, int exist_n_seq, int n_seq) {
+int abpoa_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int **weights, int *seq_lens, int exist_n_seq, int n_seq) {
     // err_func_format_printf(__func__, "Performing POA ...");
     abpoa_seq_t *abs = ab->abs;
     abpoa_res_t res; int i, j, read_id, qlen, tot_n_seq = exist_n_seq + n_seq;
-    uint8_t *qseq, *rc_qseq;
+    uint8_t *qseq, *rc_qseq; int *weight, *rc_weight;
     // uint8_t *seq1;
     for (i = 0; i < n_seq; ++i) {
-        qlen = seq_lens[i]; qseq = seqs[i]; read_id = exist_n_seq + i;
+        qlen = seq_lens[i]; qseq = seqs[i]; weight = weights[i]; read_id = exist_n_seq + i;
 #ifdef __DEBUG__
         fprintf(stderr, "seq: # %d\n", i);
 #endif
@@ -311,18 +318,25 @@ int abpoa_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int *seq_lens, in
                     if (qseq[qlen-j-1] < 4) rc_qseq[j] = 3 - qseq[qlen-j-1];
                     else rc_qseq[j] = 4;
                 }
+                rc_weight = (int*)_err_malloc(sizeof(int) * qlen);
+                for (j = 0; j < qlen; ++j) {
+                    rc_weight[j] = weight[qlen-j-1];
+                }
                 abpoa_res_t rc_res; rc_res.n_cigar = 0, rc_res.graph_cigar = 0;
                 simd_abpoa_align_sequence_to_graph(ab, abpt, rc_qseq, qlen, &rc_res);
                 if (rc_res.best_score > res.best_score) {
                     abpoa_res_copy(&res, &rc_res);
                     qseq = rc_qseq;
+                    weight = rc_weight;
                     abs->is_rc[read_id] = 1;
-                } else free(rc_qseq);
+                } else {
+                    free(rc_qseq); free(rc_weight);
+                }
                 if (rc_res.n_cigar) free(rc_res.graph_cigar);
             } 
         }
-        abpoa_add_graph_alignment(ab, abpt, qseq, qlen, NULL, res, read_id, tot_n_seq, 1);
-        if (abs->is_rc[read_id]) free(qseq);
+        abpoa_add_graph_alignment(ab, abpt, qseq, weight, qlen, NULL, res, read_id, tot_n_seq, 1);
+        if (abs->is_rc[read_id]) { free(qseq); free(weight); }
         if (res.n_cigar) free(res.graph_cigar);
     }
     // err_func_format_printf(__func__, "Performing POA ... done.");
@@ -356,7 +370,7 @@ void abpoa_output(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp) {
 //    n_seq: number of input sequences
 //    seq_len: array of input sequence length, size: seq_n
 //    seqs: array of input sequences, 0123 for ACGT, size: seq_n * seq_len[]
-int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seq, char **seq_names, int *seq_lens, uint8_t **seqs, FILE *out_fp) {
+int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seq, char **seq_names, int *seq_lens, uint8_t **seqs, int **qual_weights, FILE *out_fp) {
     if ((!abpt->out_msa && !abpt->out_cons && !abpt->out_gfa) || n_seq <= 0) return 0;
     abpoa_reset(ab, abpt, 1024);
     if (abpt->incr_fn) abpoa_restore_graph(ab, abpt); // restore existing graph
@@ -381,9 +395,18 @@ int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seq, char **seq_names, int 
         if (seq_lens[i] > max_len) max_len = seq_lens[i];
     }
 
+    int j, **weights = (int**)_err_malloc(n_seq * sizeof(int*));
+    for (i = 0; i < n_seq; ++i) {
+        weights[i] = (int*)_err_malloc(seq_lens[i] * sizeof(int));
+        if (abpt->use_qv && qual_weights != NULL && qual_weights[i] != NULL) {
+            for (j = 0; j < seq_lens[i]; ++j) weights[i][j] = (int)qual_weights[i][j];
+        } else {
+            for (j = 0; j < seq_lens[i]; ++j) weights[i][j] = 1;
+        }
+    }
 
     if ((abpt->disable_seeding && abpt->progressive_poa==0) || abpt->align_mode != ABPOA_GLOBAL_MODE) {
-        abpoa_poa(ab, abpt, seqs, seq_lens, exist_n_seq, n_seq);
+        abpoa_poa(ab, abpt, seqs, weights, seq_lens, exist_n_seq, n_seq);
     } else {
         // sequence pos to node id
         int *tpos_to_node_id = (int*)_err_calloc(max_len, sizeof(int)), *qpos_to_node_id = (int*)_err_calloc(max_len, sizeof(int));
@@ -402,13 +425,14 @@ int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seq, char **seq_names, int 
         }
 
         // perform partial order alignment
-        abpoa_anchor_poa(ab, abpt, seqs, seq_lens, par_anchors, par_c, tpos_to_node_id, qpos_to_node_id, read_id_map, exist_n_seq, n_seq);
+        abpoa_anchor_poa(ab, abpt, seqs, weights, seq_lens, par_anchors, par_c, tpos_to_node_id, qpos_to_node_id, read_id_map, exist_n_seq, n_seq);
         free(read_id_map); free(tpos_to_node_id); free(qpos_to_node_id); free(par_c);
         if (par_anchors.m > 0) free(par_anchors.a);
     }
 
     // output
     abpoa_output(ab, abpt, out_fp);
+    for (i = 0; i < n_seq; ++i) free(weights[i]); free(weights);
     return 0;
 }
 
@@ -431,13 +455,20 @@ int abpoa_msa1(abpoa_t *ab, abpoa_para_t *abpt, char *read_fn, FILE *out_fp) {
     // set seqs, seq_lens
     extern char ab_char26_table[256];
     uint8_t **seqs = (uint8_t**)_err_malloc(n_seq * sizeof(uint8_t*)); int *seq_lens = (int*)_err_malloc(n_seq * sizeof(int));
+    int **weights = (int**)_err_malloc(n_seq * sizeof(int*));
     for (i = 0; i < n_seq; ++i) {
         seq_lens[i] = abs->seq[exist_n_seq+i].l;
         seqs[i] = (uint8_t*)_err_malloc(sizeof(uint8_t) * seq_lens[i]);
+        weights[i] = (int*)_err_malloc(sizeof(int) * seq_lens[i]);
         for (j = 0; j < seq_lens[i]; ++j) seqs[i][j] = ab_char26_table[(int)abs->seq[exist_n_seq+i].s[j]];
+        if (abpt->use_qv && abs->qual[exist_n_seq+i].l > 0) {
+            for (j = 0; j < seq_lens[i]; ++j) weights[i][j] = (int)abs->qual[exist_n_seq+i].s[j]-32;
+        } else {
+            for (j = 0; j < seq_lens[i]; ++j) weights[i][j] = 1;
+        }
     }
     if ((abpt->disable_seeding && abpt->progressive_poa==0) || abpt->align_mode != ABPOA_GLOBAL_MODE) {
-        abpoa_poa(ab, abpt, seqs, seq_lens, exist_n_seq, n_seq);
+        abpoa_poa(ab, abpt, seqs, weights, seq_lens, exist_n_seq, n_seq);
     } else {
         // sequence pos to node id
         int *tpos_to_node_id = (int*)_err_calloc(max_len, sizeof(int)), *qpos_to_node_id = (int*)_err_calloc(max_len, sizeof(int));
@@ -456,7 +487,7 @@ int abpoa_msa1(abpoa_t *ab, abpoa_para_t *abpt, char *read_fn, FILE *out_fp) {
             // set tpos_to_node_id
             //
         }
-        abpoa_anchor_poa(ab, abpt, seqs, seq_lens, par_anchors, par_c, tpos_to_node_id, qpos_to_node_id, read_id_map, exist_n_seq, n_seq);
+        abpoa_anchor_poa(ab, abpt, seqs, weights, seq_lens, par_anchors, par_c, tpos_to_node_id, qpos_to_node_id, read_id_map, exist_n_seq, n_seq);
         free(read_id_map); free(tpos_to_node_id); free(qpos_to_node_id); free(par_c);
         if (par_anchors.m > 0) free(par_anchors.a);
     }
@@ -465,6 +496,8 @@ int abpoa_msa1(abpoa_t *ab, abpoa_para_t *abpt, char *read_fn, FILE *out_fp) {
     abpoa_output(ab, abpt, out_fp);
 
     kseq_destroy(ks); gzclose(readfp);
-    for (i = 0; i < n_seq; ++i) free(seqs[i]); free(seqs); free(seq_lens);
+    for (i = 0; i < n_seq; ++i) {
+        free(seqs[i]); free(weights[i]);
+    } free(seqs); free(weights); free(seq_lens);
     return 0;
 }

@@ -70,7 +70,7 @@ typedef struct {
     // int simd_flag; // available SIMD instruction
     // alignment mode
     uint8_t ret_cigar:1, rev_cigar:1, out_msa:1, out_cons:1, out_gfa:1, out_fq:1, use_read_ids:1, amb_strand:1;
-    uint8_t disable_seeding:1, progressive_poa:1;
+    uint8_t use_qv:1, disable_seeding:1, progressive_poa:1;
     char *incr_fn, *out_pog;
     int align_mode, gap_mode, max_n_cons;
     double min_freq; // for multiploid data
@@ -84,6 +84,7 @@ typedef struct {
     int node_id;
     int in_edge_n, in_edge_m, *in_id;
     int out_edge_n, out_edge_m, *out_id; int *out_weight;
+    int *read_weight, n_read, m_read; // weight of each read, valid when use_qv=1
     uint64_t **read_ids; int read_ids_n; // for each edge
 
     int aligned_node_n, aligned_node_m, *aligned_node_id; // mismatch; aligned node will have same rank
@@ -144,7 +145,7 @@ abpoa_t *abpoa_init(void);
 void abpoa_free(abpoa_t *ab);
 
 // perform msa
-int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seqs, char **seq_names, int *seq_lens, uint8_t **seqs, FILE *out_fp);
+int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seqs, char **seq_names, int *seq_lens, uint8_t **seqs, int **qual_weights, FILE *out_fp);
 
 int abpoa_msa1(abpoa_t *ab, abpoa_para_t *abpt, char *read_fn, FILE *out_fp);
 
@@ -173,7 +174,7 @@ int abpoa_add_graph_node(abpoa_graph_t *abg, uint8_t base);
 //   add_read_id: set as 1 if read_id is used (to use row-column algorithm/generate MSA result/multiple consensus)
 //   read_id: is of sequence
 //   read_ids_n: size of read_id array, each one is 64-bit (1+(tot_read_n-1)/64)
-int abpoa_add_graph_edge(abpoa_graph_t *abg, int from_id, int to_id, int check_edge, int w, uint8_t add_read_id, int read_id, int read_ids_n);
+int abpoa_add_graph_edge(abpoa_graph_t *abg, int from_id, int to_id, int check_edge, int w, uint8_t add_read_id, uint8_t add_read_weight, int read_id, int read_ids_n, int tot_read_n);
 
 // add an alignment to a graph
 // para:
@@ -182,8 +183,8 @@ int abpoa_add_graph_edge(abpoa_graph_t *abg, int from_id, int to_id, int check_e
 //   n_cigar/abpoa_cigar: from alignment result (abpoa_res_t)
 //   read_id: id of sequence
 //   tot_read_n: total number of sequence
-int abpoa_add_graph_alignment(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int qlen, int *qpos_to_node_id, abpoa_res_t res, int read_id, int tot_read_n, int inc_both_ends);
-int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *query, int qlen, int *qpos_to_node_id, abpoa_res_t res, int read_id, int tot_read_n, int inc_both_ends);
+int abpoa_add_graph_alignment(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int *weight, int qlen, int *qpos_to_node_id, abpoa_res_t res, int read_id, int tot_read_n, int inc_both_ends);
+int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *query, int *weight, int qlen, int *qpos_to_node_id, abpoa_res_t res, int read_id, int tot_read_n, int inc_both_ends);
 
 void abpoa_BFS_set_node_index(abpoa_graph_t *abg, int src_id, int sink_id);
 void abpoa_BFS_set_node_remain(abpoa_graph_t *abg, int src_id, int sink_id);
