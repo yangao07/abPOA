@@ -31,7 +31,7 @@ const struct option abpoa_long_opt [] = {
     { "extra-b", 1, NULL, 'b' },
     { "extra-f", 1, NULL, 'f' },
     { "zdrop", 1, NULL, 'z' },
-    { "bouns", 1, NULL, 'e' },
+    { "bonus", 1, NULL, 'e' },
 
     { "seeding", 0, NULL, 'S'},
     { "k-mer", 1, NULL, 'k' },
