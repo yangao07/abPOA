@@ -95,7 +95,7 @@ abpoa_para_t *abpoa_init_para(void) {
     abpt->align_mode = ABPOA_GLOBAL_MODE;
     abpt->gap_mode = ABPOA_CONVEX_GAP;
     abpt->zdrop = -1;     // disable zdrop
-    abpt->end_bonus = -1; // disable end bouns
+    abpt->end_bonus = -1; // disable end bonus
     abpt->wb = ABPOA_EXTRA_B; // extra bandwidth
     abpt->wf = ABPOA_EXTRA_F; // extra bandwidth
 
