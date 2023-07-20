@@ -609,7 +609,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
 #define simd_abpoa_lg_first_dp(score_t) {                                   \
     simd_abpoa_lg_first_row;                                                \
     if (abpt->align_mode == ABPOA_LOCAL_MODE) {                             \
-        for (i = 0; i < _end_sn; ++i)                                       \
+        for (i = 0; i <= _end_sn; ++i)                                       \
             dp_h[i] = zero;                                                 \
     } else {                                                                \
         for (i = 0; i <= _end_sn; ++i) {                                    \
@@ -625,7 +625,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
 #define simd_abpoa_ag_first_dp(score_t) {                                   \
     simd_abpoa_ag_first_row;                                                \
     if (abpt->align_mode == ABPOA_LOCAL_MODE) {                             \
-        for (i = 0; i < _end_sn; ++i)                                       \
+        for (i = 0; i <= _end_sn; ++i)                                       \
             dp_h[i] = dp_e1[i] = dp_f1[i] = zero;                           \
     } else {                                                                \
         for (i = 0; i <= _end_sn; ++i) {                                    \
@@ -643,7 +643,7 @@ SIMD_para_t _simd_p64 = {128, 64, 1,  2, 16, -1};
 #define simd_abpoa_cg_first_dp(score_t) {                                             \
     simd_abpoa_cg_first_row;                                                          \
     if (abpt->align_mode == ABPOA_LOCAL_MODE) {                                       \
-        for (i = 0; i < _end_sn; ++i)                                                 \
+        for (i = 0; i <= _end_sn; ++i)                                                 \
             dp_h[i] = dp_e1[i] = dp_e2[i] = dp_f1[i] = dp_f2[i] = zero;               \
     } else {                                                                          \
         for (i = 0; i <= _end_sn; ++i) {                                              \
