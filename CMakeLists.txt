@@ -29,10 +29,12 @@ add_library(abpoa
     src/simd_check.c
     src/utils.c)
 
+target_link_libraries(abpoa z pthread m)
+
 add_executable(abpoa_bin
     src/abpoa.c)
 
-target_link_libraries(abpoa_bin abpoa z pthread m)
+target_link_libraries(abpoa_bin abpoa)
 set_target_properties(abpoa_bin PROPERTIES OUTPUT_NAME abpoa)
 
 target_include_directories(abpoa PUBLIC
@@ -45,5 +47,9 @@ install(TARGETS abpoa_bin DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN "*.h")
 
 # configure and install pkg-config file
+if(NOT BUILD_SHARED_LIBS)
+    set(abPOA_ADDITIONAL_LINK_LIBRARIES "-lz -lpthread -lm")
+endif()
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/abpoa.pc.in ${CMAKE_CURRENT_BINARY_DIR}/abpoa-1.pc @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/abpoa-1.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
