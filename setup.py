@@ -52,7 +52,7 @@ setup(
     description = "pyabpoa: SIMD-based partial order alignment using adaptive band",
     long_description = long_description,
     long_description_content_type="text/markdown",
-    version = "1.4.1",
+    version = "1.4.2",
     url = "https://github.com/yangao07/abPOA",
     author = "Yan Gao",
     author_email = "gaoy1@chop.edu",
@@ -65,6 +65,5 @@ setup(
                     depends=[src_dir+'abpoa.h', src_dir+'abpoa_align.h', src_dir+'abpoa_graph.h', src_dir+'abpoa_output.h', src_dir+'abpoa_seed.h', src_dir+'abpoa_seq.h', src_dir+'kalloc.h', src_dir+'khash.h', src_dir+'kdq.h', src_dir+'kseq.h', src_dir+'ksort.h', src_dir+'kstring.h', src_dir+'kvec.h', src_dir+'simd_abpoa_align.h', src_dir+'simd_instruction.h', src_dir+'utils.h', 'python/cabpoa.pxd'],
                     libraries = ['z', 'm', 'pthread'],
                     extra_compile_args=['-O3', '-Wno-error=declaration-after-statement', simde, simd_flag])],
-    install_requires=['cython'],
     cmdclass = cmdclass
 )
