@@ -6,7 +6,6 @@ except ImportError:
     from distutils.core import setup
     from distutils.extension import Extension
 
-cmdclass = {}
 
 #try:
 #    from Cython.Build import build_ext
@@ -16,7 +15,6 @@ cmdclass = {}
 #    sys.exit(0)
 #else: # with Cython
 module_src = 'python/pyabpoa.pyx'
-#cmdclass['build_ext'] = build_ext
 
 
 simde = '-DUSE_SIMDE -DSIMDE_ENABLE_NATIVE_ALIASES'
