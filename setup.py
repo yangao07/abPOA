@@ -8,15 +8,15 @@ except ImportError:
 
 cmdclass = {}
 
-try:
-    from Cython.Build import build_ext
-except ImportError: # without Cython
-    #module_src = 'python/pyabpoa.c'
-    sys.stderr.write('Error: \'cython\' is required to install pyabpoa\n')
-    sys.exit(0)
-else: # with Cython
-    module_src = 'python/pyabpoa.pyx'
-    cmdclass['build_ext'] = build_ext
+#try:
+#    from Cython.Build import build_ext
+#except ImportError: # without Cython
+#    #module_src = 'python/pyabpoa.c'
+#    sys.stderr.write('Error: \'cython\' is required to install pyabpoa\n')
+#    sys.exit(0)
+#else: # with Cython
+module_src = 'python/pyabpoa.pyx'
+#cmdclass['build_ext'] = build_ext
 
 
 simde = '-DUSE_SIMDE -DSIMDE_ENABLE_NATIVE_ALIASES'
@@ -58,12 +58,12 @@ setup(
     author_email = "gaoy1@chop.edu",
     license = "MIT",
     keywords = "multiple-sequence-alignment  partial-order-graph-alignment",
+    setup_requires=["cython"],
     # Build instructions
     ext_modules = [Extension("pyabpoa",
                     sources=src,
                     include_dirs=[inc_dir],
                     depends=[src_dir+'abpoa.h', src_dir+'abpoa_align.h', src_dir+'abpoa_graph.h', src_dir+'abpoa_output.h', src_dir+'abpoa_seed.h', src_dir+'abpoa_seq.h', src_dir+'kalloc.h', src_dir+'khash.h', src_dir+'kdq.h', src_dir+'kseq.h', src_dir+'ksort.h', src_dir+'kstring.h', src_dir+'kvec.h', src_dir+'simd_abpoa_align.h', src_dir+'simd_instruction.h', src_dir+'utils.h', 'python/cabpoa.pxd'],
                     libraries = ['z', 'm', 'pthread'],
-                    extra_compile_args=['-O3', '-Wno-error=declaration-after-statement', simde, simd_flag])],
-    cmdclass = cmdclass
+                    extra_compile_args=['-O3', '-Wno-error=declaration-after-statement', simde, simd_flag])]
 )
