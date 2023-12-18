@@ -125,4 +125,4 @@ publish_pypi: clean_py sdist
 clean:
 	rm -f $(SRC_DIR)/*.[oa] $(LIB_DIR)/*.[oa] $(BIN)
 clean_py:
-	rm -rf build/ dist/ pyabpoa.egg-info/ python/pyabpoa.c
+	rm -rf build/ dist/ pyabpoa.egg-info/ python/pyabpoa.c pyabpoa.cpython-*.so
