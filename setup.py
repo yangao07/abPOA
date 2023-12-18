@@ -22,9 +22,9 @@ else:
     if platform.machine() in ["aarch64", "arm64"]:
         simd_flag = ['-march=armv8-a+simd', '-D__AVX2__']
     elif platform.machine() in ["aarch32"]:
-        simd_flag = ['-march=armv8-a+simd', '-mfput=auto -D__AVX2__']
+        simd_flag = ['-march=armv8-a+simd', '-mfpu=auto -D__AVX2__']
     else:
-        simd_flag='-march=native'
+        simd_flag=['-march=native']
         if os.getenv('SSE4', False):
             simd_flag=['-msse4.1']
         elif os.getenv('SSE2', False):
@@ -60,7 +60,7 @@ setup(
     description = "pyabpoa: SIMD-based partial order alignment using adaptive band",
     long_description = long_description,
     long_description_content_type="text/markdown",
-    version = "1.4.2",
+    version = "1.4.3",
     url = "https://github.com/yangao07/abPOA",
     author = "Yan Gao",
     author_email = "gaoy1@chop.edu",
