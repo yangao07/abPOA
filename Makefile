@@ -1,20 +1,11 @@
+.PHONY: default
+default: abpoa
+
 #CC          = gcc
+OS          := $(shell uname)
+ARCH        := $(shell arch)
 EXTRA_FLAGS = -Wno-unused-function -Wno-misleading-indentation -DUSE_SIMDE -DSIMDE_ENABLE_NATIVE_ALIASES
 CFLAGS      = -Wall -O3 $(EXTRA_FLAGS)
-
-SIMD_FLAG   = -march=native
-
-ifneq ($(armv7),) # for ARMv7
-	SIMD_FLAG   =  -march=armv7-a -mfpu=neon -D__AVX2__
-else
-ifneq ($(armv8),) # for ARMv8
-ifneq ($(aarch64),) # for Aarch64 
-	SIMD_FLAG   =  -march=armv8-a+simd -D__AVX2__
-else # for Aarch32
-	SIMD_FLAG   =  -march=armv8-a+simd -mfpu=auto -D__AVX2__
-endif
-endif
-endif
 
 # for debug
 ifneq ($(debug),)
@@ -45,13 +36,36 @@ LIB_DIR = $(OUT_PRE_DIR)/lib
 INC_DIR = ./include
 SRC_DIR = ./src
 
-SOURCE = $(SRC_DIR)/abpoa_align.c $(SRC_DIR)/abpoa.c $(SRC_DIR)/abpoa_graph.c $(SRC_DIR)/abpoa_plot.c $(SRC_DIR)/abpoa_seed.c $(SRC_DIR)/abpoa_seq.c $(SRC_DIR)/abpoa_output.c $(SRC_DIR)/kalloc.c $(SRC_DIR)/kstring.c  $(SRC_DIR)/simd_abpoa_align.c $(SRC_DIR)/simd_check.c $(SRC_DIR)/utils.c
-HEADER = $(SRC_DIR)/abpoa_align.h $(SRC_DIR)/abpoa_graph.h $(SRC_DIR)/abpoa.h $(INC_DIR)/abpoa.h $(SRC_DIR)/abpoa_seed.h $(SRC_DIR)/abpoa_seq.h $(SRC_DIR)/abpoa_output.h $(SRC_DIR)/kalloc.h $(SRC_DIR)/kdq.h $(SRC_DIR)/khash.h $(SRC_DIR)/kseq.h $(SRC_DIR)/ksort.h $(SRC_DIR)/kstring.h $(SRC_DIR)/kvec.h $(SRC_DIR)/simd_instruction.h $(INC_DIR)/simd_instruction.h $(SRC_DIR)/simd_abpoa_align.h $(SRC_DIR)/utils.h
-OBJS   = $(SRC_DIR)/abpoa_align.o $(SRC_DIR)/abpoa_graph.o $(SRC_DIR)/abpoa_plot.o $(SRC_DIR)/abpoa_seed.o $(SRC_DIR)/abpoa_seq.o $(SRC_DIR)/abpoa_output.o $(SRC_DIR)/kalloc.o $(SRC_DIR)/kstring.o $(SRC_DIR)/simd_abpoa_align.o $(SRC_DIR)/simd_check.o $(SRC_DIR)/utils.o
+# This is everything that gets bundled into our main library
+OBJS = $(addprefix $(SRC_DIR)/, abpoa_align.o abpoa_graph.o abpoa_plot.o abpoa_seed.o abpoa_seq.o abpoa_output.o kalloc.o kstring.o simd_abpoa_align.o simd_check.o utils.o)
 
-# SIMD label
-SIMD_CHECK_D = -D __CHECK_SIMD_MAIN__
+# Set default SIMD flags
+SIMD_FLAG   = -march=native
 
+# auto-detect some appropriate defaults -- this helps users in the common case of macOS with arm
+ifeq ($(ARCH), $(filter $(ARCH), aarch64 arm64))
+ifeq ($(OS), Darwin)
+	# issues/44 suggests this doesn't work for some users
+	SIMD_FLAG = -march=armv8-a+simd -D__AVX2__
+else
+	SIMD_FLAG = -march=armv8-a+simd -D__AVX2__
+endif
+endif
+
+# override if user specified
+ifneq ($(armv7),) # for ARMv7
+	SIMD_FLAG   =  -march=armv7-a -mfpu=neon -D__AVX2__
+else
+ifneq ($(armv8),) # for ARMv8
+ifneq ($(aarch64),) # for Aarch64
+	SIMD_FLAG   =  -march=armv8-a+simd -D__AVX2__
+else # for Aarch32
+	SIMD_FLAG   =  -march=armv8-a+simd -mfpu=auto -D__AVX2__
+endif
+endif
+endif
+
+# some more possible overrides
 FLAG_SSE2     = -msse2
 FLAG_SSE41    = -msse4.1
 FLAG_AVX2     = -mavx2
@@ -75,8 +89,13 @@ else ifneq ($(avx2),)
 #	py_SIMD_FLAG = AVX512BW=1
 endif
 
-.c.o:
-		$(CC) -c $(CFLAGS) $< -I$(INC_DIR) -o $@
+# SIMD check -- unused
+SIMD_CHECK_D = -D __CHECK_SIMD_MAIN__
+
+
+
+$(SRC_DIR)/%.o: $(SRC_DIR)/%.c
+		$(CC) -c $(CFLAGS) $^ -I$(INC_DIR) -o $@
 
 BIN      = $(BIN_DIR)/abpoa
 ifneq ($(gdb),)
