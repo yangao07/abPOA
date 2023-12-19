@@ -20,10 +20,11 @@ tar -zxvf abPOA-v1.4.3.tar.gz && cd abPOA-v1.4.3
 ```
 Make from source and run with test data:
 ```
-# linux
+# Linux or MacOS with armv8
 make; ./bin/abpoa ./test_data/seq.fa > cons.fa
-# macos with arm64
-make armv8=1 aarch64=1; ./bin/abpoa ./test_data/seq.fa > cons.fa
+
+# MacOS with armv7
+make armv7=1; ./bin/abpoa ./test_data/seq.fa > cons.fa
 ```
 Or, install via conda and run with test data:
 ```
