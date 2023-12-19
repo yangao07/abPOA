@@ -36,7 +36,7 @@ abpoa ./test_data/seq.fa > cons.fa
 - [Installation](#install)
   - [Installing abPOA via conda](#conda)
   - [Building abPOA from source files](#build)
-  - [Pre-built binary executable file for Linux/Unix](#binary)
+  - [Pre-built binary executable file for Linux/Unix or MacOS](#binary)
 - [General usage](#usage)
   - [To generate one consensus sequence](#gen_1cons)
   - [To generate multiple consensus sequences](#gen_mcons)
@@ -98,11 +98,16 @@ git clone --recursive https://github.com/yangao07/abPOA.git
 cd abPOA; make
 ```
 
-### <a name="binary"></a>Pre-built binary executable file for Linux/Unix 
-If you meet any compiling issue, please try the pre-built binary file:
+### <a name="binary"></a>Pre-built binary executable file for Linux/Unix or MacOS
+If you meet any compiling issue, please try the pre-built binary file for linux:
 ```
 wget https://github.com/yangao07/abPOA/releases/download/v1.4.3/abPOA-v1.4.3_x64-linux.tar.gz
 tar -zxvf abPOA-v1.4.3_x64-linux.tar.gz
+```
+or for macos:
+```
+wget https://github.com/yangao07/abPOA/releases/download/v1.4.3/abPOA-v1.4.3_arm64-macos.tar.gz
+tar -zxvf abPOA-v1.4.3_arm64-macos.tar.gz
 ```
 
 ## <a name="usage"></a>General usage
