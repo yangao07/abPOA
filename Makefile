@@ -44,7 +44,12 @@ SIMD_FLAG   = -march=native
 
 # auto-detect some appropriate defaults -- this helps users in the common case of macOS with arm
 ifeq ($(ARCH), $(filter $(ARCH), aarch64 arm64))
+ifeq ($(OS), Darwin)
+	# issues/44 suggests this doesn't work for some users
 	SIMD_FLAG = -march=armv8-a+simd -D__AVX2__
+else
+	SIMD_FLAG = -march=armv8-a+simd -D__AVX2__
+endif
 endif
 
 # override if user specified
