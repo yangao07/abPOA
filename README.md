@@ -10,7 +10,7 @@
 <!-- [![PyPI](https://img.shields.io/pypi/v/pyabpoa.svg?style=flat)](https://pypi.python.org/pypi/pyabpoa) -->
 ## Updates (v1.4.3)
 
-- Fix pyabpoa installation on macos (pip also works now)
+- Fix pyabpoa installation on macos (pip install also works now)
 
 ## Getting started
 Download the [latest release](https://github.com/yangao07/abPOA/releases):
@@ -20,7 +20,10 @@ tar -zxvf abPOA-v1.4.3.tar.gz && cd abPOA-v1.4.3
 ```
 Make from source and run with test data:
 ```
+# linux
 make; ./bin/abpoa ./test_data/seq.fa > cons.fa
+# macos with arm64
+make armv8=1 aarch64=1; ./bin/abpoa ./test_data/seq.fa > cons.fa
 ```
 Or, install via conda and run with test data:
 ```
