@@ -37,11 +37,11 @@ seqs=[
 #seqs: multiple sequences
 out_cons=True # generate consensus sequence, set as False to disable
 out_msa=True # generate row-column multiple sequence alignment, set as False to disable
-out_pog="example1.png" # generate plot of alignment graph, set None to disable
+#out_pog="example1.png" # generate plot of alignment graph, set None to disable, require `dot` to be installed
 max_n_cons = 2
 
 # multiple sequence alignment for 'seqs'
-res=a.msa(seqs, out_cons=out_cons, out_msa=out_msa, max_n_cons=max_n_cons, out_pog=out_pog)
+res=a.msa(seqs, out_cons=out_cons, out_msa=out_msa, max_n_cons=max_n_cons) #, out_pog=out_pog)
 
 # output result
 if out_cons:
@@ -70,11 +70,11 @@ seqs=[
 #seqs: multiple sequences
 out_cons=True # generate consensus sequence, set as False to disable
 out_msa=True # generate row-column multiple sequence alignment, set as False to disable
-out_pog="example2.png" # generate plot of alignment graph, set None to disable
+# out_pog="example2.png" # generate plot of alignment graph, set None to disable
 max_n_cons = 1
 
 # multiple sequence alignment for 'seqs'
-res=a.msa(seqs, out_cons=out_cons, out_msa=out_msa, max_n_cons=max_n_cons, out_pog=out_pog)
+res=a.msa(seqs, out_cons=out_cons, out_msa=out_msa, max_n_cons=max_n_cons) #, out_pog=out_pog)
 
 # output result
 if out_cons:

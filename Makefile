@@ -113,10 +113,10 @@ $(SRC_DIR)/simd_check.o:$(SRC_DIR)/simd_check.c $(SRC_DIR)/simd_instruction.h
 $(SRC_DIR)/simd_abpoa_align.o:$(SRC_DIR)/simd_abpoa_align.c $(SRC_DIR)/abpoa_graph.h $(SRC_DIR)/abpoa_align.h $(SRC_DIR)/simd_instruction.h $(SRC_DIR)/utils.h
 	$(CC) -c $(CFLAGS) $(SIMD_FLAG) -I$(INC_DIR) $< -o $@
 
-install_py: python/cabpoa.pxd python/pyabpoa.pyx python/README.md
+install_py: setup.py python/cabpoa.pxd python/pyabpoa.pyx python/README.md
 	${py_SIMD_FLAG} python setup.py install
 	
-sdist: install_py
+sdist: setup.py python/cabpoa.pxd python/pyabpoa.pyx python/README.md
 	${py_SIMD_FLAG} python setup.py sdist #bdist_wheel
 
 publish_pypi: clean_py sdist

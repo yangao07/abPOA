@@ -60,6 +60,7 @@ cscope.*
 
 # python
 dist/*
+.eggs/*
 pyabpoa.egg-info/*
 python/build/*
 python/dist/*

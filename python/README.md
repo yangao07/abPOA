@@ -31,8 +31,7 @@ seqs=[
 'CCCGGAAGA',
 'CCGAAGA'
 ]
-res=a.msa(seqs, out_cons=True, out_msa=True, out_pog='pog.png', incr_fn='') # perform multiple sequence alignment 
-                                                                # generate a figure of alignment graph to pog.png
+res=a.msa(seqs, out_cons=True, out_msa=True) # perform multiple sequence alignment 
 
 for seq in res.cons_seq:
     print(seq)  # print consensus sequence
