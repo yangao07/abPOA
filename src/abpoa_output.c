@@ -743,7 +743,7 @@ int abpoa_set_het_row_column_ids_weight(abpoa_graph_t *abg, uint64_t ***read_ids
 
     uint8_t *node_map = (uint8_t*)_err_calloc(abg->node_n, sizeof(uint8_t));
     int *n_branch = (int*)_err_calloc(msa_l, sizeof(int)), n_het_pos = 0;
-    for (i = 2; i < abg->node_n; ++i) {
+    for (i = 0; i < abg->node_n; ++i) {
         if (abg->node[i].out_edge_n < 2) continue;
 
         for (j = 0; j < abg->node[i].out_edge_n; ++j) {
