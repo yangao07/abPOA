@@ -53,7 +53,7 @@ static inline void abpoa_res_copy(abpoa_res_t *dest, abpoa_res_t *src) {
 
 static inline abpoa_cigar_t *abpoa_push_cigar(int *n_cigar, int *m_cigar, abpoa_cigar_t *cigar, int op, int len, int32_t node_id, int32_t query_id) {
     abpoa_cigar_t l = len;
-    if (*n_cigar == 0 || (op != ABPOA_CINS && op != ABPOA_CSOFT_CLIP && op != ABPOA_CHARD_CLIP) || op != (cigar[(*n_cigar)-1] & 0xf)) {
+    if (*n_cigar == 0 || (op != ABPOA_CINS && op != ABPOA_CSOFT_CLIP && op != ABPOA_CHARD_CLIP) || op != (int)(cigar[(*n_cigar)-1] & 0xf)) {
         if (*n_cigar == *m_cigar) {
             *m_cigar = *m_cigar? (*m_cigar)<<1 : 4;
             cigar = (abpoa_cigar_t*)_err_realloc(cigar, (*m_cigar) * sizeof(abpoa_cigar_t));

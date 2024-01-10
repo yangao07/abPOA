@@ -75,6 +75,7 @@ setup(
             include_dirs=[inc_dir],
             depends=[module_dep] + [src_dir + x for x in depends],
             libraries=['z', 'm', 'pthread'],
-            extra_compile_args=['-O3', '-Wno-error=declaration-after-statement'] + simde + simd_flag
+            # extra_compile_args=['-O3', '-Wno-error=declaration-after-statement', '-D __DEBUG__'] + simde + simd_flag
+            extra_compile_args=['-O3', '-Wno-misleading-indentation', '-Wno-error=declaration-after-statement'] + simde + simd_flag
     )]
 )

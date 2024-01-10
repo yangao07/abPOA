@@ -393,7 +393,7 @@ int abpoa_dp_chaining_of_local_chains(void *km, ab_u128_t *local_chains, int n_l
         int i_start_tpos = (anchors->a[i_start_anchor_i] >> 32) & 0x7fffffff, i_start_qpos = (int32_t)anchors->a[i_start_anchor_i];
         int max_j = -1, max_score = score[i_end_anchor_i];
         while (st < i) {
-            if ((local_chains[st].x) >> 63 != istrand) ++st;
+            if ((int)((local_chains[st].x) >> 63) != istrand) ++st;
             else break;
         }
         for (j = i-1; j >= st; --j) {
@@ -496,7 +496,7 @@ int abpoa_dp_chaining(void *km, ab_u64_v *anchors, ab_u64_v *par_anchors, abpoa_
         int max_j = -1, n_skip=0, non_best_iter_n = 0, max_score=abpt->k, _score;
         while (st < i) {
             uint64_t st_a = anchors->a[st];
-            if ((st_a >> 63) != i_tstrand || (int)((st_a >> 32) & 0x7fffffff) + max_dis < i_tpos) ++st;
+            if ((int)(st_a >> 63) != i_tstrand || (int)((st_a >> 32) & 0x7fffffff) + max_dis < i_tpos) ++st;
             else break;
         }
 

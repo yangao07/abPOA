@@ -5,6 +5,7 @@
 *.elf
 .idea/*
 build/*
+.vscode/*
 
 # dot
 abpoa.dot
