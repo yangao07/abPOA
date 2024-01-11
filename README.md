@@ -8,15 +8,15 @@
 [![Build Status](https://img.shields.io/travis/yangao07/abPOA/master.svg?label=Master)](https://travis-ci.org/yangao07/abPOA)
 [![License](https://img.shields.io/badge/License-MIT-black.svg)](https://github.com/yangao07/abPOA/blob/master/LICENSE)
 <!-- [![PyPI](https://img.shields.io/pypi/v/pyabpoa.svg?style=flat)](https://pypi.python.org/pypi/pyabpoa) -->
-## Updates (v1.4.3)
+## Updates (v1.5.0)
 
-- Fix pyabpoa installation on macos (pip install also works now)
+- Fix memory allocation bug for local alignment mode
 
 ## Getting started
 Download the [latest release](https://github.com/yangao07/abPOA/releases):
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.4.3/abPOA-v1.4.3.tar.gz
-tar -zxvf abPOA-v1.4.3.tar.gz && cd abPOA-v1.4.3
+wget https://github.com/yangao07/abPOA/releases/download/v1.5.0/abPOA-v1.5.0.tar.gz
+tar -zxvf abPOA-v1.5.0.tar.gz && cd abPOA-v1.5.0
 ```
 Make from source and run with test data:
 ```
@@ -33,32 +33,36 @@ abpoa ./test_data/seq.fa > cons.fa
 ```
 ## Table of Contents
 
-- [Introduction](#introduction)
-- [Installation](#install)
-  - [Installing abPOA via conda](#conda)
-  - [Building abPOA from source files](#build)
-  - [Pre-built binary executable file for Linux/Unix or MacOS](#binary)
-- [General usage](#usage)
-  - [To generate one consensus sequence](#gen_1cons)
-  - [To generate multiple consensus sequences](#gen_mcons)
-  - [To generate row-column multiple sequence alignment](#gen_msa)
-  - [To generate graph information in GFA format](#gen_gfa)
-  - [To align sequence to an existing graph in GFA/MSA format](#aln_to_gfa)
-  - [To generate a plot of the alignment graph](#gen_plot)
-- [Input](#input)
-- [Output](#output)
-  - [Consensus sequence](#cons)
-  - [Row-column multiple sequence alignment](#msa)
-  - [Full graph information](#gfa)
-  - [Plot of alignment graph](#plot)
-- [Algorithm description](#description)
-  - [Adaptive banding](#banding)
-  - [Minimizer-based seeding and partition](#seeding)
-  - [Minimizer-based progressive tree](#tree)
-  - [Multiple conensus sequences](#mcons)
-- [For development](#dev)
-- [Evaluation datasets](#eval)
-- [Contact](#contact)
+- [abPOA: adaptive banded Partial Order Alignment](#abpoa-adaptive-banded-partial-order-alignment)
+  - [Updates (v1.5.0)](#updates-v150)
+  - [Getting started](#getting-started)
+  - [Table of Contents](#table-of-contents)
+  - [Introduction](#introduction)
+  - [Installation](#installation)
+    - [Installing abPOA via conda](#installing-abpoa-via-conda)
+    - [Building abPOA from source files](#building-abpoa-from-source-files)
+    - [Pre-built binary executable file for Linux/Unix or MacOS](#pre-built-binary-executable-file-for-linuxunix-or-macos)
+  - [General usage](#general-usage)
+    - [To generate consensus sequence](#to-generate-consensus-sequence)
+    - [To generate multiple consensus sequences](#to-generate-multiple-consensus-sequences)
+    - [To generate row-column multiple sequence alignment in FASTA format](#to-generate-row-column-multiple-sequence-alignment-in-fasta-format)
+    - [To generate graph information in GFA format](#to-generate-graph-information-in-gfa-format)
+    - [To align sequence to an existing graph in GFA/MSA format](#to-align-sequence-to-an-existing-graph-in-gfamsa-format)
+    - [To generate a plot of the alignment graph](#to-generate-a-plot-of-the-alignment-graph)
+  - [Input](#input)
+  - [Output](#output)
+    - [Consensus sequence](#consensus-sequence)
+    - [Row-column multiple sequence alignment](#row-column-multiple-sequence-alignment)
+    - [Full graph information](#full-graph-information)
+    - [Plot of alignment graph](#plot-of-alignment-graph)
+  - [Algorithm description](#algorithm-description)
+    - [Adaptive banding](#adaptive-banding)
+    - [Minimizer-based seeding mode](#minimizer-based-seeding-mode)
+    - [Minimizer-based progressive tree](#minimizer-based-progressive-tree)
+    - [Multiple consensus sequences](#multiple-consensus-sequences)
+  - [For development](#for-development)
+  - [Evaluation datasets](#evaluation-datasets)
+  - [Contact](#contact)
 
 ## <a name="introduction"></a>Introduction
 abPOA is an extended version of [Partial Order Alignment (POA](10.1093/bioinformatics/18.3.452)) 
@@ -88,9 +92,9 @@ You can also build abPOA from source files.
 Make sure you have gcc (>=6.4.0) and zlib installed before compiling.
 It is recommended to download the [latest release](https://github.com/yangao07/abPOA/releases).
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.4.3/abPOA-v1.4.3.tar.gz
-tar -zxvf abPOA-v1.4.3.tar.gz
-cd abPOA-v1.4.3; make
+wget https://github.com/yangao07/abPOA/releases/download/v1.5.0/abPOA-v1.5.0.tar.gz
+tar -zxvf abPOA-v1.5.0.tar.gz
+cd abPOA-v1.5.0; make
 ```
 Or, you can use `git clone` command to download the source code.
 This gives you the latest version of abPOA, which might be still under development.
@@ -102,13 +106,13 @@ cd abPOA; make
 ### <a name="binary"></a>Pre-built binary executable file for Linux/Unix or MacOS
 If you meet any compiling issue, please try the pre-built binary file for linux:
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.4.3/abPOA-v1.4.3_x64-linux.tar.gz
-tar -zxvf abPOA-v1.4.3_x64-linux.tar.gz
+wget https://github.com/yangao07/abPOA/releases/download/v1.5.0/abPOA-v1.5.0_x64-linux.tar.gz
+tar -zxvf abPOA-v1.5.0_x64-linux.tar.gz
 ```
 or for macos:
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.4.3/abPOA-v1.4.3_arm64-macos.tar.gz
-tar -zxvf abPOA-v1.4.3_arm64-macos.tar.gz
+wget https://github.com/yangao07/abPOA/releases/download/v1.5.0/abPOA-v1.5.0_arm64-macos.tar.gz
+tar -zxvf abPOA-v1.5.0_arm64-macos.tar.gz
 ```
 
 ## <a name="usage"></a>General usage
