@@ -1177,8 +1177,8 @@ void abpoa_free_simd_matrix(abpoa_simd_matrix_t *abm) {
 // * dp_beg/end, dp_beg/end_sn if band
 // * pre_n, pre_index
 int simd_abpoa_realloc(abpoa_t *ab, int gn, int qlen, abpoa_para_t *abpt, SIMD_para_t sp) {
-    int pn = sp.num_of_value, size = sp.size, sn = (qlen + sp.num_of_value) / pn;
-    uint64_t s_msize = sn; s_msize = s_msize * abpt->m * size; // qp
+    uint64_t pn = sp.num_of_value, size = sp.size, sn = (qlen + sp.num_of_value) / pn;
+    uint64_t s_msize = sn * abpt->m * size; // qp
 
     if (abpt->gap_mode == ABPOA_LINEAR_GAP) s_msize += (sn * gn * size); // DP_H, linear
     else if (abpt->gap_mode == ABPOA_AFFINE_GAP) s_msize += (sn * gn * 3 * size); // DP_HEF, affine
@@ -1191,7 +1191,7 @@ int simd_abpoa_realloc(abpoa_t *ab, int gn, int qlen, abpoa_para_t *abpt, SIMD_p
         // err_func_format_printf(__func__, "Warning: Graph is too large or query is too long.\n");
         // return 1;
     // }
-    // fprintf(stderr, "%lld, %lld, %lld\n", (long long)node_n, (long long)ab->abm->s_msize, (long long)s_msize);
+    // fprintf(stderr, "%lld, %lld, %lld\n", (long long)gn, (long long)ab->abm->s_msize, (long long)s_msize);
     if (s_msize > ab->abm->s_msize) {
         if (ab->abm->s_mem) SIMDFree(ab->abm->s_mem);
         kroundup64(s_msize); ab->abm->s_msize = s_msize;
