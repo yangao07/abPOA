@@ -8,15 +8,15 @@
 [![Build Status](https://img.shields.io/travis/yangao07/abPOA/main.svg?label=Main)](https://travis-ci.org/yangao07/abPOA)
 [![License](https://img.shields.io/badge/License-MIT-black.svg)](https://github.com/yangao07/abPOA/blob/main/LICENSE)
 <!-- [![PyPI](https://img.shields.io/pypi/v/pyabpoa.svg?style=flat)](https://pypi.python.org/pypi/pyabpoa) -->
-## Updates (v1.5.0)
+## Updates (v1.5.1)
 
-- Fix memory allocation bug for local alignment mode
+- Fix a memory allocation bug caused by int overflow when memery is large (>4G)
 
 ## Getting started
 Download the [latest release](https://github.com/yangao07/abPOA/releases):
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.5.0/abPOA-v1.5.0.tar.gz
-tar -zxvf abPOA-v1.5.0.tar.gz && cd abPOA-v1.5.0
+wget https://github.com/yangao07/abPOA/releases/download/v1.5.1/abPOA-v1.5.1.tar.gz
+tar -zxvf abPOA-v1.5.1.tar.gz && cd abPOA-v1.5.1
 ```
 Make from source and run with test data:
 ```
@@ -34,7 +34,7 @@ abpoa ./test_data/seq.fa > cons.fa
 ## Table of Contents
 
 - [abPOA: adaptive banded Partial Order Alignment](#abpoa-adaptive-banded-partial-order-alignment)
-  - [Updates (v1.5.0)](#updates-v150)
+  - [Updates (v1.5.1)](#updates-v151)
   - [Getting started](#getting-started)
   - [Table of Contents](#table-of-contents)
   - [Introduction](#introduction)
@@ -92,9 +92,9 @@ You can also build abPOA from source files.
 Make sure you have gcc (>=6.4.0) and zlib installed before compiling.
 It is recommended to download the [latest release](https://github.com/yangao07/abPOA/releases).
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.5.0/abPOA-v1.5.0.tar.gz
-tar -zxvf abPOA-v1.5.0.tar.gz
-cd abPOA-v1.5.0; make
+wget https://github.com/yangao07/abPOA/releases/download/v1.5.1/abPOA-v1.5.1.tar.gz
+tar -zxvf abPOA-v1.5.1.tar.gz
+cd abPOA-v1.5.1; make
 ```
 Or, you can use `git clone` command to download the source code.
 This gives you the latest version of abPOA, which might be still under development.
@@ -106,13 +106,13 @@ cd abPOA; make
 ### <a name="binary"></a>Pre-built binary executable file for Linux/Unix or MacOS
 If you meet any compiling issue, please try the pre-built binary file for linux:
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.5.0/abPOA-v1.5.0_x64-linux.tar.gz
-tar -zxvf abPOA-v1.5.0_x64-linux.tar.gz
+wget https://github.com/yangao07/abPOA/releases/download/v1.5.1/abPOA-v1.5.1_x64-linux.tar.gz
+tar -zxvf abPOA-v1.5.1_x64-linux.tar.gz
 ```
 or for macos:
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.5.0/abPOA-v1.5.0_arm64-macos.tar.gz
-tar -zxvf abPOA-v1.5.0_arm64-macos.tar.gz
+wget https://github.com/yangao07/abPOA/releases/download/v1.5.1/abPOA-v1.5.1_arm64-macos.tar.gz
+tar -zxvf abPOA-v1.5.1_arm64-macos.tar.gz
 ```
 
 ## <a name="usage"></a>General usage
