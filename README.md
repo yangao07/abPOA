@@ -10,7 +10,7 @@
 <!-- [![PyPI](https://img.shields.io/pypi/v/pyabpoa.svg?style=flat)](https://pypi.python.org/pypi/pyabpoa) -->
 ## Updates (v1.5.1)
 
-- Fix a memory allocation bug caused by int overflow when memery is large (>4G)
+- Fix a memory allocation bug caused by int overflow when memory is large (>4G)
 
 ## Getting started
 Download the [latest release](https://github.com/yangao07/abPOA/releases):
