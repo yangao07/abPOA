@@ -66,7 +66,7 @@ setup(
     author_email = "gaoy1@chop.edu",
     license = "MIT",
     keywords = "multiple-sequence-alignment  partial-order-graph-alignment",
-    setup_requires=["cython"],
+    setup_requires=["cython<3"], # see https://github.com/cython/cython/issues/5568
     # Build instructions
     ext_modules = [
         Extension(
