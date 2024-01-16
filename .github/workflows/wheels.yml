@@ -26,12 +26,9 @@ jobs:
         buildplat:
         - [ubuntu-latest, manylinux_x86_64, auto]
         - [macos-latest, macosx_x86_64, x86_64]
-        - [macos-latest, macosx_arm64, arm64]
+        # skip these for now, need more work
+        #- [macos-latest, macosx_arm64, arm64]
         python: ["cp38", "cp39", "cp310", "cp311", "cp312"]
-        #exclude:
-        #    # This one fails, I (cjw85) don't care for why
-        #    - buildplat: macosx_arm64
-        #    - python: "cp38"
 
     steps:
       - uses: actions/checkout@v3
