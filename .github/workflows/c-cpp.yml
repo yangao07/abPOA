@@ -8,10 +8,13 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v3
+    - name: Preparing Repositories
+      uses: actions/checkout@v3
+      with:
+        token: '${{ secrets.ACCESS_TOKEN }}'
+        submodules: recursive
+
     - name: make
       run: make
