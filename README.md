@@ -5,7 +5,8 @@
 [![PyPI](https://img.shields.io/pypi/dm/pyabpoa.svg?label=pip%20install)](https://pypi.python.org/pypi/pyabpoa)
 [![Published in Bioinformatics](https://img.shields.io/badge/Published%20in-Bioinformatics-blue.svg)](https://dx.doi.org/10.1093/bioinformatics/btaa963)
 [![GitHub Issues](https://img.shields.io/github/issues/yangao07/abPOA.svg?label=Issues)](https://github.com/yangao07/abPOA/issues)
-[![C/C++ CI](https://github.com/yangao07/abPOA/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/yangao07/abPOA/actions/workflows/c-cpp.yml)
+[![C/C++ CI](https://github.com/yangao07/abPOA/actions/workflows/linux-CI.yml/badge.svg)](https://github.com/yangao07/abPOA/actions/workflows/linux-CI.yml)
+[![C/C++ CI](https://github.com/yangao07/abPOA/actions/workflows/macos-CI.yml/badge.svg)](https://github.com/yangao07/abPOA/actions/workflows/macos-CI.yml)
 [![License](https://img.shields.io/badge/License-MIT-black.svg)](https://github.com/yangao07/abPOA/blob/main/LICENSE)
 <!-- [![PyPI](https://img.shields.io/pypi/v/pyabpoa.svg?style=flat)](https://pypi.python.org/pypi/pyabpoa) -->
 ## Updates (v1.5.1)

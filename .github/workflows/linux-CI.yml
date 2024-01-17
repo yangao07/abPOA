@@ -1,0 +1,19 @@
+name: linux
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Preparing Repositories
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: make
+      run: make
