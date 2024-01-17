@@ -7,8 +7,19 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  build-linux:
     runs-on: ubuntu-latest
+    steps:
+    - name: Preparing Repositories
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: make
+      run: make
+
+  build-macos:
+    runs-on: macos-latest
     steps:
     - name: Preparing Repositories
       uses: actions/checkout@v3
