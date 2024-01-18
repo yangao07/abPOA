@@ -1,4 +1,4 @@
-import os, platform, sys
+import os
 
 try:
     from setuptools import setup, Extension
@@ -9,19 +9,22 @@ except ImportError:
 
 simde = ['-DUSE_SIMDE', '-DSIMDE_ENABLE_NATIVE_ALIASES']
 
-if platform.system() == "Darwin":
+machine_system = os.popen("uname").readlines()[0].rsplit()[0]
+machine_arch = os.popen("uname -m").readlines()[0].rsplit()[0]
+
+if machine_system == "Darwin":
     # note: see https://github.com/pypa/wheel/issues/406
     simd_flag = ['-march=native', '-D__AVX2__', '-mmacosx-version-min=10.9']
-    if platform.machine() in ["aarch64", "arm64"]:
+    if machine_arch in ["aarch64", "arm64"]:
         os.environ['_PYTHON_HOST_PLATFORM'] = "macosx-10.9-arm64"
         os.environ['ARCHFLAGS'] = "-arch arm64"
-    else:
+    else: # x86_64
         os.environ['_PYTHON_HOST_PLATFORM'] = "macosx-10.9-x86_64"
         os.environ['ARCHFLAGS'] = "-arch x86_64"
 else:
-    if platform.machine() in ["aarch64", "arm64"]:
+    if machine_arch in ["aarch64", "arm64"]:
         simd_flag = ['-march=armv8-a+simd', '-D__AVX2__']
-    elif platform.machine() in ["aarch32"]:
+    elif machine_arch in ["aarch32"]:
         simd_flag = ['-march=armv8-a+simd', '-mfpu=auto -D__AVX2__']
     else:
         simd_flag=['-march=native']
