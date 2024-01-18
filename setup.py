@@ -1,4 +1,5 @@
-import os
+#!/usr/bin/env python
+import os, platform, sys
 
 try:
     from setuptools import setup, Extension
@@ -9,24 +10,21 @@ except ImportError:
 
 simde = ['-DUSE_SIMDE', '-DSIMDE_ENABLE_NATIVE_ALIASES']
 
-machine_system = os.popen("uname").readlines()[0].rsplit()[0]
-machine_arch = os.popen("uname -m").readlines()[0].rsplit()[0]
-
-if machine_system == "Darwin":
+if platform.system() == "Darwin":
     # note: see https://github.com/pypa/wheel/issues/406
     simd_flag = ['-march=native', '-D__AVX2__', '-mmacosx-version-min=10.9']
-    if machine_arch in ["aarch64", "arm64"]:
+    if platform.machine() in ["aarch64", "arm64"]:
         os.environ['_PYTHON_HOST_PLATFORM'] = "macosx-10.9-arm64"
         os.environ['ARCHFLAGS'] = "-arch arm64"
     else: # x86_64
         os.environ['_PYTHON_HOST_PLATFORM'] = "macosx-10.9-x86_64"
         os.environ['ARCHFLAGS'] = "-arch x86_64"
-else:
-    if machine_arch in ["aarch64", "arm64"]:
+else: # Linux
+    if platform.machine() in ["aarch64", "arm64"]:
         simd_flag = ['-march=armv8-a+simd', '-D__AVX2__']
-    elif machine_arch in ["aarch32"]:
+    elif platform.machine() in ["aarch32"]:
         simd_flag = ['-march=armv8-a+simd', '-mfpu=auto -D__AVX2__']
-    else:
+    else: # x86_64
         simd_flag=['-march=native']
         if os.getenv('SSE4', False):
             simd_flag=['-msse4.1']
