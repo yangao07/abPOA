@@ -44,12 +44,13 @@ abpoa ./test_data/seq.fa > cons.fa
     - [Building abPOA from source files](#building-abpoa-from-source-files)
     - [Pre-built binary executable file for Linux/Unix or MacOS](#pre-built-binary-executable-file-for-linuxunix-or-macos)
   - [General usage](#general-usage)
-    - [To generate consensus sequence](#to-generate-consensus-sequence)
-    - [To generate multiple consensus sequences](#to-generate-multiple-consensus-sequences)
-    - [To generate row-column multiple sequence alignment in FASTA format](#to-generate-row-column-multiple-sequence-alignment-in-fasta-format)
-    - [To generate graph information in GFA format](#to-generate-graph-information-in-gfa-format)
-    - [To align sequence to an existing graph in GFA/MSA format](#to-align-sequence-to-an-existing-graph-in-gfamsa-format)
-    - [To generate a plot of the alignment graph](#to-generate-a-plot-of-the-alignment-graph)
+    - [Generate consensus sequence](#generate-consensus-sequence)
+    - [Generate multiple consensus sequences](#generate-multiple-consensus-sequences)
+    - [Generate row-column multiple sequence alignment in FASTA format](#generate-row-column-multiple-sequence-alignment-in-fasta-format)
+    - [Generate graph information in GFA format](#generate-graph-information-in-gfa-format)
+    - [Align sequence to an existing graph in GFA/MSA format](#align-sequence-to-an-existing-graph-in-gfamsa-format)
+    - [Generate consensus sequence for amino acid sequences](#generate-consensus-sequence-for-amino-acid-sequences)
+    - [Generate a plot of the alignment graph](#generate-a-plot-of-the-alignment-graph)
   - [Input](#input)
   - [Output](#output)
     - [Consensus sequence](#consensus-sequence)
@@ -80,15 +81,15 @@ It right now supports SSE2/SSE4.1/AVX2 vectorization.
 
 For more information, please refer to our [paper](https://dx.doi.org/10.1093/bioinformatics/btaa963) published in Bioinformatics.
 
-## <a name="install"></a>Installation
+## Installation
 
-### <a name="conda"></a>Installing abPOA via conda
+### Installing abPOA via conda
 On Linux/Unix and Mac OS, abPOA can be installed via
 ```
 conda install -c bioconda abpoa   # install abPOA program
 ```
 
-### <a name="build"></a>Building abPOA from source files
+### Building abPOA from source files
 You can also build abPOA from source files. 
 Make sure you have gcc (>=6.4.0) and zlib installed before compiling.
 It is recommended to download the [latest release](https://github.com/yangao07/abPOA/releases).
@@ -104,7 +105,7 @@ git clone --recursive https://github.com/yangao07/abPOA.git
 cd abPOA; make
 ```
 
-### <a name="binary"></a>Pre-built binary executable file for Linux/Unix or MacOS
+### Pre-built binary executable file for Linux/Unix or MacOS
 If you meet any compiling issue, please try the pre-built binary file for linux:
 ```
 wget https://github.com/yangao07/abPOA/releases/download/v1.5.1/abPOA-v1.5.1_x64-linux.tar.gz
@@ -116,27 +117,27 @@ wget https://github.com/yangao07/abPOA/releases/download/v1.5.1/abPOA-v1.5.1_arm
 tar -zxvf abPOA-v1.5.1_arm64-macos.tar.gz
 ```
 
-## <a name="usage"></a>General usage
-### <a name="gen_1cons"></a>To generate consensus sequence
+## General usage
+### Generate consensus sequence
 
 ```
 abpoa seq.fa > cons.fa
 ```
 
-### <a name="gen_mcons"></a>To generate multiple consensus sequences
+### Generate multiple consensus sequences
 
 ```
 abpoa heter.fa -d2 > 2cons.fa
 ```
 
-### <a name="gen_msa"></a>To generate row-column multiple sequence alignment in FASTA format
+### Generate row-column multiple sequence alignment in FASTA format
 
 ```
 abpoa seq.fa -r1 > out.msa
 abpoa seq.fa -r2 > out_cons.msa
 ```
 
-### <a name="gen_gfa"></a>To generate graph information in [GFA](https://github.com/GFA-spec/GFA-spec/blob/master/GFA1.md) format
+### Generate graph information in [GFA](https://github.com/GFA-spec/GFA-spec/blob/master/GFA1.md) format
 
 ```
 abpoa seq.fa -r3 > out.gfa
@@ -146,7 +147,7 @@ To include the generated consensus sequence as a path in the GFA file:
 abpoa seq.fa -r4 > out.gfa
 ```
 
-### <a name="aln_to_gfa"></a>To align sequence to an existing graph in GFA/MSA format
+### Align sequence to an existing graph in GFA/MSA format
 ```
 abpoa -i in.gfa seq.fa -r3 > out.gfa
 abpoa -i in.msa seq.fa -r1 > out.msa
@@ -158,14 +159,22 @@ abpoa seq1.fa -r1 > seq1.msa
 abpoa -i seq1.msa seq2.fa > cons.fa
 ```
 
-### <a name="gen_plot"></a>To generate a plot of the alignment graph
+### Generate consensus sequence for amino acid sequences
+```
+abpoa -c -t BLOSUM62.mtx input_aa.fa > output_aa_cons.fa
+```
+abPOA provides two score matrix files for amino acid sequences: `BLOSUM62.mtx`, `HOXD70.mtx`.
+
+You can also use any score matrix, as long as it has the same format as the above two.
+
+### Generate a plot of the alignment graph
 
 ```
 abpoa seq.fa -g poa.png > cons.fa
 ```
 See [Plot of alignment graph](#plot) for more details about the plot file.
 
-## <a name="input"></a>Input
+## Input
 abPOA works with FASTA, FASTQ, gzip'd FASTA(.fa.gz) and gzip'd FASTQ(.fq.gz) formats. The input file is 
 expected to contains multiple sequences which will be processed sequentially to perform the iterative 
 sequence-to-graph (partial order) alignment.
@@ -174,8 +183,8 @@ abPOA can also take a list of filenames as input with option `-l`, where each li
 file containing multiple sequences. Each sequence file is then individually aligned by abPOA to generate a
 consensus sequence.
 
-## <a name="output"></a>Output
-### <a name="cons"></a>Consensus sequence 
+## Output
+### Consensus sequence 
 By default, abPOA only outputs the consensus sequence generated from the final alignment graph.
 It is in FASTA format with the name field set as "Consensus_sequence".
 For example:
@@ -195,7 +204,7 @@ CCATTCCCACCATCCTTACCATCAACATCACCATCCCCACCATCCCCAACACCATTCCCACCATCCCTACCATCACCATC
 >Consensus_sequence_2
 CCATTCCCACCATCCTTACCATCAACATCACCATCCCCACCATCCCCAACACCATTCCCACCATCCCTACCATCACCATCACCATCCCCACCAACATCCCCACCACCATCCTCACTACCATCCCCACCACCATTTCCACCATTCCCACCACAGTCACCATCACCCCCACCATCCCCATCATCATCCGCACCATCCCCACCATCCCCACCACCATCTCCATTACCATCCCCACCACCATCCCCATTACCATCCCCACCACCATCCCCATTACCATCCCCACCACCATTTCCACCATTCCCACCATCATCCCCACCACCATCCTCGTTACCATCCCCACCACCATCCCCATTACCATCCCCACCACCATTTCCACCATTCCCACCATCATCCCCACCACCATCCCCATTACCATCCCCACCACCATCCCCATTACCATCCCCACCACCATTTCCACCATTCCCACCATCATCCCCACCACCATCCTCGTTACCATCCCCACCACCTTTTCCACCATTCCCACCATCATCCCCACCGCCATCCTCGTTACCATCCCCACCACCTTTTCCACCATTCCCACCATCTCCAACACCTCCCCCACCATCATCCCCACCATCCCCACCACCTTCTCCACCATCATTCTCACCATCCCCACCACCATCTCCACCACCATTCTCACCATCTCCACCAACATCCCCACCATCCCCACCCCCATGCCCACCAACATCCCCACCATCCCCACCCCCATGCCCACCATCATCCCCACCATCC
 ```
-### <a name="msa"></a>Row-column multiple sequence alignment
+### Row-column multiple sequence alignment
 abPOA can also output the row-column multiple sequence alignment (RC-MSA) of all the aligned sequences in FASTA format.
 For example:
 ```
@@ -210,7 +219,7 @@ ACGTGTACA--TTGAC
 ```
 The `-` in the sequence stands for alignment gap. 
 
-### <a name="gfa"></a>Full graph information
+### Full graph information
 abPOA can output the final alignment graph in GFA format.
 Each segment line (`S` line) represents one node and each link line (`L` line) represents one edge between two nodes.
 The original input sequences and the generated consensus sequence are described as paths in `P` lines.
@@ -220,7 +229,7 @@ abPOA outputs two graph-related numbers in the header line (`H` line):
 
 Please refer to the [GFA specification](https://github.com/GFA-spec/GFA-spec/blob/master/GFA1.md) for more details of the GFA format.
 
-### <a name="plot"></a>Plot of alignment graph
+### Plot of alignment graph
 
 abPOA can generate a plot of the final partial order alignment graph with the help of `graphviz dot`. 
 For example:
@@ -233,11 +242,11 @@ The numbers inside the nodes are the node IDs. The numbers on the edges are the 
 Make sure you have `dot` installed before using abPOA to generate the plot.
 For Linux/Unix systems: `sudo apt-get install graphviz`.
 
-## <a name="description"></a>Algorithm description
-### <a name="banding"></a>Adaptive banding
+## Algorithm description
+### Adaptive banding
 To understand how the adaptive banding working, please refer to our [Bioinformatics paper](https://dx.doi.org/10.1093/bioinformatics/btaa963).
 
-### <a name="seeding"></a>Minimizer-based seeding mode
+### Minimizer-based seeding mode
 As abPOA always allocates quadratic size of memory, for very long input sequences (>10 kb), memory usage will be a challenge.
 
 To solve this issue, we develop a minimizer-based seeding and partition method to split the sequence and graph with a small window.
@@ -250,7 +259,7 @@ A second round of chaining is then performed on all the local minimizer chains t
 With this global chain, abPOA selects a series of minimizer hits as partition anchors which has at least a distance of 500 bp (by default, -n/--min-poa-win).
 Within each partitioned window, abPOA performs banded partial order alignment separately and combines all the alignment results at the end.
 
-### <a name="tree"></a>Minimizer-based progressive tree
+### Minimizer-based progressive tree
 Instead of aligning all the sequences in the original order, abPOA can alternatively build a progressive tree to guide the alignment order.
 The generation of the progressive tree is also based on minimizers.
 For each pair of sequences, abPOA calculates their similarity score which is the Jaccard similarity of the minimizers, i.e. the number of minimizer hits divided by the total number of all minimizers from the two sequences.
@@ -262,22 +271,22 @@ With all the similarity scores (minimizer-based Jaccard similarity), abPOA build
 
 Then, abPOA performs partial order alignment following the order of sequences in this progressive tree set.
 
-### <a name="mcons"></a>Multiple consensus sequences
+### Multiple consensus sequences
 abPOA supports generating multiple consensus sequences from the final alignment graph (set -d/--max-num-cons as >1).
 
 The general underlying idea is to group input sequences into multiple clusters based on the heterozygous bases in the graph,
 Then, one consensus sequence is separately generated for each cluster of input sequences.
 The minimum allele frequency for each heterozygous base is 0.25 (by default, -q/--min-freq). 
 
-## <a name="dev"></a>For development
+## For development
 abPOA is not only a stand-alone tool for MSA and consensus calling, it can also work as a programming library. [example.c](example.c) shows how to use the C APIs of abPOA to take a set of sequences as input and perform MSA and consensus calling. Basically, the library file `libabpoa.a` and two header files [abpoa.h](include/abpoa.h) and [simd_instruction.h](include/simd_instruction.h) are needed to make the abPOA library work in your program.
 
 abPOA also provides Python bindings to all the primary C APIs. Refer to [python/README.md](python/README.md) for more details.
 
-## <a name="eval"></a>Evaluation datasets
+## Evaluation datasets
 The evaluation datasets and scripts used in [abPOA paper](https://dx.doi.org/10.1093/bioinformatics/btaa963) can be found in [abPOA-v1.0.5](https://github.com/yangao07/abPOA/releases/tag/v1.0.5).
 
-## <a name="contact"></a>Contact
+## Contact
 Yan Gao gaoy1@chop.edu
 
 Yi Xing xingyi@chop.edu
