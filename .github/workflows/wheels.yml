@@ -29,7 +29,7 @@ jobs:
         # skip these for now, need more work
         - [macos-latest, macosx_arm64, arm64]
         # python: ["cp38", "cp39", "cp310", "cp311", "cp312"]
-        python: ["cp312", "cp313"]
+        python: ["cp312"]
 
     steps:
       - uses: actions/checkout@v3
