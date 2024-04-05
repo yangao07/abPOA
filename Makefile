@@ -6,15 +6,14 @@ OS          := $(shell uname)
 ARCH        := $(shell arch)
 # add -fno-tree-vectorize to avoid certain vectorization errors in O3 optimization
 # right now, we are using -O3 for the best performance, and no vectorization errors were found
-EXTRA_FLAGS = -Wall -Wno-unused-function -Wno-misleading-indentation -DUSE_SIMDE -DSIMDE_ENABLE_NATIVE_ALIASES # -fno-tree-vectorize
+EXTRA_FLAGS = -Wall -Wno-unused-function -Wno-misleading-indentation -DUSE_SIMDE -DSIMDE_ENABLE_NATIVE_ALIASES# -fno-tree-vectorize
 
-DFLAGS	  =
 # for debug
 ifneq ($(debug),)
-	DFLAGS  +=   -D __DEBUG__
+	EXTRA_FLAGS  += -D __DEBUG__
 endif
 ifneq ($(sdebug),)
-	DFLAGS  +=   -D __SIMD_DEBUG__
+	EXTRA_FLAGS  += -D __SIMD_DEBUG__
 endif
 
 # for gdb
@@ -24,7 +23,7 @@ else
 	OPT_FLAGS = -O3
 endif
 
-CFLAGS        = OPT_FLAGS ${DFLAGS} $(EXTRA_FLAGS)
+CFLAGS        = $(OPT_FLAGS) $(EXTRA_FLAGS)
 
 # for gprof
 ifneq ($(pg),)
