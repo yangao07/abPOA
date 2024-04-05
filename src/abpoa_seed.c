@@ -231,7 +231,7 @@ void mm_aa_sketch(void *km, const uint8_t *str, int len, int w, int k, uint32_t 
 int abpoa_build_guide_tree(abpoa_para_t *abpt, int n_seq, ab_u128_v *mm, int *tree_id_map) {
     if (mm->n == 0) return 0;
 
-    if (abpt->verbose > 0) fprintf(stderr, "[%s] Building progressive guide tree ... ", __func__);
+    if (abpt->verbose >= ABPOA_INFO_VERBOSE) fprintf(stderr, "[%s] Building progressive guide tree ... ", __func__);
     size_t i, _i, j; int rid1, rid2;                                          // mm_hit_n: mimizer hits between each two sequences
                                                                               // 0: 0
                                                                               // 1: 0 1
@@ -319,7 +319,7 @@ int abpoa_build_guide_tree(abpoa_para_t *abpt, int n_seq, ab_u128_v *mm, int *tr
     }
 
     free(mm_hit_n); free(jac_sim);
-    if (abpt->verbose > 0) fprintf(stderr, "done!\n");
+    if (abpt->verbose >= ABPOA_INFO_VERBOSE) fprintf(stderr, "done!\n");
     return 0;
 }
 
@@ -382,7 +382,9 @@ int get_local_chain_score(int j_end_tpos, int j_end_qpos, int i_end_anchor_i, ab
 // local chains:
 //   x: strand | end_tpos | end_qpos
 //   y: end_anchor_i | start_anchor_i
-int abpoa_dp_chaining_of_local_chains(void *km, ab_u128_t *local_chains, int n_local_chains, ab_u64_v *anchors, int *score, int *pre_id, ab_u64_v *par_anchors, int min_w, int tlen, int qlen) {
+int abpoa_dp_chaining_of_local_chains(void *km, ab_u128_t *local_chains, int n_local_chains, 
+                                      ab_u64_v *anchors, int *score, int *pre_id, ab_u64_v *par_anchors, 
+                                      int min_w, int tlen, int qlen, int verbose) {
     int i, j, st, score1, global_max_score=INT32_MIN, global_max_i=-1;
     int *chain_score = (int*)kmalloc(km, n_local_chains * 4), *pre_chain_id = (int*)kmalloc(km, n_local_chains * 4);
     size_t _n = par_anchors->n;
@@ -452,13 +454,13 @@ int abpoa_dp_chaining_of_local_chains(void *km, ab_u128_t *local_chains, int n_l
         par_anchors->a[par_anchors->n-i-1] = tmp;
     }
 
-#ifdef __DEBUG__
-    for (i = _n; i < par_anchors->n; ++i) {
-        uint64_t ia = par_anchors->a[i];
-        // strand, rpos, qpos
-        fprintf(stderr, "%c\t%ld\t%d\n", "+-"[ia >> 63], (ia>>32) & 0x7fffffff, ((uint32_t)ia));
+    if (verbose >= ABPOA_LONG_DEBUG_VERBOSE) {
+        for (i = _n; i < par_anchors->n; ++i) {
+            uint64_t ia = par_anchors->a[i];
+            // strand, rpos, qpos
+            fprintf(stderr, "%c\t%ld\t%d\n", "+-"[ia >> 63], (ia>>32) & 0x7fffffff, ((uint32_t)ia));
+        }
     }
-#endif
     kfree(km, chain_score), kfree(km, pre_chain_id);
     return 0;
 }
@@ -482,7 +484,7 @@ static int get_chain_score(int max_bw, int *score, int i_qpos, int i_tpos, int j
 // Dynamic Programming-based Chaining for global alignment mode
 // anchors:
 //          strand<<63 | tpos<<32 | qpos
-int abpoa_dp_chaining(void *km, ab_u64_v *anchors, ab_u64_v *par_anchors, abpoa_para_t *abpt, int tlen, int qlen) {
+int abpoa_dp_chaining(void *km, ab_u64_v *anchors, ab_u64_v *par_anchors, abpoa_para_t *abpt, int tlen, int qlen, int verbose) {
     int i, j, st, n_a = anchors->n;
     int *score = (int32_t*)kmalloc(km, n_a * 4), *pre_id = (int32_t*)kmalloc(km, n_a * 4), *end_pos = (int32_t*)kmalloc(km, n_a * 4);
     memset(end_pos, 0, n_a * 4);
@@ -516,9 +518,7 @@ int abpoa_dp_chaining(void *km, ab_u64_v *anchors, ab_u64_v *par_anchors, abpoa_
 
             if (pre_id[j] >= 0) end_pos[pre_id[j]] = i;
         }
-#ifdef __DEBUG__
-        fprintf(stderr, "%d pre_id: %d, score: %d, tpos: %d, qpos: %d\n", i, max_j, max_score, i_tpos, i_qpos);
-#endif
+        if (verbose >= ABPOA_LONG_DEBUG_VERBOSE) fprintf(stderr, "%d pre_id: %d, score: %d, tpos: %d, qpos: %d\n", i, max_j, max_score, i_tpos, i_qpos);
         score[i] = max_score, pre_id[i] = max_j;
     }
 
@@ -570,7 +570,8 @@ int abpoa_dp_chaining(void *km, ab_u64_v *anchors, ab_u64_v *par_anchors, abpoa_
     }
 
     radix_sort_ab_128x(local_chains+tot_chain_i+1, local_chains + n_local_chains);
-    abpoa_dp_chaining_of_local_chains(km, local_chains+tot_chain_i+1, n_local_chains-1-tot_chain_i, anchors, score, pre_id, par_anchors, min_w, tlen, qlen);
+    abpoa_dp_chaining_of_local_chains(km, local_chains+tot_chain_i+1, n_local_chains-1-tot_chain_i, 
+                                      anchors, score, pre_id, par_anchors, min_w, tlen, qlen, abpt->verbose);
 
     kfree(km, score); kfree(km, pre_id); kfree(km, end_pos); kfree(km, local_chains);
     return 0;
@@ -630,7 +631,7 @@ int LIS(void *km, int tot_n, uint64_t *rank, int n) {
 // output:
 //   anchor list size: n
 //   list of anchors: anchors
-int LIS_chaining(void *km, ab_u64_v *anchors, ab_u64_v *par_anchors, int min_w) {
+int LIS_chaining(void *km, ab_u64_v *anchors, ab_u64_v *par_anchors, int min_w, int verbose) {
     size_t i, j, n_a = anchors->n, n_for, n_rev;
     uint64_t *for_rank = (uint64_t*)kmalloc(km, sizeof(uint64_t) * n_a);
     uint64_t *rev_rank = (uint64_t*)kmalloc(km, sizeof(uint64_t) * n_a);
@@ -663,10 +664,8 @@ int LIS_chaining(void *km, ab_u64_v *anchors, ab_u64_v *par_anchors, int min_w) 
         n = n_rev; rank = rev_rank; kfree(km, for_rank);
     }
     // filter anchors
-    int last_tpos = -1, last_qpos = -1, cur_tpos, cur_qpos;
-#ifdef __DEBUG__
-    size_t _n = par_anchors->n;
-#endif
+    int last_tpos = -1, last_qpos = -1, cur_tpos, cur_qpos; size_t _n = 0;
+    if (verbose >= ABPOA_LONG_DEBUG_VERBOSE) _n = par_anchors->n;
     for (i = 0; i < n; ++i) {
         j = (int)rank[i]-1;
         cur_tpos = (anchors->a[j] >> 32) & 0x7fffffff;
@@ -677,18 +676,19 @@ int LIS_chaining(void *km, ab_u64_v *anchors, ab_u64_v *par_anchors, int min_w) 
         kv_push(uint64_t, 0, *par_anchors, anchors->a[j]); // store LIS anchors into par_anchors
         last_tpos = cur_tpos; last_qpos = cur_qpos;
     }
-#ifdef __DEBUG__
-    for (i = _n; i < par_anchors->n; ++i) {
-        uint64_t ia = par_anchors->a[i];
-        // strand, rpos, qpos
-        fprintf(stderr, "%c\t%ld\t%d\n", "+-"[ia >> 63], (ia>>32) & 0x7fffffff, ((uint32_t)ia));
+
+    if (verbose >= ABPOA_LONG_DEBUG_VERBOSE) {
+        for (i = _n; i < par_anchors->n; ++i) {
+            uint64_t ia = par_anchors->a[i];
+            // strand, rpos, qpos
+            fprintf(stderr, "%c\t%ld\t%d\n", "+-"[ia >> 63], (ia>>32) & 0x7fffffff, ((uint32_t)ia));
+        }
     }
-#endif
     return 0;
 }
 
 int abpoa_collect_mm(void *km, uint8_t **seqs, int *seq_lens, int n_seq, abpoa_para_t *abpt, ab_u128_v *mm, int *mm_c) {
-    if (abpt->verbose > 0) fprintf(stderr, "[%s] Collecting minimizers ... ", __func__);
+    if (abpt->verbose >= ABPOA_INFO_VERBOSE) fprintf(stderr, "[%s] Collecting minimizers ... ", __func__);
     int i;
     mm_c[0] = 0;
     for (i = 0; i < n_seq; ++i) { // collect minimizers
@@ -696,7 +696,7 @@ int abpoa_collect_mm(void *km, uint8_t **seqs, int *seq_lens, int n_seq, abpoa_p
         else mm_sketch(km, seqs[i], seq_lens[i], abpt->w, abpt->k, i, 0, abpt->amb_strand, mm);
         mm_c[i+1] = mm->n;
     }
-    if (abpt->verbose > 0) fprintf(stderr, "done!\n");
+    if (abpt->verbose >= ABPOA_INFO_VERBOSE) fprintf(stderr, "done!\n");
     return mm->n;
 }
 
@@ -731,11 +731,9 @@ int abpoa_build_guide_tree_partition(uint8_t **seqs, int *seq_lens, int n_seq, a
         // collect minimizer hit anchors between t and q
         collect_anchors1(km, &anchors, mm1, mm_c, tid, qid, seq_lens[qid], abpt->k);
         // filtering and only keep LIS anchors
-#ifdef __DEBUG__
-        fprintf(stderr, "%d vs %d (tot_n: %ld)\n", tid, qid, anchors.n);
-#endif
+        if (abpt->verbose >= ABPOA_LONG_DEBUG_VERBOSE) fprintf(stderr, "%d vs %d (tot_n: %ld)\n", tid, qid, anchors.n);
         // alignment mode: different chaining result for global/local/extend
-        abpoa_dp_chaining(km, &anchors, par_anchors, abpt, seq_lens[tid], seq_lens[qid]);
+        abpoa_dp_chaining(km, &anchors, par_anchors, abpt, seq_lens[tid], seq_lens[qid], abpt->verbose);
         par_c[i] = par_anchors->n;
         kfree(km, anchors.a);
     }

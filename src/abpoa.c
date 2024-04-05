@@ -54,6 +54,7 @@ const struct option abpoa_long_opt [] = {
 
     { "help", 0, NULL, 'h' },
     { "version", 0, NULL, 'v' },
+    { "verbose", 1, NULL, 'V'},
 
     { 0, 0, 0, 0}
 };
@@ -122,6 +123,7 @@ int abpoa_usage(void)
 
     err_printf("    -h --help               print this help usage information\n");
     err_printf("    -v --version            show version number\n");
+    err_printf("    -V --verbose     INT    verbose level (0-2). 0: none, 1: information, 2: debug [0]\n");
 
 
     err_printf("\n");

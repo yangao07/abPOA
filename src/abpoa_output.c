@@ -728,7 +728,7 @@ int reassign_hap(int **clu_haps, int *clu_size, uint64_t **clu_read_ids, int rea
 
 // read_weight is NOT used here, no matter use_qv is set or not.
 // collect minimized set of het bases
-int abpoa_set_het_row_column_ids_weight(abpoa_graph_t *abg, uint64_t ***read_ids, int *het_poss, int **rc_weight, int msa_l, int n_seq, int m, int min_w, int read_ids_n) {
+int abpoa_set_het_row_column_ids_weight(abpoa_graph_t *abg, uint64_t ***read_ids, int *het_poss, int **rc_weight, int msa_l, int n_seq, int m, int min_w, int read_ids_n, int verbose) {
     int i, j, k, n, rank;
     uint64_t b, one = 1, *whole_read_ids = (uint64_t*)_err_calloc(read_ids_n, sizeof(uint64_t));
     for (i = 0; i < n_seq; ++i) {
@@ -782,12 +782,12 @@ int abpoa_set_het_row_column_ids_weight(abpoa_graph_t *abg, uint64_t ***read_ids
             if (iden == 1) continue;
 
             het_poss[n_het_pos++] = rank;
-#ifdef __DEBUG__
-            fprintf(stderr, "%d\t", rank);
-            for (j = 0; j < m; ++j) {
-                fprintf(stderr, "%c: %d\t", "ACGT-"[j], rc_weight[rank][j]);
-            } fprintf(stderr, "\n");
-#endif
+            if (verbose >= ABPOA_LONG_DEBUG_VERBOSE) {
+                fprintf(stderr, "%d\t", rank);
+                for (j = 0; j < m; ++j) {
+                    fprintf(stderr, "%c: %d\t", "ACGT-"[j], rc_weight[rank][j]);
+                } fprintf(stderr, "\n");
+            }
         }
     }
     free(n_branch); free(node_map);
@@ -796,7 +796,8 @@ int abpoa_set_het_row_column_ids_weight(abpoa_graph_t *abg, uint64_t ***read_ids
 
 // group read into clusters based on all het bases
 // initial cluster size could be > max_n_cons
-int abpoa_collect_clu_hap_read_ids(int *het_poss, int n_het_pos, uint64_t ***read_ids, int read_ids_n, int n_seq, int m, int min_w, int max_n_cons, uint64_t ***clu_read_ids, int *_m_clu) {
+int abpoa_collect_clu_hap_read_ids(int *het_poss, int n_het_pos, uint64_t ***read_ids, int read_ids_n, 
+                                   int n_seq, int m, int min_w, int max_n_cons, uint64_t ***clu_read_ids, int *_m_clu, int verbose) {
     if (n_het_pos == 0) return 1;
     int i, j, k, n_clu = 0, m_clu = 2;
     int **clu_haps = (int**)_err_malloc(2 * sizeof(int*));
@@ -832,25 +833,25 @@ int abpoa_collect_clu_hap_read_ids(int *het_poss, int n_het_pos, uint64_t ***rea
         }
     }
     if (n_clu < 2) err_fatal(__func__, "# haplotypes: %d\n", n_clu);
-#ifdef __DEBUG__
-    fprintf(stderr, "n_clu: %d\n", n_clu);
-    for (i = 0; i < n_clu; ++i) {
-        for (j = 0; j < n_het_pos; ++j) {
-            fprintf(stderr, "%d\t", clu_haps[i][j]);
+    if (verbose >= ABPOA_LONG_DEBUG_VERBOSE) {
+        fprintf(stderr, "n_clu: %d\n", n_clu);
+        for (i = 0; i < n_clu; ++i) {
+            for (j = 0; j < n_het_pos; ++j) {
+                fprintf(stderr, "%d\t", clu_haps[i][j]);
+            }
+            fprintf(stderr, "\tsize: %d\n", clu_size[i]);
         }
-        fprintf(stderr, "\tsize: %d\n", clu_size[i]);
     }
-#endif
 
     // assign haplotype with reads < min_w to haplotype with reads >= min_w
     // keep at most _max_n_cons_ haps and read ids, weight need to >= min_w
     n_clu = reassign_hap(clu_haps, clu_size, *clu_read_ids, read_ids_n, n_clu, min_w, max_n_cons, n_het_pos);
-#ifdef __DEBUG__
-    fprintf(stderr, "After re-assign: n_clu: %d\n", n_clu);
-    for (i = 0; i < n_clu; ++i) {
-        fprintf(stderr, "%d:\tsize: %d\n", i, clu_size[i]);
+    if (verbose >= ABPOA_LONG_DEBUG_VERBOSE) {
+        fprintf(stderr, "After re-assign: n_clu: %d\n", n_clu);
+        for (i = 0; i < n_clu; ++i) {
+            fprintf(stderr, "%d:\tsize: %d\n", i, clu_size[i]);
+        }
     }
-#endif
     for (i = 0; i < m_clu; ++i) free(clu_haps[i]); free(clu_haps); free(clu_size);
     *_m_clu = m_clu;
     return n_clu;
@@ -858,7 +859,7 @@ int abpoa_collect_clu_hap_read_ids(int *het_poss, int n_het_pos, uint64_t ***rea
 
 // read_weight is NOT used here
 // cluster reads into _n_clu_ groups based on heterogeneous bases
-int abpoa_multip_read_clu(abpoa_graph_t *abg, int src_id, int sink_id, int n_seq, int m, int max_n_cons, double min_freq, uint64_t ***clu_read_ids, int *_m_clu) {
+int abpoa_multip_read_clu(abpoa_graph_t *abg, int src_id, int sink_id, int n_seq, int m, int max_n_cons, double min_freq, uint64_t ***clu_read_ids, int *_m_clu, int verbose) {
     abpoa_set_msa_rank(abg, src_id, sink_id);
     int i, j, n_clu, m_clu, read_ids_n = (n_seq-1)/64+1;
     int msa_l = abg->node_id_to_msa_rank[sink_id]-1, min_w = MAX_OF_TWO(1, n_seq * min_freq); // TODO fastq-qual weight
@@ -878,11 +879,11 @@ int abpoa_multip_read_clu(abpoa_graph_t *abg, int src_id, int sink_id, int n_seq
     } 
     // find min set of het nodes
     int *het_poss = (int*)_err_calloc(msa_l, sizeof(int));
-    int n_het_pos = abpoa_set_het_row_column_ids_weight(abg, read_ids, het_poss, rc_weight, msa_l, n_seq, m, min_w, read_ids_n);
+    int n_het_pos = abpoa_set_het_row_column_ids_weight(abg, read_ids, het_poss, rc_weight, msa_l, n_seq, m, min_w, read_ids_n, verbose);
     
     if (n_het_pos < 1) n_clu = 1;
     // collect at most _max_n_cons_ haplotypes and corresponding read ids
-    else n_clu = abpoa_collect_clu_hap_read_ids(het_poss, n_het_pos, read_ids, read_ids_n, n_seq, m, min_w, max_n_cons, clu_read_ids, &m_clu);
+    else n_clu = abpoa_collect_clu_hap_read_ids(het_poss, n_het_pos, read_ids, read_ids_n, n_seq, m, min_w, max_n_cons, clu_read_ids, &m_clu, verbose);
 
     for (i = 0; i < msa_l; ++i) {
         for (j = 0; j < m; ++j) free(read_ids[i][j]);
@@ -906,7 +907,7 @@ void abpoa_generate_consensus(abpoa_t *ab, abpoa_para_t *abpt) {
     int n_clu, m_clu, n_seq = ab->abs->n_seq; uint64_t **clu_read_ids;
     int read_ids_n = (n_seq-1)/64+1;
 
-    if (abpt->max_n_cons > 1) n_clu = abpoa_multip_read_clu(abg, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, n_seq, abpt->m, abpt->max_n_cons, abpt->min_freq, &clu_read_ids, &m_clu);
+    if (abpt->max_n_cons > 1) n_clu = abpoa_multip_read_clu(abg, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, n_seq, abpt->m, abpt->max_n_cons, abpt->min_freq, &clu_read_ids, &m_clu, abpt->verbose);
     else n_clu = 1;
 
     abpoa_cons_t *abc = ab->abc;

@@ -38,6 +38,11 @@
 #define ABPOA_HB 0
 #define ABPOA_HC 1
 
+#define ABPOA_NONE_VERBOSE 0
+#define ABPOA_INFO_VERBOSE 1
+#define ABPOA_DEBUG_VERBOSE 2
+#define ABPOA_LONG_DEBUG_VERBOSE 3
+
 // NOTE: upper boundary of in_edge_n is pow(2,30)
 // for MATCH/MISMATCH: node_id << 34  | query_id << 4 | op
 // for INSERTION:      query_id << 34 | op_len << 4   | op

@@ -133,7 +133,7 @@ abpoa_para_t *abpoa_init_para(void) {
     abpt->min_w = ABPOA_MIN_POA_WIN;
     abpt->progressive_poa = 0; // progressive partial order alignment
 
-    abpt->verbose = 0;
+    abpt->verbose = ABPOA_NONE_VERBOSE;
 
     // abpt->simd_flag = simd_check();
 
@@ -199,9 +199,7 @@ int abpoa_anchor_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int **weig
     // uint8_t *seq1;
     for (_i = 0; _i < n_seq; ++_i) {
         i = read_id_map[_i]; read_id = exist_n_seq + i; qlen = seq_lens[i]; whole_res.n_cigar = 0, whole_res.m_cigar = 0, whole_res.graph_cigar = 0;
-#ifdef __DEBUG__
-        fprintf(stderr, "seq: # %d\n", i);
-#endif
+        if (abpt->verbose >= ABPOA_DEBUG_VERBOSE) fprintf(stderr, "seq: # %d\n", i);
         // seq-to-graph alignment and add alignment within each split window
         if (_i == 0) ai = 0; else ai = par_c[_i-1];
 
@@ -252,10 +250,7 @@ int abpoa_anchor_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int **weig
         for (; ai < par_c[_i]; ++ai) {
             end_tpos = ((par_anchors.a[ai] >> 32) & 0x7fffffff) - k + 1; end_id = tpos_to_node_id[end_tpos];
             end_qpos = (uint32_t)par_anchors.a[ai] - k + 1;
-
-#ifdef __DEBUG__
-            fprintf(stderr, "\tanchor: t: %d (id: %d), q: %d\n", end_tpos, end_id, end_qpos);
-#endif
+            if (abpt->verbose >= ABPOA_DEBUG_VERBOSE) fprintf(stderr, "\tanchor: t: %d (id: %d), q: %d\n", end_tpos, end_id, end_qpos);
 
             res.graph_cigar = 0; res.n_cigar = 0;
             abpoa_align_sequence_to_subgraph(ab, abpt, beg_id, end_id, qseq+beg_qpos, end_qpos-beg_qpos, &res);
@@ -277,9 +272,7 @@ int abpoa_anchor_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int **weig
         }
         end_id = ABPOA_SINK_NODE_ID; end_qpos = seq_lens[i];
 
-#ifdef __DEBUG__
-            fprintf(stderr, "\tanchor: t: %d (id: %d), q: %d\n", end_tpos, end_id, end_qpos);
-#endif
+        if (abpt->verbose >= ABPOA_DEBUG_VERBOSE) fprintf(stderr, "\tanchor: t: %d (id: %d), q: %d\n", end_tpos, end_id, end_qpos);
         res.graph_cigar = 0; res.n_cigar = 0;
         abpoa_align_sequence_to_subgraph(ab, abpt, beg_id, end_id, qseq+beg_qpos, end_qpos-beg_qpos, &res);
         abpoa_push_whole_cigar(&whole_res.n_cigar, &whole_res.m_cigar, &whole_res.graph_cigar, res.n_cigar, res.graph_cigar);
@@ -307,9 +300,7 @@ int abpoa_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int **weights, in
     // uint8_t *seq1;
     for (i = 0; i < n_seq; ++i) {
         qlen = seq_lens[i]; qseq = seqs[i]; weight = weights[i]; read_id = exist_n_seq + i;
-#ifdef __DEBUG__
-        fprintf(stderr, "seq: # %d\n", i);
-#endif
+        if (abpt->verbose >= ABPOA_DEBUG_VERBOSE) fprintf(stderr, "seq: # %d\n", i);
         res.graph_cigar = 0; res.n_cigar = 0;
         if (abpoa_align_sequence_to_graph(ab, abpt, qseq, qlen, &res) >= 0) {
             if (abpt->amb_strand && (res.best_score < MIN_OF_TWO(qlen, ab->abg->node_n-2) * abpt->max_mat * .3333)) { // TODO .3333

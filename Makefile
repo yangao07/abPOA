@@ -4,19 +4,27 @@ default: abpoa
 #CC          = gcc
 OS          := $(shell uname)
 ARCH        := $(shell arch)
-EXTRA_FLAGS = -Wno-unused-function -Wno-misleading-indentation -DUSE_SIMDE -DSIMDE_ENABLE_NATIVE_ALIASES
-CFLAGS      = -Wall -O3 $(EXTRA_FLAGS)
+# add -fno-tree-vectorize to avoid certain vectorization errors in O3 optimization
+# right now, we are using -O3 for the best performance, and no vectorization errors were found
+EXTRA_FLAGS = -Wall -Wno-unused-function -Wno-misleading-indentation -DUSE_SIMDE -DSIMDE_ENABLE_NATIVE_ALIASES # -fno-tree-vectorize
 
+DFLAGS	  =
 # for debug
 ifneq ($(debug),)
-	DFLAGS   =   -D __DEBUG__
+	DFLAGS  +=   -D __DEBUG__
 endif
+ifneq ($(sdebug),)
+	DFLAGS  +=   -D __SIMD_DEBUG__
+endif
+
 # for gdb
 ifneq ($(gdb),)
-	CFLAGS   = -Wall -g ${DFLAGS} $(EXTRA_FLAGS)
+	OPT_FLAGS = -g
 else
-	CFLAGS   = -Wall -O3 ${DFLAGS} $(EXTRA_FLAGS)
+	OPT_FLAGS = -O3
 endif
+
+CFLAGS        = OPT_FLAGS ${DFLAGS} $(EXTRA_FLAGS)
 
 # for gprof
 ifneq ($(pg),)
