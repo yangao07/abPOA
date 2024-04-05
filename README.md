@@ -172,7 +172,7 @@ You can also use any score matrix, as long as it has the same format as the abov
 ```
 abpoa seq.fa -g poa.png > cons.fa
 ```
-See [Plot of alignment graph](#plot) for more details about the plot file.
+See [Plot of alignment graph](#plot-of-alignment-graph) for more details about the plot file.
 
 ## Input
 abPOA works with FASTA, FASTQ, gzip'd FASTA(.fa.gz) and gzip'd FASTQ(.fq.gz) formats. The input file is 
