@@ -777,6 +777,7 @@ void simd_output_pre_nodes(int *pre_index, int pre_n, int dp_i, int dp_j, int cu
             } else set_num = pn;                                                                                                  \
         }                                                                                                                         \
         dp_h[sn_i] = SIMDMax(dp_h[sn_i], first);                                                                                  \
+        if (sn_i == end_sn) for (i = end+1; i < (end_sn+1)*pn; ++i) _dp_h[i] = inf_min;                                           \
         SIMD_SET_F(dp_h[sn_i], log_n, set_num, PRE_MIN, PRE_MASK, SUF_MIN, GAP_E1S, SIMDMax, SIMDAdd, SIMDSub, SIMDShiftOneN);    \
         first = SIMDOri(SIMDAndi(SIMDShiftRight(SIMDSub(dp_h[sn_i], GAP_E1), SIMDTotalBytes-SIMDShiftOneN), PRE_MASK[0]), SUF_MIN[0]); \
     }                                                                                                                             \
@@ -885,9 +886,11 @@ void simd_output_pre_nodes(int *pre_index, int pre_n, int dp_i, int dp_j, int cu
         dp_h[sn_i] = SIMDMax(dp_h[sn_i], dp_e1[sn_i]); SIMDi tmp = dp_h[sn_i];                                                    \
         if (abpt->align_mode == ABPOA_LOCAL_MODE) {                                                                               \
             dp_h[sn_i] = SIMDMax(zero, SIMDMax(dp_h[sn_i], dp_f1[sn_i]));                                                         \
+            if (sn_i == end_sn) for (i = end+1; i < (end_sn+1)*pn; ++i) _dp_h[i] = _dp_e1[i] = inf_min;                           \
             SIMDSetIfEqual(dp_e1[sn_i], dp_h[sn_i],tmp, SIMDMax(SIMDSub(dp_e1[sn_i],GAP_E1), SIMDSub(dp_h[sn_i],GAP_OE1)),zero);  \
         } else {                                                                                                                  \
             dp_h[sn_i] = SIMDMax(dp_h[sn_i], dp_f1[sn_i]);                                                                        \
+            if (sn_i == end_sn) for (i = end+1; i < (end_sn+1)*pn; ++i) _dp_h[i] = _dp_e1[i] = inf_min;                           \
             SIMDSetIfEqual(dp_e1[sn_i], dp_h[sn_i],tmp, SIMDMax(SIMDSub(dp_e1[sn_i],GAP_E1), SIMDSub(dp_h[sn_i],GAP_OE1)),SIMD_INF_MIN); \
         }                                                                                                                         \
     }                                                                                                                             \
@@ -1014,11 +1017,13 @@ void simd_output_pre_nodes(int *pre_index, int pre_n, int dp_i, int dp_j, int cu
         first2 = SIMDShiftRight(SIMDMax(dp_h[sn_i], SIMDAdd(dp_f2[sn_i], GAP_O2)), SIMDTotalBytes-SIMDShiftOneN);                 \
         if (abpt->align_mode == ABPOA_LOCAL_MODE) {                                                                               \
             dp_h[sn_i] = SIMDMax(zero, SIMDMax(dp_h[sn_i], SIMDMax(dp_f1[sn_i], dp_f2[sn_i])));                                   \
+            if (sn_i == end_sn) for (i = end+1; i < (end_sn+1)*pn; ++i) _dp_h[i] = _dp_e1[i] = _dp_e2[i] = inf_min;               \
             dp_e1[sn_i] = SIMDMax(zero,SIMDMax(SIMDSub(dp_e1[sn_i],GAP_E1),SIMDSub(dp_h[sn_i],GAP_OE1)));                         \
             dp_e2[sn_i] = SIMDMax(zero,SIMDMax(SIMDSub(dp_e2[sn_i],GAP_E2),SIMDSub(dp_h[sn_i],GAP_OE2)));                         \
         } else {                                                                                                                  \
             /* H = max{H, F}    */                                                                                                \
             dp_h[sn_i] = SIMDMax(dp_h[sn_i], SIMDMax(dp_f1[sn_i], dp_f2[sn_i]));                                                  \
+            if (sn_i == end_sn) for (i = end+1; i < (end_sn+1)*pn; ++i) _dp_h[i] = _dp_e1[i] = _dp_e2[i] = inf_min;               \
             /* e for next cell */                                                                                                 \
             dp_e1[sn_i] = SIMDMax(SIMDSub(dp_e1[sn_i],GAP_E1),SIMDSub(dp_h[sn_i],GAP_OE1));                                       \
             dp_e2[sn_i] = SIMDMax(SIMDSub(dp_e2[sn_i],GAP_E2),SIMDSub(dp_h[sn_i],GAP_OE2));                                       \
@@ -1420,6 +1425,7 @@ int abpoa_cg_dp(SIMDi *q, SIMDi *dp_h, SIMDi *dp_e1, SIMDi *dp_e2, SIMDi *dp_f1,
     first = SIMDShiftRight(SIMDShiftLeft(dp_h[beg_sn], SIMDTotalBytes-SIMDShiftOneNi32), SIMDTotalBytes-SIMDShiftOneNi32);
     int set_num; SIMDi first2 = first;//, tmp;
     int32_t *_dp_h = (int32_t*)dp_h, *_dp_e1 = (int32_t*)dp_e1, *_dp_e2 = (int32_t*)dp_e2;
+    // debug_simd_abpoa_print_cg_matrix_row("4", int32_t, index_i);
     // set h/e as inf_min for cells out of range: < dp_beg or > dp_end
     for (i = beg_sn * pn; i < beg; ++i) _dp_h[i] = _dp_e1[i] = _dp_e2[i] = inf_min;
     for (i = end+1; i < (end_sn+1)*pn; ++i) _dp_h[i] = _dp_e1[i] = _dp_e2[i] = inf_min;
@@ -1445,14 +1451,16 @@ int abpoa_cg_dp(SIMDi *q, SIMDi *dp_h, SIMDi *dp_e1, SIMDi *dp_e2, SIMDi *dp_f1,
         first2 = SIMDShiftRight(SIMDMaxi32(dp_h[sn_i], SIMDAddi32(dp_f2[sn_i], GAP_O2)), SIMDTotalBytes-SIMDShiftOneNi32);
         /* H = max{H, F}    */
         dp_h[sn_i] = SIMDMaxi32(SIMDMaxi32(dp_h[sn_i], dp_f1[sn_i]), dp_f2[sn_i]);
+        if (sn_i == end_sn) for (i = end+1; i < (end_sn+1)*pn; ++i) _dp_h[i] = _dp_e1[i] = _dp_e2[i] = inf_min;
         // if (sn_i==beg_sn) debug_simd_abpoa_print_cg_matrix_row("4.4", int32_t, index_i);
         /* e for next cell */
         // SIMDSetIfEquali32(dp_e1[sn_i], dp_h[sn_i], tmp, SIMDMaxi32(SIMDSubi32(dp_e1[sn_i], GAP_E1), SIMDSubi32(dp_h[sn_i], GAP_OE1)), SIMD_INF_MIN);
         dp_e1[sn_i] = SIMDMaxi32(SIMDSubi32(dp_e1[sn_i], GAP_E1), SIMDSubi32(dp_h[sn_i], GAP_OE1));
         // SIMDSetIfEquali32(dp_e2[sn_i], dp_h[sn_i], tmp, SIMDMaxi32(SIMDSubi32(dp_e2[sn_i], GAP_E2), SIMDSubi32(dp_h[sn_i], GAP_OE2)), SIMD_INF_MIN);
         dp_e2[sn_i] = SIMDMaxi32(SIMDSubi32(dp_e2[sn_i], GAP_E2), SIMDSubi32(dp_h[sn_i], GAP_OE2));
+        // debug_simd_abpoa_print_cg_matrix_row("4.5", int32_t, index_i);
     }
-    // debug_simd_abpoa_print_cg_matrix_row("0", int32_t, index_i);
+    // debug_simd_abpoa_print_cg_matrix_row("5", int32_t, index_i);
     return tot_dp_sn;
 }
 
