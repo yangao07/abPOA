@@ -127,7 +127,8 @@ abPOA provides two conensus calling methods:
 * heaviest bundlding (default): the path with largest weight along the partial order graph
 * most frequent bases: pick the most common base at each alignment position
 
-Sometimes these two methods will generate different consensus sequences (#67).
+Sometimes these two methods will generate different consensus sequences [#67](https://github.com/yangao07/abPOA/issues/67)
+
 
 To use `most frequent bases` method:
 ```
