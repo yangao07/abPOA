@@ -19,9 +19,10 @@ jobs:
       run: make
 
     - name: Run Test Data
-      run: ./bin/abpoa ./test_data/test.fa;         \
-           ./bin/abpoa ./test_data/heter.fa -d2;    \
-           ./bin/abpoa ./test_data/seq.fa -a1;      \
-           ./bin/abpoa ./test_data/seq.fa -r5 -a1;  \
-           ./bin/abpoa ./test_data./heter.fq -d2 -Q \
-           ./bin/abpoa ./test_data./heter.fq -d2 -Q -a1
+      run: | 
+         ./bin/abpoa ./test_data/test.fa
+         ./bin/abpoa ./test_data/heter.fa -d2
+         ./bin/abpoa ./test_data/seq.fa -a1
+         ./bin/abpoa ./test_data/seq.fa -r5 -a1
+         ./bin/abpoa ./test_data./heter.fq -d2 -Q
+         ./bin/abpoa ./test_data./heter.fq -d2 -Q -a1
