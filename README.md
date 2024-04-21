@@ -8,7 +8,6 @@
 [![C/C++ CI](https://github.com/yangao07/abPOA/actions/workflows/linux-CI.yml/badge.svg)](https://github.com/yangao07/abPOA/actions/workflows/linux-CI.yml)
 [![C/C++ CI](https://github.com/yangao07/abPOA/actions/workflows/macos-CI.yml/badge.svg)](https://github.com/yangao07/abPOA/actions/workflows/macos-CI.yml)
 [![License](https://img.shields.io/badge/License-MIT-black.svg)](https://github.com/yangao07/abPOA/blob/main/LICENSE)
-<!-- [![PyPI](https://img.shields.io/pypi/v/pyabpoa.svg?style=flat)](https://pypi.python.org/pypi/pyabpoa) -->
 ## Updates (v1.5.1)
 
 - Fix a memory allocation bug caused by int overflow when memory is large (>4G)
@@ -44,12 +43,12 @@ abpoa ./test_data/seq.fa > cons.fa
     - [Building abPOA from source files](#building-abpoa-from-source-files)
     - [Pre-built binary executable file for Linux/Unix or MacOS](#pre-built-binary-executable-file-for-linuxunix-or-macos)
   - [General usage](#general-usage)
-    - [Generate consensus sequence](#generate-consensus-sequence)
+    - [Generate a consensus sequence](#generate-a-consensus-sequence)
     - [Generate multiple consensus sequences](#generate-multiple-consensus-sequences)
     - [Generate row-column multiple sequence alignment in FASTA format](#generate-row-column-multiple-sequence-alignment-in-fasta-format)
     - [Generate graph information in GFA format](#generate-graph-information-in-gfa-format)
     - [Align sequence to an existing graph in GFA/MSA format](#align-sequence-to-an-existing-graph-in-gfamsa-format)
-    - [Generate consensus sequence for amino acid sequences](#generate-consensus-sequence-for-amino-acid-sequences)
+    - [Generate a consensus sequence for amino acid sequences](#generate-a-consensus-sequence-for-amino-acid-sequences)
     - [Generate a plot of the alignment graph](#generate-a-plot-of-the-alignment-graph)
   - [Input](#input)
   - [Output](#output)
@@ -118,10 +117,21 @@ tar -zxvf abPOA-v1.5.1_arm64-macos.tar.gz
 ```
 
 ## General usage
-### Generate consensus sequence
+### Generate a consensus sequence
 
 ```
 abpoa seq.fa > cons.fa
+```
+
+abPOA provides two conensus calling methods: 
+* heaviest bundlding (default): the path with largest weight along the partial order graph
+* most frequent bases: pick the most common base at each alignment position
+
+Sometimes these two methods will generate different consensus sequences (#67).
+
+To use `most frequent bases` method:
+```
+abpoa seq.fa -a1 > cons.fa
 ```
 
 ### Generate multiple consensus sequences
@@ -159,7 +169,7 @@ abpoa seq1.fa -r1 > seq1.msa
 abpoa -i seq1.msa seq2.fa > cons.fa
 ```
 
-### Generate consensus sequence for amino acid sequences
+### Generate a consensus sequence for amino acid sequences
 ```
 abpoa -c -t BLOSUM62.mtx input_aa.fa > output_aa_cons.fa
 ```
