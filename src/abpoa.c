@@ -49,6 +49,7 @@ const struct option abpoa_long_opt [] = {
     { "output", 1, NULL, 'o' },
     { "result", 1, NULL, 'r' },
     { "out-pog", 1, NULL, 'g' },
+    { "cons-algrm", 1, NULL, 'a'},
     { "max-num-cons", 1, NULL, 'd', },
     { "min-freq", 1, NULL, 'q', },
 
@@ -65,14 +66,14 @@ int abpoa_usage(void)
     err_printf("%s: %s \n\n", PROG, DESCRIPTION);
     err_printf("Version: %s\t", VERSION);
 	err_printf("Contact: %s\n\n", CONTACT);
-    err_printf("Usage: %s [options] <in.fa/fq> > cons.fa/msa.out/abpoa.gfa\n\n", PROG);
+    err_printf("Usage: %s [options] <in.fa/fq> > cons.fa/msa.fa/abpoa.gfa\n\n", PROG);
     err_printf("Options:\n");
     err_printf("  Alignment:\n");
-    err_printf("    -m --aln-mode   INT     alignment mode [%d]\n", ABPOA_GLOBAL_MODE);
+    err_printf("    -m --aln-mode    INT    alignment mode [%d]\n", ABPOA_GLOBAL_MODE);
     err_printf("                              %d: global, %d: local, %d: extension\n", ABPOA_GLOBAL_MODE, ABPOA_LOCAL_MODE, ABPOA_EXTEND_MODE);
-    err_printf("    -M --match      INT     match score [%d]\n", ABPOA_MATCH);
-    err_printf("    -X --mismatch   INT     mismatch penalty [%d]\n", ABPOA_MISMATCH);
-    err_printf("    -t --matrix    FILE     scoring matrix file, \'-M\' and \'-X\' are not used when \'-t\' is used [Null]\n");
+    err_printf("    -M --match       INT    match score [%d]\n", ABPOA_MATCH);
+    err_printf("    -X --mismatch    INT    mismatch penalty [%d]\n", ABPOA_MISMATCH);
+    err_printf("    -t --matrix     FILE    scoring matrix file, \'-M\' and \'-X\' are not used when \'-t\' is used [Null]\n");
     err_printf("                            e.g., \'HOXD70.mtx, BLOSUM62.mtx\'\n");
     err_printf("    -O --gap-open INT(,INT) gap opening penalty (O1,O2) [%d,%d]\n", ABPOA_GAP_OPEN1, ABPOA_GAP_OPEN2);
     err_printf("    -E --gap-ext  INT(,INT) gap extension penalty (E1,E2) [%d,%d]\n", ABPOA_GAP_EXT1, ABPOA_GAP_EXT2);
@@ -84,9 +85,9 @@ int abpoa_usage(void)
     err_printf("                            for each input sequence, try the reverse complement if the current\n");
     err_printf("                            alignment score is too low, and pick the strand with a higher score\n");
     err_printf("  Adaptive banded DP:\n");
-    err_printf("    -b --extra-b    INT     first adaptive banding parameter [%d]\n", ABPOA_EXTRA_B);
+    err_printf("    -b --extra-b     INT    first adaptive banding parameter [%d]\n", ABPOA_EXTRA_B);
     err_printf("                            set b as < 0 to disable adaptive banded DP\n");
-    err_printf("    -f --extra-f  FLOAT     second adaptive banding parameter [%.2f]\n", ABPOA_EXTRA_F);
+    err_printf("    -f --extra-f   FLOAT    second adaptive banding parameter [%.2f]\n", ABPOA_EXTRA_F);
     err_printf("                            the number of extra bases added on both sites of the band is\n");
     err_printf("                            b+f*L, where L is the length of the aligned sequence\n");
     // err_printf("    -z --zdrop    INT       Z-drop score in extension alignment [-1]\n");
@@ -102,7 +103,8 @@ int abpoa_usage(void)
     // err_printf("    -n --par-size           minimal partition size [%d]\n", ABPOA_W);
 
     err_printf("  Input/Output:\n");
-    err_printf("    -Q --use-qual-weight    take base quality score from FASTQ input file as graph edge weight [False]\n");
+    err_printf("    -Q --use-qual-weight    take base quality score from FASTQ input file as graph edge weight for consensus calling [False]\n");
+    err_printf("                            effective only when input sequences are in FASTQ format and consensus calling with heaviest bundling\n");
     err_printf("    -c --amino-acid         input sequences are amino acid (default is nucleotide) [False]\n");
     err_printf("    -l --in-list            input file is a list of sequence file names [False]\n");
     err_printf("                            each line is one sequence file containing a set of sequences\n");
@@ -117,6 +119,9 @@ int abpoa_usage(void)
     err_printf("                            - %d: graph in GFA format\n", ABPOA_OUT_GFA);
     err_printf("                            - %d: graph with consensus path in GFA format\n", ABPOA_OUT_CONS_GFA);
     err_printf("                            - %d: consensus in FASTQ format\n", ABPOA_OUT_CONS_FQ);
+    err_printf("    -a --cons-algrm INT     consensus algorithm [%d]\n", ABPOA_HB);
+    err_printf("                            - %d: heaviest bundling path in partial order graph\n", ABPOA_HB);
+    err_printf("                            - %d: most frequent bases at each position\n", ABPOA_MC);
     err_printf("    -d --maxnum-cons INT    max. number of consensus sequence to generate [1]\n");
     err_printf("    -q --min-freq  FLOAT    min. frequency of each consensus sequence (only effective when -d/--num-cons > 1) [%.2f]\n", MULTIP_MIN_FREQ);
     err_printf("    -g --out-pog    FILE    dump final alignment graph to FILE (.pdf/.png) [Null]\n\n");
@@ -151,7 +156,7 @@ int abpoa_main(char *file_fn, int is_list, abpoa_para_t *abpt){
 
 int main(int argc, char **argv) {
     int c, m, in_list=0; char *s; abpoa_para_t *abpt = abpoa_init_para();
-    while ((c = getopt_long(argc, argv, "m:M:X:t:O:E:b:f:z:e:QSk:w:n:i:clpso:r:g:d:q:hvV:", abpoa_long_opt, NULL)) >= 0) {
+    while ((c = getopt_long(argc, argv, "m:M:X:t:O:E:b:f:z:e:QSk:w:n:i:clpso:r:g:a:d:q:hvV:", abpoa_long_opt, NULL)) >= 0) {
         switch(c)
         {
             case 'm': m = atoi(optarg);
@@ -194,6 +199,7 @@ int main(int argc, char **argv) {
                       break;
             case 'g': abpt->out_pog= strdup(optarg); break;
 
+            case 'a': abpt->cons_algrm = atoi(optarg); break;
             case 'd': abpt->max_n_cons = atoi(optarg); break; 
             case 'q': abpt->min_freq = atof(optarg); break;
 

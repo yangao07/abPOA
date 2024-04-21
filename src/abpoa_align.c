@@ -106,6 +106,7 @@ abpoa_para_t *abpoa_init_para(void) {
     abpt->out_fq = 0;     // output consensus sequence in fastq
     abpt->out_gfa = 0;    // out graph in GFA format
     abpt->out_msa = 0;    // output msa
+    abpt->cons_algrm = ABPOA_HB; // consensus calling algorithm
     abpt->max_n_cons = 1; // number of max. generated consensus sequence
     abpt->min_freq = MULTIP_MIN_FREQ; 
     abpt->use_read_ids = 0;
@@ -142,10 +143,10 @@ abpoa_para_t *abpoa_init_para(void) {
 
 void abpoa_post_set_para(abpoa_para_t *abpt) {
     abpoa_set_gap_mode(abpt);
-    if (abpt->out_msa || abpt->out_gfa || abpt->max_n_cons > 1) {
+    if (abpt->out_msa || abpt->out_gfa || abpt->max_n_cons > 1 || abpt->cons_algrm == ABPOA_MC) {
         abpt->use_read_ids = 1;
-        set_65536_table();
-        if (abpt->max_n_cons > 1) set_bit_table16();
+        if (abpt->out_msa || abpt->out_gfa) set_65536_table();
+        if (abpt->max_n_cons > 1 || abpt->cons_algrm == ABPOA_MC) set_bit_table16();
     }
     if (abpt->align_mode == ABPOA_LOCAL_MODE) abpt->wb = -1;
     int i;

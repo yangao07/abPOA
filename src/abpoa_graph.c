@@ -28,7 +28,7 @@ void abpoa_free_node(abpoa_node_t *node, int n) {
     for (i = 0; i < n; ++i) {
         if (node[i].in_edge_m > 0) free(node[i].in_id);
         if (node[i].out_edge_m > 0) {
-            free(node[i].out_id); free(node[i].out_weight);
+            free(node[i].out_id); free(node[i].out_edge_weight);
             if (node[i].read_ids_n > 0) {
                 for (j = 0; j < node[i].out_edge_m; ++j) {
                     free(node[i].read_ids[j]);
@@ -51,7 +51,7 @@ abpoa_graph_t *abpoa_realloc_graph_edge(abpoa_graph_t *abg, int io, int id, int 
         if (edge_m <= 0) {
             abg->node[id].out_edge_m = MAX_OF_TWO(abg->node[id].out_edge_n, 1);
             abg->node[id].out_id = (int*)_err_malloc(abg->node[id].out_edge_m * sizeof(int));
-            abg->node[id].out_weight = (int*)_err_malloc(abg->node[id].out_edge_m * sizeof(int));
+            abg->node[id].out_edge_weight = (int*)_err_malloc(abg->node[id].out_edge_m * sizeof(int));
             if (use_read_ids || abg->node[id].read_ids_n > 0) {
                 abg->node[id].read_ids = (uint64_t**)_err_malloc(abg->node[id].out_edge_m * sizeof(uint64_t*));
                 if (abg->node[id].read_ids_n > 0) {
@@ -64,7 +64,7 @@ abpoa_graph_t *abpoa_realloc_graph_edge(abpoa_graph_t *abg, int io, int id, int 
         } else if (abg->node[id].out_edge_n >= edge_m) {
             abg->node[id].out_edge_m = abg->node[id].out_edge_n+1; kroundup32(abg->node[id].out_edge_m);
             abg->node[id].out_id = (int*)_err_realloc(abg->node[id].out_id, abg->node[id].out_edge_m * sizeof(int));
-            abg->node[id].out_weight = (int*)_err_realloc(abg->node[id].out_weight, abg->node[id].out_edge_m * sizeof(int));
+            abg->node[id].out_edge_weight = (int*)_err_realloc(abg->node[id].out_edge_weight, abg->node[id].out_edge_m * sizeof(int));
             if (use_read_ids || abg->node[id].read_ids_n > 0) {
                 abg->node[id].read_ids = (uint64_t**)_err_realloc(abg->node[id].read_ids, abg->node[id].out_edge_m * sizeof(uint64_t*));
                 if (abg->node[id].read_ids_n > 0) {
@@ -253,8 +253,8 @@ void abpoa_BFS_set_node_remain(abpoa_graph_t *abg, int src_id, int sink_id) {
             int max_w=-1, max_id=-1;
             for (i = 0; i < abg->node[cur_id].out_edge_n; ++i) {
                 out_id = abg->node[cur_id].out_id[i];
-                if (abg->node[cur_id].out_weight[i] > max_w) {
-                    max_w = abg->node[cur_id].out_weight[i];
+                if (abg->node[cur_id].out_edge_weight[i] > max_w) {
+                    max_w = abg->node[cur_id].out_edge_weight[i];
                     max_id = out_id;
                 }
             }
@@ -287,7 +287,7 @@ void abpoa_topological_sort(abpoa_graph_t *abg, abpoa_para_t *abpt) {
         // fprintf(stderr, "node_n: %d, index_rank_m: %d\n", node_n, abg->index_rank_m);
         abg->index_to_node_id = (int*)_err_realloc(abg->index_to_node_id, abg->index_rank_m * sizeof(int));
         abg->node_id_to_index = (int*)_err_realloc(abg->node_id_to_index, abg->index_rank_m * sizeof(int));
-        if (abpt->out_msa || abpt->max_n_cons > 1) 
+        if (abpt->out_msa || abpt->max_n_cons > 1 || abpt->cons_algrm == ABPOA_MC) 
             abg->node_id_to_msa_rank = (int*)_err_realloc(abg->node_id_to_msa_rank, abg->index_rank_m * sizeof(int));
         if (abpt->wb >= 0) {
             abg->node_id_to_max_pos_left = (int*)_err_realloc(abg->node_id_to_max_pos_left, abg->index_rank_m * sizeof(int));
@@ -426,7 +426,7 @@ int abpoa_add_graph_edge(abpoa_graph_t *abg, int from_id, int to_id, int check_e
         int i;
         for (i = 0; i < out_edge_n; ++i) {
             if (abg->node[from_id].out_id[i] == to_id) { // edge exists
-                abg->node[from_id].out_weight[i] += w; // update weight on existing edge
+                abg->node[from_id].out_edge_weight[i] += w; // update weight on existing edge
                 // update label id
                 edge_exist = 1;
                 out_edge_i = i;
@@ -444,7 +444,7 @@ int abpoa_add_graph_edge(abpoa_graph_t *abg, int from_id, int to_id, int check_e
         /// out edge
         abpoa_realloc_graph_edge(abg, 1, from_id, add_read_id);
         abg->node[from_id].out_id[out_edge_n] = to_id;
-        abg->node[from_id].out_weight[out_edge_n] = w; // initial weight for new edge
+        abg->node[from_id].out_edge_weight[out_edge_n] = w; // initial weight for new edge
         out_edge_i = out_edge_n;
         ++abg->node[from_id].out_edge_n;
     }
@@ -699,7 +699,7 @@ void abpoa_reset(abpoa_t *ab, abpoa_para_t *abpt, int qlen) {
         abg->node_m = abg->index_rank_m = node_m;
         abg->index_to_node_id = (int*)_err_realloc(abg->index_to_node_id, node_m * sizeof(int));
         abg->node_id_to_index = (int*)_err_realloc(abg->node_id_to_index, node_m * sizeof(int));
-        if (abpt->out_msa || abpt->max_n_cons > 1) 
+        if (abpt->out_msa || abpt->max_n_cons > 1 || abpt->cons_algrm == ABPOA_MC) 
             abg->node_id_to_msa_rank = (int*)_err_realloc(abg->node_id_to_msa_rank, node_m * sizeof(int));
         if (abpt->wb >= 0) {
             abg->node_id_to_max_pos_left = (int*)_err_realloc(abg->node_id_to_max_pos_left, node_m * sizeof(int));
