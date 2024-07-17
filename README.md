@@ -8,15 +8,16 @@
 [![C/C++ CI](https://github.com/yangao07/abPOA/actions/workflows/linux-CI.yml/badge.svg)](https://github.com/yangao07/abPOA/actions/workflows/linux-CI.yml)
 [![C/C++ CI](https://github.com/yangao07/abPOA/actions/workflows/macos-CI.yml/badge.svg)](https://github.com/yangao07/abPOA/actions/workflows/macos-CI.yml)
 [![License](https://img.shields.io/badge/License-MIT-black.svg)](https://github.com/yangao07/abPOA/blob/main/LICENSE)
-## Updates (v1.5.1)
+## Updates (v1.5.2)
 
-- Fix a memory allocation bug caused by int overflow when memory is large (>4G)
+- Fix a backtrack bug in seeding mode
+- Add consensus mode: most frequent base at each pos
 
 ## Getting started
 Download the [latest release](https://github.com/yangao07/abPOA/releases):
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.5.1/abPOA-v1.5.1.tar.gz
-tar -zxvf abPOA-v1.5.1.tar.gz && cd abPOA-v1.5.1
+wget https://github.com/yangao07/abPOA/releases/download/v1.5.2/abPOA-v1.5.2.tar.gz
+tar -zxvf abPOA-v1.5.2.tar.gz && cd abPOA-v1.5.2
 ```
 Make from source and run with test data:
 ```
@@ -34,7 +35,7 @@ abpoa ./test_data/seq.fa > cons.fa
 ## Table of Contents
 
 - [abPOA: adaptive banded Partial Order Alignment](#abpoa-adaptive-banded-partial-order-alignment)
-  - [Updates (v1.5.1)](#updates-v151)
+  - [Updates (v1.5.2)](#updates-v152)
   - [Getting started](#getting-started)
   - [Table of Contents](#table-of-contents)
   - [Introduction](#introduction)
@@ -93,9 +94,9 @@ You can also build abPOA from source files.
 Make sure you have gcc (>=6.4.0) and zlib installed before compiling.
 It is recommended to download the [latest release](https://github.com/yangao07/abPOA/releases).
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.5.1/abPOA-v1.5.1.tar.gz
-tar -zxvf abPOA-v1.5.1.tar.gz
-cd abPOA-v1.5.1; make
+wget https://github.com/yangao07/abPOA/releases/download/v1.5.2/abPOA-v1.5.2.tar.gz
+tar -zxvf abPOA-v1.5.2.tar.gz
+cd abPOA-v1.5.2; make
 ```
 Or, you can use `git clone` command to download the source code.
 This gives you the latest version of abPOA, which might be still under development.
@@ -107,13 +108,13 @@ cd abPOA; make
 ### Pre-built binary executable file for Linux/Unix or MacOS
 If you meet any compiling issue, please try the pre-built binary file for linux:
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.5.1/abPOA-v1.5.1_x64-linux.tar.gz
-tar -zxvf abPOA-v1.5.1_x64-linux.tar.gz
+wget https://github.com/yangao07/abPOA/releases/download/v1.5.2/abPOA-v1.5.2_x64-linux.tar.gz
+tar -zxvf abPOA-v1.5.2_x64-linux.tar.gz
 ```
 or for macos:
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.5.1/abPOA-v1.5.1_arm64-macos.tar.gz
-tar -zxvf abPOA-v1.5.1_arm64-macos.tar.gz
+wget https://github.com/yangao07/abPOA/releases/download/v1.5.2/abPOA-v1.5.2_arm64-macos.tar.gz
+tar -zxvf abPOA-v1.5.2_arm64-macos.tar.gz
 ```
 
 ## General usage
