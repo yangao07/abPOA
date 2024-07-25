@@ -66,7 +66,7 @@ setup(
     version = "1.5.2",
     url = "https://github.com/yangao07/abPOA",
     author = "Yan Gao",
-    author_email = "gaoy1@chop.edu",
+    author_email = "yangao@ds.dfci.harvard.edu",
     license = "MIT",
     keywords = "multiple-sequence-alignment  partial-order-graph-alignment",
     setup_requires=["cython<3"], # see https://github.com/cython/cython/issues/5568
