@@ -35,7 +35,6 @@ cdef extern from "abpoa.h":
     cdef int ABPOA_OUT_CONS_GFA "ABPOA_OUT_CONS_GFA"
 
     cdef int ABPOA_HB "ABPOA_HB"
-    cdef int ABPOA_HC "ABPOA_HC"
     cdef int ABPOA_MF "ABPOA_MF"
 
     ctypedef struct abpoa_res_t:
@@ -63,7 +62,7 @@ cdef extern from "abpoa.h":
         uint8_t use_qv, disable_seeding, progressive_poa
         char *incr_fn
         char *out_pog
-        int align_mode, gap_mode, max_n_cons
+        int align_mode, gap_mode, max_n_cons, cons_algrm
         double min_freq # for diploid data
         int verbose
 

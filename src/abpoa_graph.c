@@ -287,7 +287,7 @@ void abpoa_topological_sort(abpoa_graph_t *abg, abpoa_para_t *abpt) {
         // fprintf(stderr, "node_n: %d, index_rank_m: %d\n", node_n, abg->index_rank_m);
         abg->index_to_node_id = (int*)_err_realloc(abg->index_to_node_id, abg->index_rank_m * sizeof(int));
         abg->node_id_to_index = (int*)_err_realloc(abg->node_id_to_index, abg->index_rank_m * sizeof(int));
-        if (abpt->out_msa || abpt->max_n_cons > 1 || abpt->cons_algrm == ABPOA_MC) 
+        if (abpt->out_msa || abpt->max_n_cons > 1 || abpt->cons_algrm == ABPOA_MF) 
             abg->node_id_to_msa_rank = (int*)_err_realloc(abg->node_id_to_msa_rank, abg->index_rank_m * sizeof(int));
         if (abpt->wb >= 0) {
             abg->node_id_to_max_pos_left = (int*)_err_realloc(abg->node_id_to_max_pos_left, abg->index_rank_m * sizeof(int));
@@ -699,7 +699,7 @@ void abpoa_reset(abpoa_t *ab, abpoa_para_t *abpt, int qlen) {
         abg->node_m = abg->index_rank_m = node_m;
         abg->index_to_node_id = (int*)_err_realloc(abg->index_to_node_id, node_m * sizeof(int));
         abg->node_id_to_index = (int*)_err_realloc(abg->node_id_to_index, node_m * sizeof(int));
-        if (abpt->out_msa || abpt->max_n_cons > 1 || abpt->cons_algrm == ABPOA_MC) 
+        if (abpt->out_msa || abpt->max_n_cons > 1 || abpt->cons_algrm == ABPOA_MF) 
             abg->node_id_to_msa_rank = (int*)_err_realloc(abg->node_id_to_msa_rank, node_m * sizeof(int));
         if (abpt->wb >= 0) {
             abg->node_id_to_max_pos_left = (int*)_err_realloc(abg->node_id_to_max_pos_left, node_m * sizeof(int));

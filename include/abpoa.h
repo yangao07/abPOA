@@ -36,7 +36,7 @@
 #define ABPOA_OUT_CONS_FQ  5
 
 #define ABPOA_HB 0
-#define ABPOA_MC 1
+#define ABPOA_MF 1
 
 #define ABPOA_NONE_VERBOSE 0
 #define ABPOA_INFO_VERBOSE 1

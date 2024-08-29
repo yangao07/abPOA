@@ -90,8 +90,10 @@ cdef class msa_aligner:
     cdef abpoa_para_t abpt
     cdef seq2int_dict, int2seq_dict
 
-    def __cinit__(self, aln_mode='g', is_aa=False, match=2, mismatch=4, score_matrix=b'', gap_open1=4, gap_open2=24, gap_ext1=2, gap_ext2=1,
-            extra_b=10, extra_f=0.01):
+    def __cinit__(self, aln_mode='g', is_aa=False,
+                  match=2, mismatch=4, score_matrix=b'', gap_open1=4, gap_open2=24, gap_ext1=2, gap_ext2=1,
+                  extra_b=10, extra_f=0.01,
+                  cons_algrm='HB'):
         self.ab = abpoa_init()
 
         if aln_mode == 'g':
@@ -132,6 +134,12 @@ cdef class msa_aligner:
         self.abpt.zdrop = -1
         self.abpt.disable_seeding = 1
         self.abpt.progressive_poa = 0
+        if cons_algrm.upper() == 'MF':
+            self.abpt.cons_algrm = ABPOA_MF
+        elif cons_algrm.upper() == 'HB':
+            self.abpt.cons_algrm = ABPOA_HB
+        else:
+            raise Exception('Unknown conseneus calling mode: {}'.format(cons_algrm))
 
         self.seq2int_dict, self.int2seq_dict = set_seq_int_dict(self.abpt.m)
 

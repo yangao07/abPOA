@@ -63,6 +63,7 @@ This constructs a multiple sequence alignment handler of pyabpoa, it accepts the
 * **gap_ext2**: second gap extension penalty; default: **1**
 * **extra_b**: first adaptive banding paremeter; set as < 0 to disable adaptive banded DP; default: **10**
 * **extra_f**: second adaptive banding paremete; the number of extra bases added on both sites of the band is *b+f\*L*, where *L* is the length of the aligned sequence; default : **0.01**
+* **cons_algrm**: consensus calling algorithm. 'HB': heaviest bunlding, 'MF': most frequent bases; default: **'HB'**
 
 The `msa_aligner` handler provides one method which performs multiple sequence alignment and takes four arguments:
 ```

@@ -121,7 +121,7 @@ int abpoa_usage(void)
     err_printf("                            - %d: consensus in FASTQ format\n", ABPOA_OUT_CONS_FQ);
     err_printf("    -a --cons-algrm INT     consensus algorithm [%d]\n", ABPOA_HB);
     err_printf("                            - %d: heaviest bundling path in partial order graph\n", ABPOA_HB);
-    err_printf("                            - %d: most frequent bases at each position\n", ABPOA_MC);
+    err_printf("                            - %d: most frequent bases at each position\n", ABPOA_MF);
     err_printf("    -d --maxnum-cons INT    max. number of consensus sequence to generate [1]\n");
     err_printf("    -q --min-freq  FLOAT    min. frequency of each consensus sequence (only effective when -d/--num-cons > 1) [%.2f]\n", MULTIP_MIN_FREQ);
     err_printf("    -g --out-pog    FILE    dump final alignment graph to FILE (.pdf/.png) [Null]\n\n");

@@ -16,35 +16,35 @@ env:
   CIBW_SKIP: pp*
 
 jobs:
-  build_wheels:
-    name: Build wheels for ${{ matrix.python }}-${{ matrix.buildplat[1] }}
-    runs-on: ${{ matrix.buildplat[0] }}
-    strategy:
-      # Ensure that a wheel builder finishes even if another fails
-      fail-fast: false
-      matrix:
-        buildplat:
-        - [ubuntu-latest, manylinux_x86_64, auto]
-        - [macos-latest, macosx_x86_64, x86_64]
-        # skip these for now, need more work
-        - [macos-latest, macosx_arm64, arm64]
-        # python: ["cp38", "cp39", "cp310", "cp311", "cp312"]
-        python: ["cp312"]
+  # build_wheels:
+  #   name: Build wheels for ${{ matrix.python }}-${{ matrix.buildplat[1] }}
+  #   runs-on: ${{ matrix.buildplat[0] }}
+  #   strategy:
+  #     # Ensure that a wheel builder finishes even if another fails
+  #     fail-fast: false
+  #     matrix:
+  #       buildplat:
+  #       - [ubuntu-latest, manylinux_x86_64, auto]
+  #       - [macos-latest, macosx_x86_64, x86_64]
+  #       # skip these for now, need more work
+  #       - [macos-latest, macosx_arm64, arm64]
+  #       # python: ["cp38", "cp39", "cp310", "cp311", "cp312"]
+  #       python: ["cp312"]
 
-    steps:
-      - uses: actions/checkout@v3
-        with:
-            submodules: 'true'
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #           submodules: 'true'
 
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.15.0
-        env:
-          CIBW_ARCHS: ${{ matrix.buildplat[2] }}
-          CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
+  #     - name: Build wheels
+  #       uses: pypa/cibuildwheel@v2.15.0
+  #       env:
+  #         CIBW_ARCHS: ${{ matrix.buildplat[2] }}
+  #         CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
-      - uses: actions/upload-artifact@v3
-        with:
-          path: ./wheelhouse/*.whl
+  #     - uses: actions/upload-artifact@v3
+  #       with:
+  #         path: ./wheelhouse/*.whl
 
   build_sdist:
     name: Build source distribution
@@ -62,7 +62,8 @@ jobs:
           path: dist/*.tar.gz
 
   upload_pypi:
-    needs: [build_wheels, build_sdist]
+    # needs: [build_wheels, build_sdist]
+    needs: [build_sdist]
     runs-on: ubuntu-latest
     # upload to PyPI on every tag starting with 'v'
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
