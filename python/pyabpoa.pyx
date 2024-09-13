@@ -4,6 +4,7 @@ from libc.stdint cimport uint8_t
 from collections import defaultdict as dd
 cimport cython
 from cabpoa cimport *
+from libc.string cimport strcpy
 
 
 cdef class msa_result:
@@ -89,6 +90,8 @@ cdef class msa_aligner:
     cdef abpoa_t *ab
     cdef abpoa_para_t abpt
     cdef seq2int_dict, int2seq_dict
+    cdef char* _score_mat_fn
+    cdef bytes _score_mat_fn_b
 
     def __cinit__(self, aln_mode='g', is_aa=False,
                   match=2, mismatch=4, score_matrix=b'', gap_open1=4, gap_open2=24, gap_ext1=2, gap_ext2=1,
@@ -114,12 +117,11 @@ cdef class msa_aligner:
         self.abpt.mismatch = mismatch
 
         if score_matrix:
-            if isinstance(score_matrix, str): 
-                score_matrix = bytes(score_matrix, 'utf-8')
-            if os.path.exists(score_matrix.decode('utf-8')):
-                abpoa_set_mat_from_file(&self.abpt, score_matrix)
-            else:
-                raise Exception('Matrix file not exist: {}'.format(score_matrix.decode('utf-8')))
+            self.abpt.use_score_matrix = 1
+            _score_mat_fn_b = score_matrix.encode('utf-8')
+            _score_mat_fn = <char*> malloc(len(_score_mat_fn_b) + 1)
+            strcpy(_score_mat_fn, _score_mat_fn_b)
+            self.abpt.mat_fn = _score_mat_fn
 
         self.abpt.gap_open1 = gap_open1
         self.abpt.gap_open2 = gap_open2
