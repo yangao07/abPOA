@@ -39,11 +39,13 @@ const struct option abpoa_long_opt [] = {
     { "min-poa-win", 1, NULL, 'n' },
     { "progressive", 0, NULL, 'p'},
 
+    { "inc-path-score", 0, NULL, 'G'},
+    { "sort-by-len", 0, NULL, 'L'},
+    { "gap-on-right", 0, NULL, 'R' },
     { "use-qual-weight", 0, NULL, 'Q'},
     { "amino-acid", 0, NULL, 'c'},
     { "in-list", 0, NULL, 'l' },
     { "increment", 1, NULL, 'i' },
-    
 
     { "amb-strand", 0, NULL, 's' },
     { "output", 1, NULL, 'o' },
@@ -90,6 +92,10 @@ int abpoa_usage(void)
     err_printf("    -f --extra-f   FLOAT    second adaptive banding parameter [%.2f]\n", ABPOA_EXTRA_F);
     err_printf("                            the number of extra bases added on both sites of the band is\n");
     err_printf("                            b+f*L, where L is the length of the aligned sequence\n");
+    err_printf("  Heuristics for graph alignment: (**under development**)\n");
+    err_printf("    -G --inc-path-score     include log-scaled path score for graph alignment [False]\n");
+    err_printf("    -L --sort-by-len        sort input sequences by length in descending order [False]\n");
+    err_printf("    -R --gap-on-right       put indel on the right-most side of the alignment, default is left [False]\n");
     // err_printf("    -z --zdrop    INT       Z-drop score in extension alignment [-1]\n");
     // err_printf("                            set as <= 0 to disable Z-drop extension\n");
     // err_printf("    -e --bonus    INT       end bonus score in extension alignment [-1]\n");
@@ -156,7 +162,7 @@ int abpoa_main(char *file_fn, int is_list, abpoa_para_t *abpt){
 
 int main(int argc, char **argv) {
     int c, m, in_list=0; char *s; abpoa_para_t *abpt = abpoa_init_para();
-    while ((c = getopt_long(argc, argv, "m:M:X:t:O:E:b:f:z:e:QSk:w:n:i:clpso:r:g:a:d:q:hvV:", abpoa_long_opt, NULL)) >= 0) {
+    while ((c = getopt_long(argc, argv, "m:M:X:t:O:E:b:f:z:e:QGLRSk:w:n:i:clpso:r:g:a:d:q:hvV:", abpoa_long_opt, NULL)) >= 0) {
         switch(c)
         {
             case 'm': m = atoi(optarg);
@@ -169,6 +175,9 @@ int main(int argc, char **argv) {
             case 'O': abpt->gap_open1 = strtol(optarg, &s, 10); if (*s == ',') abpt->gap_open2 = strtol(s+1, &s, 10); break;
             case 'E': abpt->gap_ext1 = strtol(optarg, &s, 10); if (*s == ',') abpt->gap_ext2 = strtol(s+1, &s, 10); break;
 
+            case 'G': abpt->inc_path_score = 1; break;
+            case 'L': abpt->sort_input_seq_by_len = 1; break;
+            case 'R': abpt->put_gap_on_right = 1; break;
             case 'b': abpt->wb = atoi(optarg); break;
             case 'f': abpt->wf = atof(optarg); break;
             case 'z': abpt->zdrop = atoi(optarg); break;

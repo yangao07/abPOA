@@ -11,6 +11,7 @@ extern "C" {
 #endif
 
 abpoa_seq_t *abpoa_realloc_seq(abpoa_seq_t *abs);
+void abpoa_cpy_abs(abpoa_seq_t *to_abs, int to_i, abpoa_seq_t *from_abs, int from_i);
 void abpoa_cpy_str(abpoa_str_t *str, char *s, int l);
 abpoa_seq_t *abpoa_init_seq(void);
 void abpoa_free_seq(abpoa_seq_t *abs);

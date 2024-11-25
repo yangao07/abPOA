@@ -26,7 +26,9 @@ void abpoa_set_graph_node(abpoa_graph_t *abg, int node_i) {
 void abpoa_free_node(abpoa_node_t *node, int n) {
     int i, j;
     for (i = 0; i < n; ++i) {
-        if (node[i].in_edge_m > 0) free(node[i].in_id);
+        if (node[i].in_edge_m > 0) {
+            free(node[i].in_id); free(node[i].in_edge_weight);
+        }
         if (node[i].out_edge_m > 0) {
             free(node[i].out_id); free(node[i].out_edge_weight);
             if (node[i].read_ids_n > 0) {
@@ -45,7 +47,9 @@ void abpoa_free_node(abpoa_node_t *node, int n) {
 // 0: in_edge, 1: out_edge
 abpoa_graph_t *abpoa_realloc_graph_edge(abpoa_graph_t *abg, int io, int id, int use_read_ids) {
     if (io == 0) {
-        _uni_realloc(abg->node[id].in_id, abg->node[id].in_edge_n, abg->node[id].in_edge_m, int);
+        int m = abg->node[id].in_edge_m;
+        _uni_realloc(abg->node[id].in_id, abg->node[id].in_edge_n, m, int);
+        _uni_realloc(abg->node[id].in_edge_weight, abg->node[id].in_edge_n, abg->node[id].in_edge_m, int);
     } else {
         int edge_m = abg->node[id].out_edge_m;
         if (edge_m <= 0) {
@@ -273,6 +277,14 @@ void abpoa_BFS_set_node_remain(abpoa_graph_t *abg, int src_id, int sink_id) {
     err_fatal_simple("Failed to set node remain.");
 }
 
+// TODO 
+void abpoa_merge_nodes(abpoa_graph_t *abg, int src_id, int sink_id) {
+    if (abg->node_n <= 0) {
+        err_func_format_printf(__func__, "Empty graph.\n");
+        return;
+    }
+}
+
 // 1. index_to_node_id
 // 2. node_id_to_index
 // 3. node_id_to_rank
@@ -287,7 +299,7 @@ void abpoa_topological_sort(abpoa_graph_t *abg, abpoa_para_t *abpt) {
         // fprintf(stderr, "node_n: %d, index_rank_m: %d\n", node_n, abg->index_rank_m);
         abg->index_to_node_id = (int*)_err_realloc(abg->index_to_node_id, abg->index_rank_m * sizeof(int));
         abg->node_id_to_index = (int*)_err_realloc(abg->node_id_to_index, abg->index_rank_m * sizeof(int));
-        if (abpt->out_msa || abpt->max_n_cons > 1 || abpt->cons_algrm == ABPOA_MF) 
+        if (abpt->out_msa || abpt->max_n_cons > 1 || abpt->cons_algrm == ABPOA_MF)
             abg->node_id_to_msa_rank = (int*)_err_realloc(abg->node_id_to_msa_rank, abg->index_rank_m * sizeof(int));
         if (abpt->wb >= 0) {
             abg->node_id_to_max_pos_left = (int*)_err_realloc(abg->node_id_to_max_pos_left, abg->index_rank_m * sizeof(int));
@@ -374,6 +386,24 @@ void abpoa_set_msa_rank(abpoa_graph_t *abg, int src_id, int sink_id) {
     }
 }
 
+int abpoa_get_node_weight(abpoa_graph_t *abg, int node_id) {
+    int i, weight = 0;
+    for (i = 0; i < abg->node[node_id].out_edge_n; ++i) {
+        weight += abg->node[node_id].out_edge_weight[i];
+    }
+    return weight;
+}
+
+int abpoa_get_incre_path_score(abpoa_graph_t *abg, int node_id, int in_id_idx) {
+    if (in_id_idx < 0 || in_id_idx >= abg->node[node_id].in_edge_n) err_fatal(__func__, "Unexpected in_id_idx: %d.", in_id_idx);
+    int pre_node_id = abg->node[node_id].in_id[in_id_idx];
+    int node_w = abpoa_get_node_weight(abg, pre_node_id);
+    int edge_w = abg->node[node_id].in_edge_weight[in_id_idx];
+    if (node_w == 0 || edge_w == 0) return 0;
+    int score = round(log((double)edge_w/(double)node_w));
+    return MAX_OF_TWO(score, -20); // -20 is the minimum score
+}
+
 int abpoa_get_aligned_id(abpoa_graph_t *abg, int node_id, uint8_t base) {
     int i, aln_id;
     abpoa_node_t *node = abg->node;
@@ -424,6 +454,15 @@ int abpoa_add_graph_edge(abpoa_graph_t *abg, int from_id, int to_id, int check_e
     int out_edge_i = -1;
     if (check_edge) {
         int i;
+        // in edge
+        for (i = 0; i < abg->node[to_id].in_edge_n; ++i) {
+            if (abg->node[to_id].in_id[i] == from_id) { // edge exists
+                abg->node[to_id].in_edge_weight[i] += w; // update weight on existing edge
+                // update label id
+                break;
+            }
+        }
+        // out edge
         for (i = 0; i < out_edge_n; ++i) {
             if (abg->node[from_id].out_id[i] == to_id) { // edge exists
                 abg->node[from_id].out_edge_weight[i] += w; // update weight on existing edge
@@ -440,6 +479,7 @@ int abpoa_add_graph_edge(abpoa_graph_t *abg, int from_id, int to_id, int check_e
         /// in edge
         abpoa_realloc_graph_edge(abg, 0, to_id, 0);
         abg->node[to_id].in_id[abg->node[to_id].in_edge_n] = from_id;
+        abg->node[to_id].in_edge_weight[abg->node[to_id].in_edge_n] = w;
         ++abg->node[to_id].in_edge_n;
         /// out edge
         abpoa_realloc_graph_edge(abg, 1, from_id, add_read_id);
@@ -498,6 +538,7 @@ void abpoa_add_graph_sequence(abpoa_graph_t *abg, uint8_t *seq, int *weight, int
 
     abpoa_add_graph_edge(abg, last_node_id, ABPOA_SINK_NODE_ID, 0, weight[seq_l-1], add_read_id, add_read_weight, read_id, read_ids_n, tot_read_n);
     abg->is_called_cons = abg->is_set_msa_rank = abg->is_topological_sorted = 0;
+    // abpoa_merge_nodes(abg, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID);
     // abpoa_topological_sort(abg, abpt);
 }
 
@@ -666,6 +707,7 @@ int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_i
     // abpoa_add_graph_edge(abg, last_id, end_node_id, 1-last_new, w, add_read_id&add, read_id, read_ids_n);
     abpoa_add_graph_edge(abg, last_id, end_node_id, 1-last_new, weight[seq_l-1], add_read_id, add_read_weight, read_id, read_ids_n, tot_read_n);
     abg->is_called_cons = abg->is_topological_sorted = 0;
+    // abpoa_merge_nodes(abg, beg_node_id, end_node_id);
     // abpoa_topological_sort(abg, abpt);
     if (_weight == NULL) free(weight);
     return 0;

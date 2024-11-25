@@ -96,6 +96,11 @@ abpoa_para_t *abpoa_init_para(void) {
     abpt->gap_mode = ABPOA_CONVEX_GAP;
     abpt->zdrop = -1;     // disable zdrop
     abpt->end_bonus = -1; // disable end bonus
+
+    abpt->inc_path_score = 0;
+    abpt->sort_input_seq_by_len = 0;
+    abpt->put_gap_on_right = 0;
+
     abpt->wb = ABPOA_EXTRA_B; // extra bandwidth
     abpt->wf = ABPOA_EXTRA_F; // extra bandwidth
 
@@ -428,6 +433,26 @@ int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seq, char **seq_names, int 
     return 0;
 }
 
+// only sort new sequences
+void abpoa_sort_seq_by_length(abpoa_seq_t *abs, int exist_n_seq, int n_seq) {
+    int i, j;
+    // sort by length
+    abpoa_seq_t *tmp_seq = (abpoa_seq_t*)calloc(1, sizeof(abpoa_seq_t));
+    tmp_seq->n_seq = 1; abpoa_realloc_seq(tmp_seq);
+    for (i = 0; i < n_seq-1; ++i) {
+        for (j = i+1; j < n_seq; ++j) {
+            if (abs->seq[exist_n_seq+i].l < abs->seq[exist_n_seq+j].l) {
+                // swap i and j
+                abpoa_cpy_abs(tmp_seq, 0, abs, exist_n_seq+i);
+                abpoa_cpy_abs(abs, exist_n_seq+i, abs, exist_n_seq+j);
+                abpoa_cpy_abs(abs, exist_n_seq+j, tmp_seq, 0);
+            }
+        }
+    }
+    // free
+    abpoa_free_seq(tmp_seq);
+}
+
 int abpoa_msa1(abpoa_t *ab, abpoa_para_t *abpt, char *read_fn, FILE *out_fp) {
     if (!abpt->out_msa && !abpt->out_cons && !abpt->out_gfa) return 0;
     abpoa_reset(ab, abpt, 1024);
@@ -437,6 +462,8 @@ int abpoa_msa1(abpoa_t *ab, abpoa_para_t *abpt, char *read_fn, FILE *out_fp) {
     // read seq from read_fn
     gzFile readfp = xzopen(read_fn, "r"); kseq_t *ks = kseq_init(readfp);
     int i, j, n_seq = abpoa_read_seq(abs, ks);
+
+    if (abpt->sort_input_seq_by_len) abpoa_sort_seq_by_length(abs, exist_n_seq, n_seq);
 
     // always reset graph before perform POA
     int max_len = 0;

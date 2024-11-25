@@ -68,6 +68,9 @@ typedef struct {
     int m; int *mat; char *mat_fn; // score matrix
     int use_score_matrix; // set _mat_ based on score matrix file, then _match_/_mismatch_ is not used.
     int match, max_mat, mismatch, min_mis, gap_open1, gap_open2, gap_ext1, gap_ext2; int inf_min;
+    int sort_input_seq_by_len; // sort input sequences by length, in descending order
+    int put_gap_on_right; // put indel on the left-most side of the alignment: minimap2-like, or right-most: wfa2-like
+    int inc_path_score; // set mismatch/match score based on node weight, i.e., # covered reads * match/mismatch
     // minimizer seeding parameter
     int k, w, min_w;
     int wb; float wf; // extra band width
@@ -87,7 +90,7 @@ typedef struct {
 
 typedef struct {
     int node_id;
-    int in_edge_n, in_edge_m, *in_id;
+    int in_edge_n, in_edge_m, *in_id; int *in_edge_weight; // in_edge_weight: for additional path score
     int out_edge_n, out_edge_m, *out_id; int *out_edge_weight; // out_edge_weight: edge-wise weight
     int *read_weight, n_read, m_read; // read_weight: read-wise weight, valid when use_qv=1
     uint64_t **read_ids; int read_ids_n; // for each edge

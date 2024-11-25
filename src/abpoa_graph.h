@@ -19,6 +19,8 @@ extern "C" {
 #endif
 
 int abpoa_get_aligned_id(abpoa_graph_t *abg, int node_id, uint8_t base);
+int abpoa_get_incre_path_score(abpoa_graph_t *abg, int node_id, int in_id_idx);
+int abpoa_get_node_weight(abpoa_graph_t *abg, int node_id);
 void abpoa_add_graph_aligned_node(abpoa_graph_t *abg, int node_id, int aligned_id);
 void abpoa_set_msa_rank(abpoa_graph_t *abg, int src_id, int sink_id);
 abpoa_graph_t *abpoa_init_graph(void);

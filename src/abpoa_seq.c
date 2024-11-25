@@ -122,11 +122,24 @@ void abpoa_free_seq(abpoa_seq_t *abs) {
 
 void abpoa_cpy_str(abpoa_str_t *str, char *s, int l) {
     if (l > 0) {
+        // str->s = (char*)_err_malloc(str->m * sizeof(char));
+        if (str->m != 0) str->s = (char*)_err_realloc(str->s, (l+1) * sizeof(char));
+        else str->s = (char*)_err_malloc((l+1) * sizeof(char));
         str->l = l; str->m = l + 1;
-        str->s = (char*)_err_malloc(str->m * sizeof(char));
         memcpy(str->s, s, l);
         str->s[str->l] = 0;
     }
+}
+
+// copy abs->seq[from_i] to abs->seq[to_i]
+// copy abs->name[from_i] to abs->name[to_i]
+// copy abs->comment[from_i] to abs->comment[to_i]
+// copy abs->qual[from_i] to abs->qual[to_i]
+void abpoa_cpy_abs(abpoa_seq_t *to_abs, int to_i, abpoa_seq_t *from_abs, int from_i) {
+    abpoa_cpy_str(to_abs->seq+to_i, from_abs->seq[from_i].s, from_abs->seq[from_i].l);
+    abpoa_cpy_str(to_abs->name+to_i, from_abs->name[from_i].s, from_abs->name[from_i].l);
+    abpoa_cpy_str(to_abs->comment+to_i, from_abs->comment[from_i].s, from_abs->comment[from_i].l);
+    abpoa_cpy_str(to_abs->qual+to_i, from_abs->qual[from_i].s, from_abs->qual[from_i].l);
 }
 
 void abpoa_cpy_seq(abpoa_seq_t *abs, int seq_i, kseq_t *kseq) {
