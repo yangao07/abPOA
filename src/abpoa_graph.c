@@ -187,6 +187,33 @@ void abpoa_free(abpoa_t *ab) {
     free(ab);
 }
 
+// sort in_id/out_id by edge weight in descending order
+void abpoa_sort_in_out_ids(abpoa_graph_t *abg) {
+    int i, j, k;
+    int tmp;
+    for (i = 0; i < abg->node_n; ++i) {
+        // in_id
+        for (j = 0; j < abg->node[i].in_edge_n-1; ++j) {
+            for (k = j+1; k < abg->node[i].in_edge_n; ++k) {
+                if (abg->node[i].in_edge_weight[j] < abg->node[i].in_edge_weight[k]) {
+                    tmp = abg->node[i].in_id[j]; abg->node[i].in_id[j] = abg->node[i].in_id[k]; abg->node[i].in_id[k] = tmp;
+                    tmp = abg->node[i].in_edge_weight[j]; abg->node[i].in_edge_weight[j] = abg->node[i].in_edge_weight[k]; abg->node[i].in_edge_weight[k] = tmp;
+                }
+            }
+        }
+        // out_id
+        for (j = 0; j < abg->node[i].out_edge_n-1; ++j) {
+            for (k = j+1; k < abg->node[i].out_edge_n; ++k) {
+                if (abg->node[i].out_edge_weight[j] < abg->node[i].out_edge_weight[k]) {
+                    tmp = abg->node[i].out_id[j]; abg->node[i].out_id[j] = abg->node[i].out_id[k]; abg->node[i].out_id[k] = tmp;
+                    tmp = abg->node[i].out_edge_weight[j]; abg->node[i].out_edge_weight[j] = abg->node[i].out_edge_weight[k]; abg->node[i].out_edge_weight[k] = tmp;
+                }
+            }
+        }
+    }
+
+}
+
 void abpoa_BFS_set_node_index(abpoa_graph_t *abg, int src_id, int sink_id) {
     int *id, cur_id, out_id, aligned_id;
     int index = 0, q_size, new_q_size;
@@ -311,6 +338,7 @@ void abpoa_topological_sort(abpoa_graph_t *abg, abpoa_para_t *abpt) {
     }
     // start from ABPOA_SRC_NODE_ID to ABPOA_SINK_NODE_ID
     abpoa_BFS_set_node_index(abg, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID);
+    abpoa_sort_in_out_ids(abg);
     // init min/max rank
     if (abpt->wb >= 0) {
         int i;

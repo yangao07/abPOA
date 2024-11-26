@@ -176,7 +176,7 @@ int main(int argc, char **argv) {
             case 'E': abpt->gap_ext1 = strtol(optarg, &s, 10); if (*s == ',') abpt->gap_ext2 = strtol(s+1, &s, 10); break;
 
             case 'G': abpt->inc_path_score = 1; break;
-            case 'L': abpt->sort_input_seq_by_len = 1; break;
+            case 'L': abpt->sort_input_seq = 1; break;
             case 'R': abpt->put_gap_on_right = 1; break;
             case 'b': abpt->wb = atoi(optarg); break;
             case 'f': abpt->wf = atof(optarg); break;

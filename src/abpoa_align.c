@@ -98,7 +98,7 @@ abpoa_para_t *abpoa_init_para(void) {
     abpt->end_bonus = -1; // disable end bonus
 
     abpt->inc_path_score = 0;
-    abpt->sort_input_seq_by_len = 0;
+    abpt->sort_input_seq = 0;
     abpt->put_gap_on_right = 0;
 
     abpt->wb = ABPOA_EXTRA_B; // extra bandwidth
@@ -205,6 +205,7 @@ int abpoa_anchor_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int **weig
     // uint8_t *seq1;
     for (_i = 0; _i < n_seq; ++_i) {
         i = read_id_map[_i]; read_id = exist_n_seq + i; qlen = seq_lens[i]; whole_res.n_cigar = 0, whole_res.m_cigar = 0, whole_res.graph_cigar = 0;
+        fprintf(stderr, "seq: # %d\n", i);
         if (abpt->verbose >= ABPOA_DEBUG_VERBOSE) fprintf(stderr, "seq: # %d\n", i);
         // seq-to-graph alignment and add alignment within each split window
         if (_i == 0) ai = 0; else ai = par_c[_i-1];
@@ -463,7 +464,7 @@ int abpoa_msa1(abpoa_t *ab, abpoa_para_t *abpt, char *read_fn, FILE *out_fp) {
     gzFile readfp = xzopen(read_fn, "r"); kseq_t *ks = kseq_init(readfp);
     int i, j, n_seq = abpoa_read_seq(abs, ks);
 
-    if (abpt->sort_input_seq_by_len) abpoa_sort_seq_by_length(abs, exist_n_seq, n_seq);
+    if (abpt->sort_input_seq) abpoa_sort_seq_by_length(abs, exist_n_seq, n_seq);
 
     // always reset graph before perform POA
     int max_len = 0;

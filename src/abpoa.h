@@ -68,7 +68,7 @@ typedef struct {
     int m; int *mat; char *mat_fn; // score matrix
     int use_score_matrix; // set _mat_ based on score matrix file, then _match_/_mismatch_ is not used.
     int match, max_mat, mismatch, min_mis, gap_open1, gap_open2, gap_ext1, gap_ext2; int inf_min;
-    int sort_input_seq_by_len; // sort input sequences by length, in descending order
+    int sort_input_seq; // sort input sequences by length, in descending order
     int put_gap_on_right; // put indel on the left-most side of the alignment: minimap2-like, or right-most: wfa2-like
     int inc_path_score; // set mismatch/match score based on node weight, i.e., # covered reads * match/mismatch
     // minimizer seeding parameter

@@ -752,7 +752,7 @@ void simd_output_pre_nodes(int *pre_index, int pre_n, int dp_i, int dp_j, int cu
     /* first pre_node */                                                                                                          \
     pre_i = pre_index[dp_i][0];                                                                                                   \
     if (abpt->inc_path_score) path_score = abpoa_get_incre_path_score(graph, node_id, 0);                                         \
-    SIMDi dp_path_score = SIMDSetOne(path_score);                                                                              \
+    SIMDi dp_path_score = SIMDSetOne(path_score);                                                                                 \
     pre_dp_h = DP_H + pre_i * dp_sn;                                                                                              \
     pre_end = dp_end[pre_i]; pre_beg_sn = dp_beg_sn[pre_i];                                                                       \
     /* set M from (pre_i, q_i-1), E from (pre_i, q_i) */                                                                          \
@@ -843,7 +843,7 @@ void simd_output_pre_nodes(int *pre_index, int pre_n, int dp_i, int dp_j, int cu
     /* first pre_node */                                                                                                          \
     pre_i = pre_index[dp_i][0];                                                                                                   \
     if (abpt->inc_path_score) path_score = abpoa_get_incre_path_score(graph, node_id, 0);                                         \
-    SIMDi dp_path_score = SIMDSetOne(path_score);                                                                              \
+    SIMDi dp_path_score = SIMDSetOne(path_score);                                                                                 \
     pre_dp_h = DP_HEF + pre_i * 3 * dp_sn; pre_dp_e1 = pre_dp_h + dp_sn;                                                          \
     pre_end = dp_end[pre_i]; pre_beg_sn = dp_beg_sn[pre_i]; pre_end_sn = dp_end_sn[pre_i];                                        \
     /* set M from (pre_i, q_i-1) */                                                                                               \
@@ -858,7 +858,7 @@ void simd_output_pre_nodes(int *pre_index, int pre_n, int dp_i, int dp_j, int cu
     }                                                                                                                             \
     for (sn_i = _beg_sn; sn_i <= _end_sn; ++sn_i) { /* SIMD parallelization */                                                    \
         remain = SIMDShiftLeft(pre_dp_h[sn_i], SIMDShiftOneN);                                                                    \
-        dp_h[sn_i] = SIMDAdd(SIMDOri(first, remain), dp_path_score);                                                           \
+        dp_h[sn_i] = SIMDAdd(SIMDOri(first, remain), dp_path_score);                                                              \
         first = SIMDShiftRight(pre_dp_h[sn_i], SIMDTotalBytes-SIMDShiftOneN);                                                     \
     }                                                                                                                             \
     /* set E from (pre_i, q_i) */                                                                                                 \
@@ -868,13 +868,13 @@ void simd_output_pre_nodes(int *pre_index, int pre_n, int dp_i, int dp_j, int cu
         for (i = _end_sn+1; i <= end_sn; ++i) dp_e1[i] = SIMD_INF_MIN;                                                            \
     }                                                                                                                             \
     for (sn_i = _beg_sn; sn_i <= _end_sn; ++sn_i)   /* SIMD parallelization */                                                    \
-        dp_e1[sn_i] = SIMDAdd(pre_dp_e1[sn_i], dp_path_score);                                                                 \
+        dp_e1[sn_i] = SIMDAdd(pre_dp_e1[sn_i], dp_path_score);                                                                    \
     /* get max m and e */                                                                                                         \
     for (i = 1; i < pre_n[dp_i]; ++i) {                                                                                           \
         pre_i = pre_index[dp_i][i];                                                                                               \
         if (abpt->inc_path_score) {                                                                                               \
             path_score = abpoa_get_incre_path_score(graph, node_id, i);                                                           \
-            dp_path_score = SIMDSetOne(path_score);                                                                            \
+            dp_path_score = SIMDSetOne(path_score);                                                                               \
         }                                                                                                                         \
         pre_dp_h = DP_HEF + pre_i * 3 * dp_sn; pre_dp_e1 = pre_dp_h + dp_sn;                                                      \
         pre_end = dp_end[pre_i]; pre_beg_sn = dp_beg_sn[pre_i]; pre_end_sn = dp_end_sn[pre_i];                                    \
@@ -888,7 +888,7 @@ void simd_output_pre_nodes(int *pre_index, int pre_n, int dp_i, int dp_j, int cu
         }                                                                                                                         \
         for (sn_i = _beg_sn; sn_i <= _end_sn; ++sn_i) { /* SIMD parallelization */                                                \
             remain = SIMDShiftLeft(pre_dp_h[sn_i], SIMDShiftOneN);                                                                \
-            dp_h[sn_i] = SIMDMax(SIMDAdd(SIMDOri(first, remain), dp_path_score), dp_h[sn_i]);                               \
+            dp_h[sn_i] = SIMDMax(SIMDAdd(SIMDOri(first, remain), dp_path_score), dp_h[sn_i]);                                     \
             first = SIMDShiftRight(pre_dp_h[sn_i], SIMDTotalBytes-SIMDShiftOneN);                                                 \
         }                                                                                                                         \
         /* set E from (pre_i, q_i) */                                                                                             \
@@ -968,7 +968,7 @@ void simd_output_pre_nodes(int *pre_index, int pre_n, int dp_i, int dp_j, int cu
     /* first pre_node */                                                                                                          \
     pre_i = pre_index[dp_i][0];                                                                                                   \
     if (abpt->inc_path_score) path_score = abpoa_get_incre_path_score(graph, node_id, 0);                                         \
-    SIMDi dp_path_score = SIMDSetOne(path_score);                                                                              \
+    SIMDi dp_path_score = SIMDSetOne(path_score);                                                                                 \
     pre_dp_h = DP_H2E2F + pre_i * 5 * dp_sn; pre_dp_e1 = pre_dp_h + dp_sn; pre_dp_e2 = pre_dp_e1 + dp_sn;                         \
     pre_end = dp_end[pre_i]; pre_beg_sn = dp_beg_sn[pre_i]; pre_end_sn = dp_end_sn[pre_i];                                        \
     /* set M from (pre_i, q_i-1) */                                                                                               \
@@ -984,7 +984,7 @@ void simd_output_pre_nodes(int *pre_index, int pre_n, int dp_i, int dp_j, int cu
  /* fprintf(stderr, "1 index_i: %d, beg_sn: %d, end_sn: %d\n", index_i, _beg_sn, _end_sn); */                                     \
     for (sn_i = _beg_sn; sn_i <= _end_sn; ++sn_i) { /* SIMD parallelization */                                                    \
         remain = SIMDShiftLeft(pre_dp_h[sn_i], SIMDShiftOneN);                                                                    \
-        dp_h[sn_i] = SIMDAdd(SIMDOri(first, remain), dp_path_score);                                                           \
+        dp_h[sn_i] = SIMDAdd(SIMDOri(first, remain), dp_path_score);                                                              \
         first = SIMDShiftRight(pre_dp_h[sn_i], SIMDTotalBytes-SIMDShiftOneN);                                                     \
     }                                                                                                                             \
     /* set E from (pre_i, q_i) */                                                                                                 \
@@ -995,15 +995,15 @@ void simd_output_pre_nodes(int *pre_index, int pre_n, int dp_i, int dp_j, int cu
     }                                                                                                                             \
  /* fprintf(stderr, "2 index_i: %d, beg_sn: %d, end_sn: %d\n", index_i, _beg_sn, _end_sn); */                                     \
     for (sn_i = _beg_sn; sn_i <= _end_sn; ++sn_i) { /* SIMD parallelization */                                                    \
-        dp_e1[sn_i] = SIMDAdd(pre_dp_e1[sn_i], dp_path_score);                                                                 \
-        dp_e2[sn_i] = SIMDAdd(pre_dp_e2[sn_i], dp_path_score);                                                                 \
+        dp_e1[sn_i] = SIMDAdd(pre_dp_e1[sn_i], dp_path_score);                                                                    \
+        dp_e2[sn_i] = SIMDAdd(pre_dp_e2[sn_i], dp_path_score);                                                                    \
     }                                                                                                                             \
     /* get max m and e */                                                                                                         \
     for (i = 1; i < pre_n[dp_i]; ++i) {                                                                                           \
         pre_i = pre_index[dp_i][i];                                                                                               \
         if (abpt->inc_path_score) {                                                                                               \
             path_score = abpoa_get_incre_path_score(graph, node_id, i);                                                           \
-            dp_path_score = SIMDSetOne(path_score);                                                                            \
+            dp_path_score = SIMDSetOne(path_score);                                                                               \
         }                                                                                                                         \
         pre_dp_h = DP_H2E2F + (pre_i * 5) * dp_sn; pre_dp_e1 = pre_dp_h + dp_sn; pre_dp_e2 = pre_dp_e1 + dp_sn;                   \
         pre_end = dp_end[pre_i]; pre_beg_sn = dp_beg_sn[pre_i]; pre_end_sn = dp_end_sn[pre_i];                                    \
@@ -1018,15 +1018,15 @@ void simd_output_pre_nodes(int *pre_index, int pre_n, int dp_i, int dp_j, int cu
      /* fprintf(stderr, "3 index_i: %d, beg_sn: %d, end_sn: %d\n", index_i, _beg_sn, _end_sn); */                                 \
         for (sn_i = _beg_sn; sn_i <= _end_sn; ++sn_i) { /* SIMD parallelization */                                                \
             remain = SIMDShiftLeft(pre_dp_h[sn_i], SIMDShiftOneN);                                                                \
-            dp_h[sn_i] = SIMDMax(SIMDAdd(SIMDOri(first, remain), dp_path_score), dp_h[sn_i]);                               \
+            dp_h[sn_i] = SIMDMax(SIMDAdd(SIMDOri(first, remain), dp_path_score), dp_h[sn_i]);                                     \
             first = SIMDShiftRight(pre_dp_h[sn_i], SIMDTotalBytes-SIMDShiftOneN);                                                 \
         }                                                                                                                         \
         /* set E from (pre_i, q_i) */                                                                                             \
         _end_sn = MIN_OF_TWO(pre_end_sn, end_sn);                                                                                 \
      /* fprintf(stderr, "4 index_i: %d, beg_sn: %d, end_sn: %d\n", index_i, _beg_sn, _end_sn); */                                 \
         for (sn_i = _beg_sn; sn_i <= _end_sn; ++sn_i) { /* SIMD parallelization */                                                \
-            dp_e1[sn_i] = SIMDMax(SIMDAdd(pre_dp_e1[sn_i], dp_path_score), dp_e1[sn_i]);                                    \
-            dp_e2[sn_i] = SIMDMax(SIMDAdd(pre_dp_e2[sn_i], dp_path_score), dp_e2[sn_i]);                                    \
+            dp_e1[sn_i] = SIMDMax(SIMDAdd(pre_dp_e1[sn_i], dp_path_score), dp_e1[sn_i]);                                          \
+            dp_e2[sn_i] = SIMDMax(SIMDAdd(pre_dp_e2[sn_i], dp_path_score), dp_e2[sn_i]);                                          \
         }                                                                                                                         \
     }                                                                                                                             \
     /* compare M, E, and F */                                                                                                     \
