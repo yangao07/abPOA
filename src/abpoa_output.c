@@ -909,7 +909,7 @@ int abpoa_collect_clu_hap_read_ids(int *het_poss, int n_het_pos, uint64_t ***rea
 // cluster reads into _n_clu_ groups based on heterogeneous bases
 int abpoa_multip_read_clu(abpoa_graph_t *abg, int src_id, int sink_id, int n_seq, int m, int max_n_cons, double min_freq, uint64_t ***clu_read_ids, int *_m_clu, int verbose) {
     abpoa_set_msa_rank(abg, src_id, sink_id);
-    int i, j, n_clu, m_clu, read_ids_n = (n_seq-1)/64+1;
+    int i, j, n_clu, m_clu=0, read_ids_n = (n_seq-1)/64+1;
     int msa_l = abg->node_id_to_msa_rank[sink_id]-1, min_w = MAX_OF_TWO(1, n_seq * min_freq); // TODO fastq-qual weight
     
     // read_ids: support reads for each base (A/C/G/T) at each position
@@ -929,7 +929,7 @@ int abpoa_multip_read_clu(abpoa_graph_t *abg, int src_id, int sink_id, int n_seq
     int *het_poss = (int*)_err_calloc(msa_l, sizeof(int));
     int n_het_pos = abpoa_set_het_row_column_ids_weight(abg, read_ids, het_poss, rc_weight, msa_l, n_seq, m, min_w, read_ids_n, verbose);
     
-    if (n_het_pos < 1) n_clu = 1;
+    if (n_het_pos < 1) { n_clu = 1; m_clu = 0; }
     // collect at most _max_n_cons_ haplotypes and corresponding read ids
     else n_clu = abpoa_collect_clu_hap_read_ids(het_poss, n_het_pos, read_ids, read_ids_n, n_seq, m, min_w, max_n_cons, clu_read_ids, &m_clu, verbose);
 
