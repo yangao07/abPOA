@@ -359,6 +359,26 @@ void abpoa_output(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp) {
     if (abpt->out_pog) abpoa_dump_pog(ab, abpt);
 }
 
+// only sort new sequences
+void abpoa_sort_seq_by_length(abpoa_seq_t *abs, int exist_n_seq, int n_seq) {
+    int i, j;
+    // sort by length
+    abpoa_seq_t *tmp_seq = (abpoa_seq_t*)calloc(1, sizeof(abpoa_seq_t));
+    tmp_seq->n_seq = 1; abpoa_realloc_seq(tmp_seq);
+    for (i = 0; i < n_seq-1; ++i) {
+        for (j = i+1; j < n_seq; ++j) {
+            if (abs->seq[exist_n_seq+i].l < abs->seq[exist_n_seq+j].l) {
+                // swap i and j
+                abpoa_cpy_abs(tmp_seq, 0, abs, exist_n_seq+i);
+                abpoa_cpy_abs(abs, exist_n_seq+i, abs, exist_n_seq+j);
+                abpoa_cpy_abs(abs, exist_n_seq+j, tmp_seq, 0);
+            }
+        }
+    }
+    // free
+    abpoa_free_seq(tmp_seq);
+}
+
 // do msa for a set of input sequences
 // @function: 
 //    generate consensus sequence
@@ -387,6 +407,7 @@ int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seq, char **seq_names, int 
         }
     }
 
+    if (abpt->sort_input_seq) abpoa_sort_seq_by_length(abs, exist_n_seq, n_seq);
     // always reset graph before perform POA
     int max_len = 0;
     for (i = 0; i < n_seq; ++i) {
@@ -432,26 +453,6 @@ int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seq, char **seq_names, int 
     abpoa_output(ab, abpt, out_fp);
     for (i = 0; i < n_seq; ++i) free(weights[i]); free(weights);
     return 0;
-}
-
-// only sort new sequences
-void abpoa_sort_seq_by_length(abpoa_seq_t *abs, int exist_n_seq, int n_seq) {
-    int i, j;
-    // sort by length
-    abpoa_seq_t *tmp_seq = (abpoa_seq_t*)calloc(1, sizeof(abpoa_seq_t));
-    tmp_seq->n_seq = 1; abpoa_realloc_seq(tmp_seq);
-    for (i = 0; i < n_seq-1; ++i) {
-        for (j = i+1; j < n_seq; ++j) {
-            if (abs->seq[exist_n_seq+i].l < abs->seq[exist_n_seq+j].l) {
-                // swap i and j
-                abpoa_cpy_abs(tmp_seq, 0, abs, exist_n_seq+i);
-                abpoa_cpy_abs(abs, exist_n_seq+i, abs, exist_n_seq+j);
-                abpoa_cpy_abs(abs, exist_n_seq+j, tmp_seq, 0);
-            }
-        }
-    }
-    // free
-    abpoa_free_seq(tmp_seq);
 }
 
 int abpoa_msa1(abpoa_t *ab, abpoa_para_t *abpt, char *read_fn, FILE *out_fp) {
