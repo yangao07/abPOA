@@ -190,7 +190,7 @@ void abpoa_free(abpoa_t *ab) {
 // sort in_id/out_id by edge weight in descending order
 void abpoa_sort_in_out_ids(abpoa_graph_t *abg) {
     int i, j, k;
-    int tmp;
+    int tmp; uint64_t *tmp_read_ids;
     for (i = 0; i < abg->node_n; ++i) {
         // in_id
         for (j = 0; j < abg->node[i].in_edge_n-1; ++j) {
@@ -207,6 +207,7 @@ void abpoa_sort_in_out_ids(abpoa_graph_t *abg) {
                 if (abg->node[i].out_edge_weight[j] < abg->node[i].out_edge_weight[k]) {
                     tmp = abg->node[i].out_id[j]; abg->node[i].out_id[j] = abg->node[i].out_id[k]; abg->node[i].out_id[k] = tmp;
                     tmp = abg->node[i].out_edge_weight[j]; abg->node[i].out_edge_weight[j] = abg->node[i].out_edge_weight[k]; abg->node[i].out_edge_weight[k] = tmp;
+                    tmp_read_ids = abg->node[i].read_ids[j]; abg->node[i].read_ids[j] = abg->node[i].read_ids[k]; abg->node[i].read_ids[k] = tmp_read_ids;
                 }
             }
         }
