@@ -406,8 +406,6 @@ int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seq, char **seq_names, int 
             abs->name[exist_n_seq+i].l = 0; abs->name[exist_n_seq+i].m = 0;
         }
     }
-
-    if (abpt->sort_input_seq) abpoa_sort_seq_by_length(abs, exist_n_seq, n_seq);
     // always reset graph before perform POA
     int max_len = 0;
     for (i = 0; i < n_seq; ++i) {
