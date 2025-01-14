@@ -207,7 +207,9 @@ void abpoa_sort_in_out_ids(abpoa_graph_t *abg) {
                 if (abg->node[i].out_edge_weight[j] < abg->node[i].out_edge_weight[k]) {
                     tmp = abg->node[i].out_id[j]; abg->node[i].out_id[j] = abg->node[i].out_id[k]; abg->node[i].out_id[k] = tmp;
                     tmp = abg->node[i].out_edge_weight[j]; abg->node[i].out_edge_weight[j] = abg->node[i].out_edge_weight[k]; abg->node[i].out_edge_weight[k] = tmp;
-                    tmp_read_ids = abg->node[i].read_ids[j]; abg->node[i].read_ids[j] = abg->node[i].read_ids[k]; abg->node[i].read_ids[k] = tmp_read_ids;
+                    if (abg->node[i].read_ids_n > 0) {
+                        tmp_read_ids = abg->node[i].read_ids[j]; abg->node[i].read_ids[j] = abg->node[i].read_ids[k]; abg->node[i].read_ids[k] = tmp_read_ids;
+                    }
                 }
             }
         }
