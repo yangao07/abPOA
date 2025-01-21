@@ -32,7 +32,7 @@ unsigned char _char26_table[256] = {
 };
 
 int main(void) {
-    int i, j, n_seqs = 6;
+    int i, j, n_seqs = 5;
     char seqs[100][1000] = {
          // 0       1         2         3
          // 23456789012345678901234567890123               
@@ -40,18 +40,20 @@ int main(void) {
         "CCACGTCAATCTATCGAAGCATACGCGGCAGC",
                "AATCTATCGAAGCATACG",
               "CAATGCTAGTCGAAGCAGCTGCGGCAG",
+              "CAATGCTAGTCGAAGCAGCTGCGGCAG",
            "CGTCAATCTATCGAAGCATTCTACGCGGCAGAGC",
-        "CGTCAATCTAGAAGCATACGCGGCAAGAGC",
-        "CGTCAATCTATCGGTAAAGCATACGCTCTGTAGC",
-        "CGTCAATCTATCTTCAAGCATACGCGGCAGAGC",
-        "CGTCAATGGATCGAGTACGCGGCAGAGC",
-        "CGTCAATCTAATCGAAGCATACGCGGCAGAGC"
+           "CGTCAATCTAGAAGCATACGCGGCAAGAGC",
+           "CGTCAATCTATCGGTAAAGCATACGCTCTGTAGC",
+           "CGTCAATCTATCTTCAAGCATACGCGGCAGAGC",
+           "CGTCAATGGATCGAGTACGCGGCAGAGC",
+           "CGTCAATCTAATCGAAGCATACGCGGCAGAGC"
         };
 
     int beg_end_id[100][2] = {
         {0, 1}, 
         {2, 33},
         {6, 23}, 
+        {5, 30}, 
         {5, 30}, 
         {0, 1}, 
         {0, 1}, 
@@ -90,6 +92,10 @@ int main(void) {
     // output options
     abpt->out_msa = 1; // generate Row-Column multiple sequence alignment(RC-MSA), set 0 to disable
     abpt->out_cons = 1; // generate consensus sequence, set 0 to disable
+    abpt->cons_algrm = ABPOA_MF; // most frequent base
+    abpt->inc_path_score = 1;
+    abpt->sub_aln = 1;
+    // abpt->max_n_cons = 2;
 
     abpoa_post_set_para(abpt);
 

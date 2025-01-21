@@ -113,6 +113,7 @@ abpoa_para_t *abpoa_init_para(void) {
     abpt->out_msa = 0;    // output msa
     abpt->cons_algrm = ABPOA_HB; // consensus calling algorithm
     abpt->max_n_cons = 1; // number of max. generated consensus sequence
+    abpt->sub_aln = 0;
     abpt->min_freq = MULTIP_MIN_FREQ; 
     abpt->use_read_ids = 0;
     abpt->incr_fn = NULL; // incrementally align seq to an existing graph

@@ -59,7 +59,7 @@ cdef extern from "abpoa.h":
         # int simd_flag # available SIMD instruction
         # alignment mode
         uint8_t ret_cigar, rev_cigar, out_msa, out_cons, out_gfa, out_fq, use_read_ids, amb_strand # mode: 0: global, 1: local, 2: extend
-        uint8_t use_qv, disable_seeding, progressive_poa
+        uint8_t sub_aln, use_qv, disable_seeding, progressive_poa
         char *incr_fn
         char *out_pog
         int align_mode, gap_mode, max_n_cons, cons_algrm
@@ -75,7 +75,7 @@ cdef extern from "abpoa.h":
         int *out_id
         int *out_weight
         int *read_weight
-        int n_read, m_read
+        int n_read, m_read, n_span_read
         uint64_t **read_ids
         int read_ids_n # for diploid
         int aligned_node_n, aligned_node_m

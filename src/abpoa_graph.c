@@ -19,7 +19,7 @@ void abpoa_set_graph_node(abpoa_graph_t *abg, int node_i) {
     abg->node[node_i].in_edge_n = 0; abg->node[node_i].in_edge_m = 0;
     abg->node[node_i].out_edge_n = 0; abg->node[node_i].out_edge_m = 0;
     abg->node[node_i].aligned_node_n = 0; abg->node[node_i].aligned_node_m = 0;
-    abg->node[node_i].n_read = 0; abg->node[node_i].m_read = 0; abg->node[node_i].read_weight = NULL;
+    abg->node[node_i].n_read = 0; abg->node[node_i].n_span_read = 0; abg->node[node_i].m_read = 0; abg->node[node_i].read_weight = NULL;
     abg->node[node_i].read_ids_n = 0;
 }
 
@@ -554,7 +554,21 @@ int abpoa_add_graph_edge(abpoa_graph_t *abg, int from_id, int to_id, int check_e
     return ret;
 }
 
-void abpoa_add_graph_sequence(abpoa_graph_t *abg, uint8_t *seq, int *weight, int seq_l, int *qpos_to_node_id, int start, int end, uint8_t add_read_id, uint8_t add_read_weight, int read_id, int read_ids_n, int tot_read_n) {
+void abpoa_update_node_n_span_reads(abpoa_graph_t *abg, int src_id, int sink_id, int inc_both_ends) {
+    int src_index = abg->node_id_to_index[src_id];
+    int sink_index = abg->node_id_to_index[sink_id];
+    int i;
+    for (i = src_index+1; i < sink_index; ++i) {
+        int id = abg->index_to_node_id[i];
+        abg->node[id].n_span_read += 1;
+    }
+    if (inc_both_ends) {
+        abg->node[src_id].n_span_read += 1;
+        abg->node[sink_id].n_span_read += 1;
+    }
+}
+
+void abpoa_add_graph_sequence(abpoa_graph_t *abg, abpoa_para_t *abpt, uint8_t *seq, int *weight, int seq_l, int *qpos_to_node_id, int start, int end, uint8_t add_read_id, uint8_t add_read_weight, int read_id, int read_ids_n, int tot_read_n) {
     if (start >= seq_l || end <= start) err_fatal(__func__, "seq_l: %d\tstart: %d\tend: %d.", seq_l, start, end);
     if (end > seq_l) end = seq_l;
 
@@ -569,17 +583,20 @@ void abpoa_add_graph_sequence(abpoa_graph_t *abg, uint8_t *seq, int *weight, int
 
     abpoa_add_graph_edge(abg, last_node_id, ABPOA_SINK_NODE_ID, 0, weight[seq_l-1], add_read_id, add_read_weight, read_id, read_ids_n, tot_read_n);
     abg->is_called_cons = abg->is_set_msa_rank = abg->is_topological_sorted = 0;
+    abpoa_topological_sort(abg, abpt);
+    abpoa_update_node_n_span_reads(abg, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, 1);
     // abpoa_merge_nodes(abg, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID);
-    // abpoa_topological_sort(abg, abpt);
 }
 
-int is_full_upstream_subgraph(abpoa_graph_t *abg, int up_index, int down_index) {
+int is_full_upstream_subgraph(abpoa_graph_t *abg, int up_index, int down_index, int beg_index, int end_index) {
     int i, j, id, in_id;
+    int min_index = MIN_OF_TWO(up_index, beg_index);
+    int max_index = MAX_OF_TWO(down_index, end_index);
     for (i = up_index+1; i <= down_index; ++i) {
         id = abg->index_to_node_id[i];
         for (j = 0; j < abg->node[id].in_edge_n; ++j) {
             in_id = abg->node[id].in_id[j];
-            if (abg->node_id_to_index[in_id] < up_index) return 0;
+            if (abg->node_id_to_index[in_id] < min_index || abg->node_id_to_index[in_id] > max_index) return 0;
         }
     }
     return 1;
@@ -598,7 +615,7 @@ int abpoa_upstream_index(abpoa_graph_t *abg, int beg_index, int end_index) {
                 min_index = MIN_OF_TWO(min_index, in_index);
             }
         }
-        if (is_full_upstream_subgraph(abg, min_index, beg_index)) {
+        if (is_full_upstream_subgraph(abg, min_index, beg_index, beg_index, end_index)) {
             return min_index;
         } else {
             end_index = beg_index;
@@ -632,7 +649,7 @@ int abpoa_downstream_index(abpoa_graph_t *abg, int beg_index, int end_index) {
                 max_index = MAX_OF_TWO(max_index, out_index);
             }
         }
-        if (is_full_upstream_subgraph(abg, end_index, max_index)) {
+        if (is_full_upstream_subgraph(abg, end_index, max_index, beg_index, end_index)) {
             return max_index;
         } else {
             beg_index = end_index;
@@ -677,7 +694,7 @@ int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_i
     } else weight = _weight;
 
     if (abg->node_n == 2) { // empty graph
-        abpoa_add_graph_sequence(abg, seq, weight, seq_l, qpos_to_node_id, 0, seq_l, add_read_id, add_read_weight, read_id, read_ids_n, tot_read_n);
+        abpoa_add_graph_sequence(abg, abpt, seq, weight, seq_l, qpos_to_node_id, 0, seq_l, add_read_id, add_read_weight, read_id, read_ids_n, tot_read_n);
         if (_weight == NULL) free(weight);
         return 0;
     } else {
@@ -704,11 +721,13 @@ int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_i
                 if ((aligned_id = abpoa_get_aligned_id(abg, node_id, seq[query_id])) != -1) {
                     if (last_id != beg_node_id || inc_both_ends) add = 1; else add = 0;
                     abpoa_add_graph_edge(abg, last_id, aligned_id, 1-last_new, weight[query_id], add_read_id&add, add_read_weight, read_id, read_ids_n, tot_read_n);
+                    if (add == 0) abg->node[last_id].n_read--;
                     last_id = aligned_id; last_new = 0;
                 } else {
                     new_id = abpoa_add_graph_node(abg, seq[query_id]);
                     if (last_id != beg_node_id || inc_both_ends) add = 1; else add = 0;
                     abpoa_add_graph_edge(abg, last_id, new_id, 0, weight[query_id], add_read_id&add, add_read_weight, read_id, read_ids_n, tot_read_n);
+                    if (add == 0) abg->node[last_id].n_read--;
                     last_id = new_id; last_new = 1;
                     // add new_id to node_id's aligned node
                     abpoa_add_graph_aligned_node(abg, node_id, new_id);
@@ -716,6 +735,7 @@ int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_i
             } else { // match
                 if (last_id != beg_node_id || inc_both_ends) add = 1; else add = 0;
                 abpoa_add_graph_edge(abg, last_id, node_id, 1-last_new, weight[query_id], add_read_id&add, add_read_weight, read_id, read_ids_n, tot_read_n);
+                if (add == 0) abg->node[last_id].n_read--;
                 last_id = node_id; last_new = 0;
             }
             if (qpos_to_node_id) qpos_to_node_id[query_id] = last_id;
@@ -726,6 +746,7 @@ int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_i
                 new_id = abpoa_add_graph_node(abg, seq[query_id-j]);
                 if (last_id != beg_node_id || inc_both_ends) add = 1; else add = 0;
                 abpoa_add_graph_edge(abg, last_id, new_id, 0, weight[query_id-j], add_read_id&add, add_read_weight, read_id, read_ids_n, tot_read_n);
+                if (add == 0) abg->node[last_id].n_read--;
                 last_id = new_id; last_new = 1;
                 if (qpos_to_node_id) qpos_to_node_id[query_id-j] = last_id;
             }
@@ -737,9 +758,12 @@ int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_i
     // if (inc_both_ends) add = 1; else add = 0; XXX end_node_id is always excluded when adding weight
     // abpoa_add_graph_edge(abg, last_id, end_node_id, 1-last_new, w, add_read_id&add, read_id, read_ids_n);
     abpoa_add_graph_edge(abg, last_id, end_node_id, 1-last_new, weight[seq_l-1], add_read_id, add_read_weight, read_id, read_ids_n, tot_read_n);
+    if (inc_both_ends == 0) abg->node[last_id].n_read--;
     abg->is_called_cons = abg->is_topological_sorted = 0;
+    abpoa_topological_sort(abg, abpt);
+    // update node.n_read
+    abpoa_update_node_n_span_reads(abg, beg_node_id, end_node_id, inc_both_ends);
     // abpoa_merge_nodes(abg, beg_node_id, end_node_id);
-    // abpoa_topological_sort(abg, abpt);
     if (_weight == NULL) free(weight);
     return 0;
 }
@@ -760,7 +784,7 @@ void abpoa_reset(abpoa_t *ab, abpoa_para_t *abpt, int qlen) {
             for (k = 0; k < abg->node[i].read_ids_n; ++k) abg->node[i].read_ids[j][k] = 0;
         }
         abg->node[i].in_edge_n = abg->node[i].out_edge_n = abg->node[i].aligned_node_n = 0;
-        abg->node[i].n_read = 0;
+        abg->node[i].n_read = 0; abg->node[i].n_span_read = 0;
             
     }
     abg->node_n = 2;

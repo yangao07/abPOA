@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <assert.h>
 #include "abpoa.h"
 #include "abpoa_graph.h"
 #include "utils.h"
@@ -364,21 +365,25 @@ void abpoa_set_hb_cons(abpoa_graph_t *abg, int **max_out_id, int n_cons, uint64_
     }
 }
 
-void abpoa_set_major_voting_cons(abpoa_graph_t *abg, int m, int ***row_column_count, int **msa_node_id, int src_id, int sink_id, int msa_l, abpoa_cons_t *abc) {
-    int cur_id, cons_i, i, j, max_c, max_base, gap_c, c;
+void abpoa_set_major_voting_cons(abpoa_graph_t *abg, int use_span_read_count, int m, int ***row_column_count, int **msa_node_id, int src_id, int sink_id, int msa_l, abpoa_cons_t *abc) {
+    int cur_id, cons_i, i, j, max_c, max_base, total_c, gap_c, c;
     int cons_l;
     for (cons_i = 0; cons_i < abc->n_cons; ++cons_i) {
         cons_l = 0;
         for (i = 0; i < msa_l; ++i) {
-            max_c = 0, max_base = m, gap_c = abc->clu_n_seq[cons_i];
+            max_c = 0, total_c = 0, max_base = m; //, gap_c = abc->clu_n_seq[cons_i];
             for (j = 0; j < m-1; ++j) {
                 c = row_column_count[cons_i][i][j];
                 if (c > max_c) {
                     max_c = c;
                     max_base = j;
                 }
-                gap_c -= c;
+                total_c += c;
+                // gap_c -= c;
             }
+            // assert(max_base != m);
+            if (use_span_read_count) gap_c = abg->node[msa_node_id[i][max_base]].n_span_read - total_c;
+            else gap_c = abc->clu_n_seq[cons_i] - total_c;
             if (max_c >= gap_c) { // append consensus base to abc
                 cur_id = msa_node_id[i][max_base];
                 abc->cons_node_ids[cons_i][cons_l] = cur_id;
@@ -387,6 +392,7 @@ void abpoa_set_major_voting_cons(abpoa_graph_t *abg, int m, int ***row_column_co
                 abc->cons_phred_score[cons_i][cons_l] = abpoa_cons_phred_score(abc->cons_cov[cons_i][cons_l], abc->clu_n_seq[cons_i]);
                 cons_l++;
             }
+            // fprintf(stderr, "i: %d, max_base: %d, max_c: %d, gap_c: %d, total_c: %d, n_span: %d\n", i, max_base, max_c, gap_c, total_c, abg->node[msa_node_id[i][max_base]].n_span_read);
         }
         abc->cons_len[cons_i] = cons_l;
     }
@@ -504,7 +510,8 @@ void abpoa_heaviest_bundling(abpoa_graph_t *abg, abpoa_para_t *abpt, int src_id,
     for (i = 0; i < n_clu; ++i) free(max_out_id[i]); free(max_out_id);
 }
 
-void abpoa_major_voting(abpoa_graph_t *abg, abpoa_para_t *abpt, int src_id, int sink_id, int *out_degree, int n_clu, int read_ids_n, uint64_t **clu_read_ids, abpoa_cons_t *abc) {
+void abpoa_most_freqent(abpoa_graph_t *abg, abpoa_para_t *abpt, int src_id, int sink_id, int *out_degree, int n_clu, int read_ids_n, uint64_t **clu_read_ids, abpoa_cons_t *abc) {
+    int use_span_read_count = abpt->sub_aln;
     abpoa_set_msa_rank(abg, src_id, sink_id);
     int i, cons_i, msa_l = abg->node_id_to_msa_rank[sink_id]-1;
     int ***row_column_weight = (int***)_err_malloc(n_clu * sizeof(int**));
@@ -528,7 +535,7 @@ void abpoa_major_voting(abpoa_graph_t *abg, abpoa_para_t *abpt, int src_id, int 
     }
     // no quality weight used for now, only read count
     abpoa_set_row_column_weight(abg, n_clu, abpt->m, row_column_weight, clu_read_ids, msa_node_id);
-    abpoa_set_major_voting_cons(abg, abpt->m, row_column_weight, msa_node_id, src_id, sink_id, msa_l, abc);
+    abpoa_set_major_voting_cons(abg, use_span_read_count, abpt->m, row_column_weight, msa_node_id, src_id, sink_id, msa_l, abc);
     for (cons_i = 0; cons_i < n_clu; ++cons_i) {
         for (i = 0; i < msa_l; ++i) {
             free(row_column_weight[cons_i][i]);
@@ -906,7 +913,7 @@ int abpoa_collect_clu_hap_read_ids(int *het_poss, int n_het_pos, uint64_t ***rea
 }
 
 // read_weight is NOT used here
-// cluster reads into _n_clu_ groups based on heterogeneous bases
+// cluster reads into _n_clu_ groups based on heterozygous bases
 int abpoa_multip_read_clu(abpoa_graph_t *abg, int src_id, int sink_id, int n_seq, int m, int max_n_cons, double min_freq, uint64_t ***clu_read_ids, int *_m_clu, int verbose) {
     abpoa_set_msa_rank(abg, src_id, sink_id);
     int i, j, n_clu, m_clu=0, read_ids_n = (n_seq-1)/64+1;
@@ -942,11 +949,19 @@ int abpoa_multip_read_clu(abpoa_graph_t *abg, int src_id, int sink_id, int n_seq
     return n_clu;
 }
 
+void abpoa_generate_2cons(abpoa_t *ab, abpoa_para_t *abpt) {
+    return;
+}
+
 // should always do topological sort first, then generate consensus
 void abpoa_generate_consensus(abpoa_t *ab, abpoa_para_t *abpt) {
     if (ab->abg->is_called_cons == 1) return;
     abpoa_graph_t *abg = ab->abg;
     if (abg->node_n <= 2) return;
+    // if (abpt->max_n_cons == 2) {
+    //     abpoa_generate_2cons(ab, abpt);
+    //     return;
+    // }
     int i, *out_degree = (int*)_err_malloc(abg->node_n * sizeof(int));
     for (i = 0; i < abg->node_n; ++i) {
         out_degree[i] = abg->node[i].out_edge_n;
@@ -964,7 +979,7 @@ void abpoa_generate_consensus(abpoa_t *ab, abpoa_para_t *abpt) {
     if (abpt->cons_algrm == ABPOA_HB)
         abpoa_heaviest_bundling(abg, abpt, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, out_degree, n_clu, read_ids_n, clu_read_ids, abc);
     else
-        abpoa_major_voting(abg, abpt, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, out_degree, n_clu, read_ids_n, clu_read_ids, abc);
+        abpoa_most_freqent(abg, abpt, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, out_degree, n_clu, read_ids_n, clu_read_ids, abc);
     if (m_clu > 0) {
         for (i = 0; i < m_clu; ++i) free(clu_read_ids[i]); free(clu_read_ids);
     }

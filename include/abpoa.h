@@ -78,7 +78,8 @@ typedef struct {
     // int simd_flag; // available SIMD instruction
     // alignment mode
     uint8_t ret_cigar:1, rev_cigar:1, out_msa:1, out_cons:1, out_gfa:1, out_fq:1, use_read_ids:1, amb_strand:1;
-    uint8_t use_qv:1, disable_seeding:1, progressive_poa:1;
+    // sub_aln: reads align to subgraph, total read count is based on subgraph coverage, i.e., node.n_span_read, not total input read count
+    uint8_t sub_aln:1, use_qv:1, disable_seeding:1, progressive_poa:1;
     char *incr_fn, *out_pog;
     int align_mode, gap_mode, max_n_cons, cons_algrm; // consensus calling algorithm: 0: partial order graph, 1: majority voting
     double min_freq; // for multiploid data
@@ -92,7 +93,10 @@ typedef struct {
     int node_id;
     int in_edge_n, in_edge_m, *in_id; int *in_edge_weight; // in_edge_weight: for additional path score
     int out_edge_n, out_edge_m, *out_id; int *out_edge_weight; // out_edge_weight: edge-wise weight
-    int *read_weight, n_read, m_read; // read_weight: read-wise weight, valid when use_qv=1
+    // read_weight: read-wise weight, valid when use_qv=1
+    // n_read: # of reads covering this node
+    // n_span_read: # of reads spanning this node, including reads skipping this node
+    int *read_weight, n_read, m_read, n_span_read;
     uint64_t **read_ids; int read_ids_n; // for each edge
 
     int aligned_node_n, aligned_node_m, *aligned_node_id; // mismatch; aligned node will have same rank
