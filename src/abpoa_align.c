@@ -100,6 +100,7 @@ abpoa_para_t *abpoa_init_para(void) {
     abpt->inc_path_score = 0;
     abpt->sort_input_seq = 0;
     abpt->put_gap_on_right = 0;
+    abpt->put_gap_at_end = 0;
 
     abpt->wb = ABPOA_EXTRA_B; // extra bandwidth
     abpt->wf = ABPOA_EXTRA_F; // extra bandwidth

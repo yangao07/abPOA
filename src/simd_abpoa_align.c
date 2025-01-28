@@ -122,7 +122,7 @@ void simd_output_pre_nodes(int *pre_index, int pre_n, int dp_i, int dp_j, int cu
     id = abpoa_graph_index_to_node_id(graph, i+beg_index);                                                  \
     if (best_j < qlen) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, qlen-j, -1, qlen-1);         \
     dp_h = DP_H + i * dp_sn; _dp_h = (score_t*)dp_h; int path_score = 0;                                    \
-    int look_for_first_gap_at_end = 1; /* prefer to keep the last gap at end (begining of the backtrack) */ \
+    int look_for_first_gap_at_end = abpt->put_gap_at_end; /* prefer to keep the last gap at end (begining of the backtrack) */ \
     int put_gap_on_right = abpt->put_gap_on_right;                                                          \
     while (i > 0 && j > 0) {                                                                                \
         if (abpt->align_mode == ABPOA_LOCAL_MODE && _dp_h[j] == 0) break;                                   \
@@ -202,7 +202,7 @@ void simd_output_pre_nodes(int *pre_index, int pre_n, int dp_i, int dp_j, int cu
     id = abpoa_graph_index_to_node_id(graph, i+beg_index);                                                  \
     if (best_j < qlen) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, qlen-j, -1, qlen-1);         \
     SIMDi *dp_h = DP_HEF + dp_sn * i * 3; _dp_h = (score_t*)dp_h; int path_score = 0;                       \
-    int look_for_first_gap_at_end = 1; /* prefer to keep the last gap at end (begining of the backtrack) */ \
+    int look_for_first_gap_at_end = abpt->put_gap_at_end; /* prefer to keep the last gap at end (begining of the backtrack) */ \
     int put_gap_on_right = abpt->put_gap_on_right;                                                          \
     while (i > 0 && j > 0) {                                                                                \
         if (abpt->align_mode == ABPOA_LOCAL_MODE && _dp_h[j] == 0) break;                                   \
@@ -316,7 +316,7 @@ void simd_output_pre_nodes(int *pre_index, int pre_n, int dp_i, int dp_j, int cu
     id = abpoa_graph_index_to_node_id(graph, i+beg_index);                                                  \
     if (best_j < qlen) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, qlen-best_j, -1, qlen-1);    \
     SIMDi *dp_h = DP_H2E2F + dp_sn * i * 5; _dp_h = (score_t*)dp_h; int path_score = 0;                     \
-    int look_for_first_gap_at_end = 1; /* prefer to keep the last gap at the end (begining of backtrack) */ \
+    int look_for_first_gap_at_end = abpt->put_gap_at_end; /* prefer to keep the last gap at the end (begining of backtrack) */ \
     int put_gap_on_right = abpt->put_gap_on_right; /* prefer to keep gaps at the left-most position, minimap2-like */ \
     while (i > 0 && j > 0) {                                                                                \
         if (abpt->align_mode == ABPOA_LOCAL_MODE && _dp_h[j] == 0) break;                                   \
@@ -1528,7 +1528,7 @@ void abpoa_cg_backtrack(SIMDi *DP_H2E2F, int **pre_index, int *pre_n, int *dp_be
     id = abpoa_graph_index_to_node_id(graph, dp_i+beg_index);
     if (best_dp_j < qlen) cigar = abpoa_push_cigar(&n_c, &m_c, cigar, ABPOA_CINS, qlen-best_dp_j, -1, qlen-1);
     dp_h = DP_H2E2F + dp_sn * (dp_i * 5); _dp_h = (int32_t*)dp_h;
-    int look_for_first_gap_at_end = 1; /* prefer to keep the last gap at end (begining of the backtrack) */
+    int look_for_first_gap_at_end = abpt->put_gap_at_end; /* prefer to keep the last gap at end (begining of the backtrack) */
     int put_gap_on_right = abpt->put_gap_on_right; /* prefer to keep gaps at the left-most position, minimap2-like */
     int path_score = 0;
     while (dp_i > 0 && dp_j > 0) {

@@ -69,7 +69,6 @@ typedef struct {
     int use_score_matrix; // set _mat_ based on score matrix file, then _match_/_mismatch_ is not used.
     int match, max_mat, mismatch, min_mis, gap_open1, gap_open2, gap_ext1, gap_ext2; int inf_min;
     int sort_input_seq; // sort input sequences by length, in descending order
-    int put_gap_on_right; // put indel on the left-most side of the alignment: minimap2-like, or right-most: wfa2-like
     int inc_path_score; // set mismatch/match score based on node weight, i.e., # covered reads * match/mismatch
     // minimizer seeding parameter
     int k, w, min_w;
@@ -79,7 +78,7 @@ typedef struct {
     // alignment mode
     uint8_t ret_cigar:1, rev_cigar:1, out_msa:1, out_cons:1, out_gfa:1, out_fq:1, use_read_ids:1, amb_strand:1;
     // sub_aln: reads align to subgraph, total read count is based on subgraph coverage, i.e., node.n_span_read, not total input read count
-    uint8_t sub_aln:1, use_qv:1, disable_seeding:1, progressive_poa:1;
+    uint8_t sub_aln:1, use_qv:1, disable_seeding:1, progressive_poa:1, put_gap_on_right:, put_gap_at_end:1; // put indel on the left-most side of the alignment: minimap2-like, or right-most: wfa2-like
     char *incr_fn, *out_pog;
     int align_mode, gap_mode, max_n_cons, cons_algrm; // consensus calling algorithm: 0: partial order graph, 1: majority voting
     double min_freq; // for multiploid data

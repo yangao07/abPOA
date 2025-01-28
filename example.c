@@ -101,8 +101,9 @@ int main(void) {
     abpt->out_msa = 1; // generate Row-Column multiple sequence alignment(RC-MSA), set 0 to disable
     abpt->out_cons = 1; // generate consensus sequence, set 0 to disable
     abpt->w = 6, abpt->k = 9; abpt->min_w = 10; // minimizer-based seeding and partition
-    abpt->progressive_poa = 1;
+    abpt->progressive_poa = 0;
     abpt->max_n_cons = 2; // to generate 2 consensus sequences
+    // abpt->sub_aln = 1;
 
     abpoa_post_set_para(abpt);
 

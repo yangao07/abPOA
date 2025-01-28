@@ -554,6 +554,7 @@ int abpoa_add_graph_edge(abpoa_graph_t *abg, int from_id, int to_id, int check_e
     return ret;
 }
 
+// XXX n_span_read should be updated after adding all edges/nodes in the graph, right before topological sort/consensus calling
 void abpoa_update_node_n_span_reads(abpoa_graph_t *abg, int src_id, int sink_id, int inc_both_ends) {
     int src_index = abg->node_id_to_index[src_id];
     int sink_index = abg->node_id_to_index[sink_id];
@@ -759,7 +760,7 @@ int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_i
     // abpoa_add_graph_edge(abg, last_id, end_node_id, 1-last_new, w, add_read_id&add, read_id, read_ids_n);
     abpoa_add_graph_edge(abg, last_id, end_node_id, 1-last_new, weight[seq_l-1], add_read_id, add_read_weight, read_id, read_ids_n, tot_read_n);
     if (inc_both_ends == 0) abg->node[last_id].n_read--;
-    abg->is_called_cons = abg->is_topological_sorted = 0;
+    abg->is_called_cons = abg->is_set_msa_rank = abg->is_topological_sorted = 0;
     abpoa_topological_sort(abg, abpt);
     // update node.n_read
     abpoa_update_node_n_span_reads(abg, beg_node_id, end_node_id, inc_both_ends);

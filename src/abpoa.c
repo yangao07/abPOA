@@ -42,6 +42,7 @@ const struct option abpoa_long_opt [] = {
     { "inc-path-score", 0, NULL, 'G'},
     { "sort-by-len", 0, NULL, 'L'},
     { "gap-on-right", 0, NULL, 'R' },
+    { "gap-at-end", 0, NULL, 'J' },
     { "use-qual-weight", 0, NULL, 'Q'},
     { "amino-acid", 0, NULL, 'c'},
     { "in-list", 0, NULL, 'l' },
@@ -96,6 +97,7 @@ int abpoa_usage(void)
     err_printf("    -G --inc-path-score     include log-scaled path score for graph alignment [False]\n");
     err_printf("    -L --sort-by-len        sort input sequences by length in descending order [False]\n");
     err_printf("    -R --gap-on-right       put indel on the right-most side of the alignment, default is left [False]\n");
+    err_printf("    -J --gap-at-end         always put indel at the end of the alignment if possible [False]\n");
     // err_printf("    -z --zdrop    INT       Z-drop score in extension alignment [-1]\n");
     // err_printf("                            set as <= 0 to disable Z-drop extension\n");
     // err_printf("    -e --bonus    INT       end bonus score in extension alignment [-1]\n");
@@ -178,6 +180,7 @@ int main(int argc, char **argv) {
             case 'G': abpt->inc_path_score = 1; break;
             case 'L': abpt->sort_input_seq = 1; break;
             case 'R': abpt->put_gap_on_right = 1; break;
+            case 'J': abpt->put_gap_at_end = 1; break;
             case 'b': abpt->wb = atoi(optarg); break;
             case 'f': abpt->wf = atof(optarg); break;
             case 'z': abpt->zdrop = atoi(optarg); break;
