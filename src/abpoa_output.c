@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>
+#include "abpoa_output.h"
 #include "abpoa.h"
 #include "abpoa_graph.h"
 #include "utils.h"
@@ -118,6 +119,30 @@ void abpoa_set_msa_seq(abpoa_node_t node, int rank, uint8_t **msa_base) {
         }
         b += 64;
     }
+}
+
+int abpoa_collect_msa(abpoa_graph_t *abg, abpoa_para_t *abpt, uint8_t **msa, int n_seq) {
+    if (abg->node_n <= 2) return 0;
+    abpoa_set_msa_rank(abg, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID);
+    int msa_len = abg->node_id_to_msa_rank[ABPOA_SINK_NODE_ID]-1;
+    int i, j;
+    for (i = 0; i < n_seq; ++i) {
+        msa[i] = (uint8_t*)_err_malloc(msa_len * sizeof(uint8_t));
+        for (j = 0; j < msa_len; ++j) msa[i][j] = abpt->m;
+    }
+    int rank, aligned_id;
+    // if (out_fp && abpt->out_msa_header == 0) fprintf(out_fp, ">Multiple_sequence_alignment\n");
+    for (i = 2; i < abg->node_n; ++i) {
+        // get msa rank
+        rank = abpoa_graph_node_id_to_msa_rank(abg, i);
+        for (j = 0; j < abg->node[i].aligned_node_n; ++j) {
+            aligned_id = abg->node[i].aligned_node_id[j];
+            rank = MAX_OF_TWO(rank, abpoa_graph_node_id_to_msa_rank(abg, aligned_id));
+        }
+        // assign seq
+        abpoa_set_msa_seq(abg->node[i], rank, msa);
+    }
+    return msa_len;
 }
 
 // only generate rc-msa, output in separated func
@@ -602,350 +627,646 @@ abpoa_cons_t *abpoa_allocate_cons(abpoa_cons_t *abc, int n_node, int n_seq, int 
     return abc;
 }
 
-int abpoa_check_iden_read_ids(int **rc_weight, uint64_t ***read_ids, int m, int read_ids_n, int pos1, int pos2) {
-    int i, j, k, iden = 1;
-    uint8_t *map = (uint8_t*)_err_calloc(m, sizeof(uint8_t));
+int abpoa_collect_cand_het_profile(uint8_t **msa, int msa_l, int n_seq, int m, int min_het, cand_het_t *cand_hets, read_het_profile_t *p, int verbose) {
+    int n_het_pos = 0;
+    int i, j, k;
+    int min_hom = n_seq - min_het; // het >= min_het && <= min_hom
+    int *depth = (int*)_err_malloc((m+1) * sizeof(int));
 
-    for (i = 0; i < m ; ++i) {
-        if (rc_weight[pos1][i] == 0) continue;
-        int found_iden = 0;
-        for (j = 0; j < m; ++j) { // find from 0~m that is identical to i'th read_ids
-            if (map[j] == 1 || rc_weight[pos1][i] != rc_weight[pos2][j]) continue;
-            // iden rc_weight
-            int diff = 0;
-            for (k = 0; k < read_ids_n; ++k) {
-                if (read_ids[pos1][i][k] != read_ids[pos2][j][k]) {
-                    diff = 1; break;
-                }
-            }
-            if (diff == 0) { // i is identical to j
-                found_iden = 1; 
-                map[j] = 1;
-                break;
-            }
-        }
-        if (found_iden == 0) { // no iden for i'th base
-            iden = 0; break;
-        }
-    }
-    free(map);
-    return iden;
-}
-
-// return: 1 if redundent else 0
-int check_redundent_hap(int **clu_haps, int *clu_size, uint64_t **clu_read_ids, int n_clu, int new_clu_i, int n_het_pos, int read_id_i, uint64_t read_id) {
-    int i, j, redundent = 0;
-    for (i = n_clu-1; i >= 0; --i) {
-        int iden = 1;
-        for (j = 0; j < n_het_pos; ++j) {
-            if (clu_haps[i][j] != clu_haps[new_clu_i][j]) {
-                iden = 0; break;
-            }
-        }
-        if (iden == 1) {
-            clu_size[i] += 1;
-            clu_read_ids[i][read_id_i] |= read_id;
-            redundent = 1; break;
-        }
-    }
-    if (redundent == 0) {
-        clu_size[new_clu_i] += 1;
-        clu_read_ids[new_clu_i][read_id_i] |= read_id;
-    }
-    return redundent;
-}
-
-int reassign_hap_by_min_w(int **clu_haps, int *clu_size, uint64_t **clu_read_ids, int read_ids_n, int n_clu, int min_w, int n_het_pos) {
-    int i, j, k, n_reassign = 0;
-    for (i = 0; i < n_clu; ++i) {
-        if (clu_size[i] >= min_w || clu_size[i] == 0) continue;
-        int reassign_i = -1, max_iden_pos = 0;
-        for (j = 0; j < n_clu; ++j) {
-            int n_iden_pos = 0;
-            if (clu_size[j] < min_w) continue;
-            // i < min_w, j >= min_w
-            for (k = 0; k < n_het_pos; ++k) {
-                if (clu_haps[i][k] == clu_haps[j][k]) n_iden_pos++;
-            }
-            if (n_iden_pos > max_iden_pos) {
-                max_iden_pos = n_iden_pos;
-                reassign_i = j;
-            }
-        }
-        if (reassign_i >= 0) {
-            for (j = 0; j < read_ids_n; ++j) {
-                clu_read_ids[reassign_i][j] |= clu_read_ids[i][j];
-                clu_read_ids[i][j] = 0;
-            }
-            clu_size[reassign_i] += clu_size[i];
-            clu_size[i] = 0;
-            n_reassign += 1;
-        }
-    }
-    return n_clu - n_reassign;
-}
-
-int reassign_max_n_hap1(int **clu_haps, int *clu_size, uint64_t **clu_read_ids, int read_ids_n, int n_clu, int *clu_poss, int max_n_cons, int n_het_pos) {
-    int i, j, k, n_reassign = 0;
-    for (i = 0; i < n_clu; ++i) {
-        int is_clu = 0;
-        if (clu_size[i] == 0) continue;
-        for (j = 0; j < max_n_cons; ++j) {
-            if (i == clu_poss[j]) {
-                is_clu = 1;
-                break;
-            }
-        }
-        if (is_clu) continue;
-
-        int reassign_i = -1, max_iden_pos = 0;
-        for (j = 0; j < max_n_cons; ++j) {
-            int clu_i = clu_poss[j], n_iden_pos = 0;
-            // i < min_w, clu_i >= min_w
-            for (k = 0; k < n_het_pos; ++k) {
-                if (clu_haps[i][k] == clu_haps[clu_i][k]) n_iden_pos++;
-            }
-            if (n_iden_pos > max_iden_pos) {
-                max_iden_pos = n_iden_pos;
-                reassign_i = clu_i;
-            }
-        }
-        if (reassign_i >= 0) {
-            for (j = 0; j < read_ids_n; ++j) {
-                clu_read_ids[reassign_i][j] |= clu_read_ids[i][j];
-                clu_read_ids[i][j] = 0;
-            }
-            clu_size[reassign_i] += clu_size[i];
-            clu_size[i] = 0;
-            n_reassign += 1;
-        } else {
-            clu_size[i] = 0;
-        }
-    }
-    return n_clu - n_reassign;
-}
-
-typedef struct {
-    int size, pos;
-} clu_hap_tuple_t;
-
-// descending order
-int tup_cmpfunc (const void * a, const void * b) {
-    return -(((clu_hap_tuple_t*)a)->size - ((clu_hap_tuple_t*)b)->size);
-}
-
-int reassign_max_n_hap(int **clu_haps, int *clu_size, uint64_t **clu_read_ids, int read_ids_n, int n_clu, int n_het_pos, int max_n_cons) {
-    int i;
-    clu_hap_tuple_t *tup = (clu_hap_tuple_t*)_err_malloc(n_clu * sizeof(clu_hap_tuple_t));
-    int *clu_poss = (int*)_err_malloc(max_n_cons * sizeof(int));
-
-    while (n_clu > max_n_cons) {
-        for (i = 0; i < n_clu; ++i) {
-            tup[i].size = clu_size[i];
-            tup[i].pos = i;
-        }
-        qsort(tup, n_clu, sizeof(clu_hap_tuple_t), tup_cmpfunc);
-        // new min_w
-        for (i = 0; i < max_n_cons; ++i) clu_poss[i] = tup[i].pos;
-        int new_n_clu = reassign_max_n_hap1(clu_haps, clu_size, clu_read_ids, read_ids_n, n_clu, clu_poss, max_n_cons, n_het_pos);
-        if (new_n_clu == n_clu) { // no further reassignment, but still have more than _max_n_cons_ clus
-            err_func_printf(__func__, "%d small clusters of sequences remain un-assigned.", n_clu-max_n_cons);
-            break;
-        }
-        n_clu = new_n_clu;
-    }
-    free(tup); free(clu_poss);
-    return n_clu;
-}
-
-int reassign_hap(int **clu_haps, int *clu_size, uint64_t **clu_read_ids, int read_ids_n, int n_clu, int min_w, int max_n_cons, int n_het_pos) {
-    // assign haplotype with reads < min_w to haplotype with reads >= min_w
-    int new_n_clu = reassign_hap_by_min_w(clu_haps, clu_size, clu_read_ids, read_ids_n, n_clu, min_w, n_het_pos);
-    if (new_n_clu > max_n_cons) // keep at most _max_n_cons_
-        new_n_clu = reassign_max_n_hap(clu_haps, clu_size, clu_read_ids, read_ids_n, n_clu, n_het_pos, max_n_cons);
-    // move max_n_cons to the front
-    int i, j, pos_i;
-    for (i = pos_i = 0; i < n_clu; ++i) {
-        if (clu_size[i] == 0) continue;
-        if (i == pos_i) {
-            pos_i++; continue;
-        }
-        // move i to pos_i
-        for (j = 0; j < read_ids_n; ++j) {
-            clu_read_ids[pos_i][j] = clu_read_ids[i][j];
-            clu_size[pos_i] = clu_size[i];
-        }
-        pos_i++;
-    }
-    if (pos_i > max_n_cons) err_fatal_core(__func__, "Error: collected %d clusters.", pos_i);
-    return pos_i;
-}
-
-// read_weight is NOT used here, no matter use_qv is set or not.
-// collect minimized set of het bases
-int abpoa_set_het_row_column_ids_weight(abpoa_graph_t *abg, uint64_t ***read_ids, int *het_poss, int **rc_weight, int msa_l, int n_seq, int m, int min_w, int read_ids_n, int verbose) {
-    int i, j, k, n, rank;
-    uint64_t b, one = 1, *whole_read_ids = (uint64_t*)_err_calloc(read_ids_n, sizeof(uint64_t));
     for (i = 0; i < n_seq; ++i) {
-        j = i / 64; b = i & 0x3f;
-        whole_read_ids[j] |= (one << b);
+        p[i].read_id = i;
+        p[i].start_het_idx = -1; p[i].end_het_idx = -2;
+        p[i].alleles = (int*)malloc(msa_l * sizeof(int));
+        for (j = 0; j < msa_l; ++j) p[i].alleles[j] = -1; // init as unused
     }
+
+    // print msa
+    // for (int i = 0; i < n_seq; ++i) {
+    //     fprintf(stderr, ">%d\n", i);
+    //     for (int j = 0; j < msa_l; ++j) {
+    //         fprintf(stderr, "%c", "ACGTN-"[msa[i][j]]);
+    //     } fprintf(stderr, "\n");
+    // }
+
     for (i = 0; i < msa_l; ++i) {
-        for (j = 0; j < read_ids_n; ++j) {
-            read_ids[i][m-1][j] = whole_read_ids[j];
+        // if (i == 252)
+            // fprintf(stderr, "debug\n");
+        memset(depth, 0, (m+1) * sizeof(int));
+        for (j = 0; j < n_seq; ++j) {
+            depth[msa[j][i]]++;
         }
-    } free(whole_read_ids);
-
-    uint8_t *node_map = (uint8_t*)_err_calloc(abg->node_n, sizeof(uint8_t));
-    int *n_branch = (int*)_err_calloc(msa_l, sizeof(int)), n_het_pos = 0;
-    for (i = 0; i < abg->node_n; ++i) {
-        if (abg->node[i].out_edge_n < 2) continue;
-
-        for (j = 0; j < abg->node[i].out_edge_n; ++j) {
-            int out_id = abg->node[i].out_id[j];
-            if (node_map[out_id]) continue;
-            else node_map[out_id] = 1;
-            int sum_out_w = 0;
-            for (k = 0; k < abg->node[out_id].out_edge_n; ++k)
-                sum_out_w += abg->node[out_id].n_read;
-            if (sum_out_w < min_w || sum_out_w > n_seq-min_w) continue;
-            rank = abpoa_graph_node_id_to_msa_rank(abg, out_id); 
-            n_branch[rank-1] += 1;
-            // assign seq
-            for (n = 0; n < abg->node[out_id].out_edge_n; ++n) {
-                for (k = 0; k < abg->node[out_id].read_ids_n; ++k) {
-                    b = abg->node[out_id].read_ids[n][k];
-                    rc_weight[rank-1][abg->node[out_id].base] += get_bit_cnt4(ab_bit_table16, b);
-                    read_ids[rank-1][abg->node[out_id].base][k] |= b;
-                    read_ids[rank-1][m-1][k] ^= b;
+        int max_base = -1, max_c = 0, sec_base = -1, sec_c = 0;
+        for (j = 0; j < m+1; ++j) {
+            if (depth[j] > max_c) {
+                sec_base = max_base;
+                sec_c = max_c;
+                max_c = depth[j];
+                max_base = j;
+            } else if (depth[j] > sec_c) {
+                sec_c = depth[j];
+                sec_base = j;
+            }
+        }
+        if (max_c >= min_het && max_c <= min_hom && sec_c >= min_het && sec_c <= min_hom) { // X
+            cand_hets[n_het_pos].pos = i;
+            cand_hets[n_het_pos].phase_set = -1;
+            if (max_base == m || sec_base == m) cand_hets[n_het_pos].var_type = 1; // ID
+            else cand_hets[n_het_pos].var_type = 0; // X
+            cand_hets[n_het_pos].n_depth = n_seq; // XXX
+            cand_hets[n_het_pos].n_uniq_alles = 2;
+            cand_hets[n_het_pos].alle_covs = (int*)malloc(2 * sizeof(int));
+            cand_hets[n_het_pos].alle_covs[0] = max_c; cand_hets[n_het_pos].alle_covs[1] = sec_c;
+            cand_hets[n_het_pos].alle_bases = (uint8_t*)malloc(2 * sizeof(uint8_t));
+            cand_hets[n_het_pos].alle_bases[0] = max_base; cand_hets[n_het_pos].alle_bases[1] = sec_base;
+            n_het_pos++;
+        } else continue;
+    }
+    free(depth);
+    for (i = 0; i < n_het_pos; ++i) {
+        int pos = cand_hets[i].pos;
+        if (verbose >= 2) fprintf(stderr, "het pos: %d, %d (%d) %d (%d)\n", pos, cand_hets[i].alle_bases[0], cand_hets[i].alle_covs[0], cand_hets[i].alle_bases[1], cand_hets[i].alle_covs[1]);
+        cand_hets[i].hap_to_alle_profile = NULL;
+        cand_hets[i].alle_to_hap = NULL;
+        cand_hets[i].hap_to_cons_alle = NULL;
+        for (j = 0; j < n_seq; ++j) { // XXX partial aligned reads
+            int allele_i = -1;
+            for (k = 0; k < cand_hets[i].n_uniq_alles; ++k) {
+                if (msa[j][pos] == cand_hets[i].alle_bases[k]) {
+                    allele_i = k;
+                    break;
                 }
             }
-            rc_weight[rank-1][m-1] -= rc_weight[rank-1][abg->node[out_id].base];
+            if (allele_i == -1) continue;
+            if (p[j].start_het_idx == -1) p[j].start_het_idx = i;
+            p[j].end_het_idx = i;
+            p[j].alleles[i-p[j].start_het_idx] = allele_i;
         }
     }
-    for (rank = 0; rank < msa_l; ++rank) {
-        if (rc_weight[rank][m-1] >= min_w && rc_weight[rank][m-1] <= n_seq-min_w) n_branch[rank]++;
-        if (n_branch[rank] > 1) {
-            // filter out identical read_ids
-            int iden = 0;
-            for (i = n_het_pos-1; i >= 0; i--) {
-                int het_pos = het_poss[i];
-                // remove het bases that share the identical read groups
-                iden = abpoa_check_iden_read_ids(rc_weight, read_ids, m, read_ids_n, rank, het_pos);
-                if (iden == 1) break;
-            }
-            if (iden == 1) continue;
-
-            het_poss[n_het_pos++] = rank;
-            if (verbose >= ABPOA_LONG_DEBUG_VERBOSE) {
-                fprintf(stderr, "%d\t", rank);
-                for (j = 0; j < m; ++j) {
-                    fprintf(stderr, "%c: %d\t", "ACGT-"[j], rc_weight[rank][j]);
-                } fprintf(stderr, "\n");
-            }
-        }
-    }
-    free(n_branch); free(node_map);
     return n_het_pos;
 }
 
-// group read into clusters based on all het bases
-// initial cluster size could be > max_n_cons
-int abpoa_collect_clu_hap_read_ids(int *het_poss, int n_het_pos, uint64_t ***read_ids, int read_ids_n, 
-                                   int n_seq, int m, int min_w, int max_n_cons, uint64_t ***clu_read_ids, int *_m_clu, int verbose) {
-    if (n_het_pos == 0) return 1;
-    int i, j, k, n_clu = 0, m_clu = 2;
-    int **clu_haps = (int**)_err_malloc(2 * sizeof(int*));
-    int *clu_size = (int*)_err_calloc(2, sizeof(int));
-    *clu_read_ids = (uint64_t**)_err_malloc(2 * sizeof(uint64_t**));
-    for (i = 0; i < 2; ++i) {
-        clu_haps[i] = (int*)_err_calloc(n_het_pos, sizeof(int));
-        (*clu_read_ids)[i] = (uint64_t*)_err_calloc(read_ids_n, sizeof(uint64_t));
+int abpoa_collect_cand_het_pos(uint8_t **msa, int msa_l, int n_seq, int m, int min_het, cand_het_pos_t *cand_het_pos, int verbose) {
+    int n_het_pos = 0;
+    int i, j;
+    int min_hom = n_seq - min_het; // het >= min_het && <= min_hom
+    int *depth = (int*)_err_malloc((m+1) * sizeof(int));
+
+    // print msa
+    // for (int i = 0; i < n_seq; ++i) {
+    //     fprintf(stderr, ">%d\n", i);
+    //     for (int j = 0; j < msa_l; ++j) {
+    //         fprintf(stderr, "%c", "ACGTN-"[msa[i][j]]);
+    //     } fprintf(stderr, "\n");
+    // }
+
+    for (i = 0; i < msa_l; ++i) {
+        // if (i == 252)
+            // fprintf(stderr, "debug\n");
+        memset(depth, 0, (m+1) * sizeof(int));
+        for (j = 0; j < n_seq; ++j) {
+            depth[msa[j][i]]++;
+        }
+        int max_base = -1, max_c = 0, sec_base = -1, sec_c = 0;
+        for (j = 0; j < m+1; ++j) {
+            if (depth[j] > max_c) {
+                sec_base = max_base;
+                sec_c = max_c;
+                max_c = depth[j];
+                max_base = j;
+            } else if (depth[j] > sec_c) {
+                sec_c = depth[j];
+                sec_base = j;
+            }
+        }
+        if (max_c >= min_het && max_c <= min_hom && sec_c >= min_het && sec_c <= min_hom) { // X
+            if (verbose >= 2)
+                fprintf(stderr, "het pos: %d, %d (%d) %d (%d)\n", i, max_base, max_c, sec_base, sec_c);
+            cand_het_pos[n_het_pos].pos = i;
+            if (max_base == m || sec_base == m) cand_het_pos[n_het_pos].var_type = 1; // ID
+            else cand_het_pos[n_het_pos].var_type = 0; // X
+            cand_het_pos[n_het_pos].depth = n_seq; // XXX
+            cand_het_pos[n_het_pos].n_uniq_alles = 2;
+            cand_het_pos[n_het_pos].alle_bases = (uint8_t*)malloc(2 * sizeof(uint8_t));
+            cand_het_pos[n_het_pos].alle_bases[0] = max_base; cand_het_pos[n_het_pos].alle_bases[1] = sec_base;
+            n_het_pos++;
+        } else continue;
     }
-    
-    for (i = 0; i < n_seq; ++i) { // collect haplotype for each sequence
-        int read_id_i = i / 64; uint64_t read_id = 1ULL << (i & 0x3f);
-        for (j = 0; j < n_het_pos; ++j) {
-            int het_pos = het_poss[j];
-            for (k = 0; k < m; ++k) {
-                if (read_ids[het_pos][k][read_id_i] & read_id) {
-                    clu_haps[n_clu][j] = k; break;
+    free(depth);
+    return n_het_pos;
+}
+
+int collect_max_cov_allele(cand_het_t *het) {
+    int max_cov = 0, max_cov_alle_i = -1;
+    for (int i = 0; i < het->n_uniq_alles; ++i) {
+        if (het->alle_covs[i] > max_cov) {
+            max_cov = het->alle_covs[i]; max_cov_alle_i = i;
+        }
+    }
+    return max_cov_alle_i;
+}
+
+void var_init_hap_profile(cand_het_t *hets, int n_cand_hets) {
+    for (int het_i = 0; het_i < n_cand_hets; ++het_i) {
+        cand_het_t *het = hets+het_i;
+        if (het->hap_to_alle_profile == NULL) {
+            het->alle_to_hap = (uint8_t*)calloc(het->n_uniq_alles, sizeof(uint8_t)); // +1: minor_alt_allele
+            het->hap_to_alle_profile = (int**)malloc(3 * sizeof(int*));
+            for (int i = 0; i <= 2; ++i) het->hap_to_alle_profile[i] = (int*)calloc(het->n_uniq_alles, sizeof(int));
+            het->hap_to_cons_alle = (int*)malloc(3 * sizeof(int));
+            het->hap_to_cons_alle[0] = collect_max_cov_allele(het);
+            for (int j = 1; j <= 2; ++j) {
+                het->hap_to_cons_alle[j] = -1;
+            }
+        } else {
+            memset(het->hap_to_alle_profile[0], 0, het->n_uniq_alles * sizeof(int));
+            for (int j = 1; j <= 2; ++j) {
+                memset(het->hap_to_alle_profile[j], 0, het->n_uniq_alles * sizeof(int));
+            }
+            het->hap_to_cons_alle[0] = collect_max_cov_allele(het);
+            for (int j = 1; j <= 2; ++j) {
+                het->hap_to_cons_alle[j] = -1;
+            }
+        }
+
+        if (het->hap_to_alle_profile == NULL) {
+            het->alle_to_hap = (uint8_t*)calloc(1, sizeof(uint8_t)); // +1: minor_alt_allele
+            het->hap_to_alle_profile = (int**)malloc(3 * sizeof(int*));
+            for (int i = 0; i <= 2; ++i) het->hap_to_alle_profile[i] = (int*)calloc(1, sizeof(int));
+            het->hap_to_cons_alle = (int*)malloc(3 * sizeof(int));
+            het->hap_to_cons_alle[0] = 0;
+            for (int j = 1; j <= 2; ++j) {
+                het->hap_to_cons_alle[j] = -1;
+            }
+        } else {
+            memset(het->hap_to_alle_profile[0], 0, 1* sizeof(int));
+            for (int j = 1; j <= 2; ++j) {
+                memset(het->hap_to_alle_profile[j], 0, 1 * sizeof(int));
+            }
+            het->hap_to_cons_alle[0] = 0;
+            for (int j = 1; j <= 2; ++j) {
+                het->hap_to_cons_alle[j] = -1;
+            }
+        }
+    }
+}
+
+int *sort_cand_hets(cand_het_t *cand_hets, int n_cand_hets) {
+    int *sorted_cand_het_i = (int*)malloc(n_cand_hets * sizeof(int));
+    for (int i = 0; i < n_cand_hets; ++i) {
+        sorted_cand_het_i[i] = i;
+    }
+    // sort var by type: clean SNP -> clean indel -> noisy SNP -> noisy INDEL
+    for (int i = 0; i < n_cand_hets-1; ++i) {
+        for (int j = i+1; j < n_cand_hets; ++j) {
+            if (cand_hets[i].var_type > cand_hets[j].var_type) {
+                int tmp = sorted_cand_het_i[i]; sorted_cand_het_i[i] = sorted_cand_het_i[j]; sorted_cand_het_i[j] = tmp;
+            }
+        }
+    }
+    return sorted_cand_het_i;
+}
+
+int assign_het_init_hap(cand_het_t *het, int verbose) {
+    if (verbose >= 2) fprintf(stderr, "Init Het-Var hap: %d %c\n", het->pos, "XG"[het->var_type]);
+    if (het->var_type == 0) het->phase_set = het->pos; // potential start of a PhaseSet
+    else het->phase_set = het->pos - 1;
+    int hap1_alle_i = 0, hap2_alle_i = 1;
+    het->alle_to_hap[hap1_alle_i] = 1; het->alle_to_hap[hap2_alle_i] = 2;
+    return het->phase_set;
+}
+
+// assign haplotype to a SNP based on read SNP profiles
+// 1. pick the most common haplotype and corresponding most common base 
+// 2. assign most common base to the most common haplotype, and other bases to the other haplotype
+int assign_het_hap_based_on_pre_reads1(cand_het_t *het, int verbose) {
+    int first_hap=0, first_hap_cnt=0, first_hap_alle_i=-1;
+    int sec_hap=0, sec_hap_cnt=0, sec_hap_alle_i=-1;
+
+    for (int j = 1; j <= 2; ++j) {
+        for (int i = 0; i < het->n_uniq_alles; ++i) { // ref + alt_allele; minor_alt_allele is not considered
+            if (het->hap_to_alle_profile[j][i] > first_hap_cnt) {
+                sec_hap_cnt = first_hap_cnt; sec_hap = first_hap; sec_hap_alle_i = first_hap_alle_i;
+                first_hap_cnt = het->hap_to_alle_profile[j][i]; first_hap = j; first_hap_alle_i = i;
+            } else if (het->hap_to_alle_profile[j][i] > sec_hap_cnt) {
+                sec_hap_cnt = het->hap_to_alle_profile[j][i]; sec_hap = j; sec_hap_alle_i = i;
+            }
+        }
+    }
+    if (sec_hap == 0) {
+        if (first_hap == 1) sec_hap = 2; else sec_hap = 1;
+        // set the most common bases other than first_hap_base to sec_hap
+        int sec_hap_alle_cov = 0;
+        for (int i = 0; i < het->n_uniq_alles; ++i) {
+            if (het->alle_covs[i] > sec_hap_alle_cov && i != first_hap_alle_i) {
+                sec_hap_alle_i = i; sec_hap_alle_cov = het->alle_covs[i];
+            }
+        }
+    }
+    if (first_hap == sec_hap) {
+        if (verbose >= 2) fprintf(stderr, "Var: %d, %c, first_hap: %d (%d: %d), sec_hap: %d (%d: %d)\n", het->pos, "XG"[het->var_type], first_hap, first_hap_alle_i, first_hap_cnt, sec_hap, sec_hap_alle_i, sec_hap_cnt);
+        assign_het_init_hap(het, verbose);
+    // } else if (first_hap_alle_i == sec_hap_alle_i) { // homozygous
+    } else {
+        for (int i = 0; i < het->n_uniq_alles; ++i) {
+            if (i == first_hap_alle_i) het->alle_to_hap[i] = first_hap;
+            else if (i == sec_hap_alle_i) het->alle_to_hap[i] = sec_hap;
+            else het->alle_to_hap[i] = 0;
+        }
+    }
+    return het->phase_set;
+} 
+
+void het_init_hap_cons_alle0(cand_het_t *het, int min_alt_dp) {
+    // select the most common allele as the consensus allele, based on hap_to_alle_profile
+    for (int hap = 1; hap <= 2; ++hap) {
+        int max_cov = 0, max_cov_alle_i = -1;
+        for (int i = 0; i < het->n_uniq_alles; ++i) {
+            if (het->hap_to_alle_profile[hap][i] > max_cov) {
+                max_cov = het->hap_to_alle_profile[hap][i];
+                if (max_cov >= min_alt_dp) max_cov_alle_i = i;
+            }
+        }
+        het->hap_to_cons_alle[hap] = max_cov_alle_i;
+    }
+}
+
+int het_hap_profile_cov(cand_het_t *het) {
+    int cov = 0;
+    for (int j = 1; j <= 2; ++j) {
+        for (int i = 0; i < het->n_uniq_alles; ++i) {
+            cov += het->hap_to_alle_profile[j][i];
+        }
+    }
+    return cov;
+}
+
+int assign_het_hap_based_on_pre_reads(cand_het_t *het, int min_dp, int verbose) {
+    if (het_hap_profile_cov(het) < min_dp) 
+        return assign_het_init_hap(het, verbose);
+    else {
+        return assign_het_hap_based_on_pre_reads1(het, verbose);
+    }
+}
+
+
+// after a read is assigned with hap, update hap of all other SNPs covered by this read
+// including homozygous and heterozygous SNPs
+void update_het_hap_profile_based_on_aln_hap(int hap, int phase_set, cand_het_t *hets, read_het_profile_t *p, int read_i) {
+    int start_het_idx = p[read_i].start_het_idx, end_het_idx = p[read_i].end_het_idx;
+    for (int het_i = start_het_idx; het_i <= end_het_idx; ++het_i) {
+        int read_het_idx = het_i - start_het_idx;
+        // if (p[read_i].var_is_used[read_var_idx] == 0) continue;
+        int allele_i = p[read_i].alleles[read_het_idx];
+        if (allele_i == -1) continue;
+        hets[het_i].hap_to_alle_profile[hap][allele_i] += 1;
+        // update HOM var's phase_set as well ??
+        if (hets[het_i].phase_set == -1 || phase_set <= hets[het_i].pos)
+            hets[het_i].phase_set = phase_set;
+    }
+}
+
+int collect_tmp_hap_cons_allele_by_deduct_read(cand_het_t *het, int hap, int allele_i, int *tmp_hap_to_cons_alle, int verbose) {
+    for (int i = 1; i <= 2; ++i) {
+        tmp_hap_to_cons_alle[i] = -1;
+        if (i != hap || het->hap_to_cons_alle[i] != allele_i) { // no change
+            tmp_hap_to_cons_alle[i] = het->hap_to_cons_alle[i];
+        } else { // i==hap && var->hap_to_cons_alle[i] == allele_i
+            int cov, max_cov = 0, max_cov_alle_i = -1;
+            for (int j = 0; j < het->n_uniq_alles; ++j) {
+                cov = het->hap_to_alle_profile[i][j];
+                if (j == allele_i) cov -= 1;
+                if (cov > max_cov) {
+                    max_cov = cov; max_cov_alle_i = j;
+                }
+            }
+            if (max_cov_alle_i == -1) {
+                if (verbose >= 2) fprintf(stderr, "No HAP %d allele in SNP: %d, %c\n", i, het->pos, "XG"[het->var_type]);
+            }
+            tmp_hap_to_cons_alle[i] = max_cov_alle_i;
+        }
+    }
+    return 0;
+}
+
+// update hap_cons_profile based on hap_to_base_profile
+// update haplotype for a read based on SNP profiles of all other overlapping reads
+// input: target read, SNP profiles of all reads
+// output: updated haplotype of the target read
+int update_het_aln_hap1(int target_read_i, int cur_hap, read_het_profile_t *p, cand_het_t *cand_hets, int verbose) {
+    int start_het_idx = p[target_read_i].start_het_idx, end_het_idx = p[target_read_i].end_het_idx;
+    // deduct target read from hap_to_alle_profile, then compare target read's var profile with hap_cons_alle
+    int *hap_match_cnt = (int*)calloc(3, sizeof(int));
+    int *tmp_hap_to_cons_alle = (int*)malloc(3 * sizeof(int));
+
+    for (int het_i = start_het_idx; het_i <= end_het_idx; ++het_i) {
+        int read_het_idx = het_i - start_het_idx;
+        cand_het_t *het = cand_hets+het_i;
+        int var_weight = 1; // XXX
+        if (het->var_type == 0) var_weight = 2;
+
+        int allele_i = p[target_read_i].alleles[read_het_idx];
+        if (allele_i == -1) continue;
+        collect_tmp_hap_cons_allele_by_deduct_read(het, cur_hap, allele_i, tmp_hap_to_cons_alle, verbose);
+        for (int i = 1; i <= 2; ++i) {
+            if (tmp_hap_to_cons_alle[i] == allele_i) {
+                hap_match_cnt[i] += var_weight;
+            }
+        }
+    }
+    int max_cnt=0, max_hap=0, sec_cnt=0;
+    for (int i = 1; i <= 2; ++i) {
+        if (hap_match_cnt[i] > max_cnt) {
+            sec_cnt = max_cnt;
+            max_cnt = hap_match_cnt[i]; max_hap = i;
+        } else if (hap_match_cnt[i] > sec_cnt) {
+            sec_cnt = hap_match_cnt[i];
+        }
+    }
+    free(hap_match_cnt); free(tmp_hap_to_cons_alle);
+    if (max_cnt == 0) {
+        fprintf(stderr, "Read %d max_cnt == 0\n", target_read_i);
+        return 0; // unknown
+    } else if (max_cnt == sec_cnt) {
+        fprintf(stderr, "Read %d max_cnt == sec_cnt\n", target_read_i);
+        max_hap = cur_hap;
+    }
+    return max_hap;
+}
+
+int update_het_hap_profile_based_on_changed_hap(int new_hap, int old_hap, cand_het_t *cand_hets, int min_alt_dp, read_het_profile_t *p, int read_i, int verbose) {
+    int start_het_idx = p[read_i].start_het_idx, end_het_idx = p[read_i].end_het_idx;
+    for (int het_i = start_het_idx; het_i <= end_het_idx; ++het_i) {
+        int read_het_idx = het_i - start_het_idx;
+        // if (p[read_i].var_is_used[read_var_idx] == 0) continue;
+        int allele_i = p[read_i].alleles[read_het_idx];
+        if (allele_i == -1) continue;
+        cand_het_t *het = cand_hets+het_i;
+        // only update Het-Var
+        if (verbose >= 2) fprintf(stderr, "pos: %d, old_hap: %d, new_hap: %d, var: %d\n", het->pos, old_hap, new_hap, allele_i);
+        het->hap_to_alle_profile[old_hap][allele_i] -= 1;
+        het->hap_to_alle_profile[new_hap][allele_i] += 1;
+        het_init_hap_cons_alle0(het, min_alt_dp);
+    }
+    return 0;
+}
+
+// TODO: > 2 clusters
+void abpoa_clu_reads_based_on_het_pos(int n_het_pos, cand_het_t *cand_hets, read_het_profile_t *p, uint64_t ***clu_read_ids, int n_seq, int verbose) {
+    int *haps = (int*)_err_calloc(n_seq, sizeof(int));
+    (*clu_read_ids) = (uint64_t**)_err_malloc(sizeof(uint64_t*) * 2);
+    int read_id_n = (n_seq-1)/64+1;
+    for (int i = 0; i < 2; ++i) {
+        (*clu_read_ids)[i] = (uint64_t*)_err_calloc(read_id_n, sizeof(uint64_t));
+    }
+    var_init_hap_profile(cand_hets, n_het_pos);
+    int *sorted_cand_het_i = sort_cand_hets(cand_hets, n_het_pos);
+    for (int _het_i = 0; _het_i < n_het_pos; ++_het_i) {
+        int het_i = sorted_cand_het_i[_het_i];
+        cand_het_t *het = cand_hets+het_i;
+        // here we highly rely on reads that were assigned with HAPs previously, >= 2 reads is enough
+        int phase_set = assign_het_hap_based_on_pre_reads(het, 2, verbose); //opt->min_dp); // update alle_to_hap
+        for (int read_i = 0; read_i < n_seq; ++read_i) {
+            if (p[read_i].start_het_idx == -1) continue;
+            int read_het_idx = het_i - p[read_i].start_het_idx;
+            if (haps[read_i] == 0) {
+                int het_alle_i = p[read_i].alleles[read_het_idx];
+                if (het_alle_i == -1) continue;
+                int hap = het->alle_to_hap[het_alle_i];
+                if (hap != 0) {
+                    // first time assign hap to the read (update bam_haps)
+                    haps[read_i] = hap;
+                    if (verbose >= 2) fprintf(stderr, "read: %d, cur_var: %d, %c, alle: %d, hap: %d\n", read_i, het->pos, "XG"[het->var_type], het_alle_i, hap);
+                    // update hap_to_alle_profile for all Vars covered by this read, based on its assigned haplotype
+                    // udpated profile will then be used for following Vars (assign_var_hap_based_on_pre_reads)
+                    update_het_hap_profile_based_on_aln_hap(hap, phase_set, cand_hets, p, read_i);
                 }
             }
         }
-        if (check_redundent_hap(clu_haps, clu_size, *clu_read_ids, n_clu, n_clu, n_het_pos, read_id_i, read_id) == 0) {
-            if (++n_clu == m_clu) {
-                m_clu <<= 1;
-                clu_haps = (int**)_err_realloc(clu_haps, m_clu * sizeof(int*));
-                clu_size = (int*)_err_realloc(clu_size, m_clu * sizeof(int));
-                (*clu_read_ids) = (uint64_t**)_err_realloc(*clu_read_ids, m_clu * sizeof(uint64_t**));
-                for (j = n_clu; j < m_clu; ++j) {
-                    clu_haps[j] = (int*)_err_calloc(n_het_pos, sizeof(int));
-                    clu_size[j] = 0;
-                    (*clu_read_ids)[j] = (uint64_t*)_err_calloc(read_ids_n, sizeof(uint64_t)); // mem may lost
+        het_init_hap_cons_alle0(het, 2); // update hap_to_cons_alle
+    } // after first round, 
+    // bam_haps/hap_to_alle_profile/hap_to_cons_alle are upToDate and will be used in the following rounds
+    // alle_to_hap will not be used (may be NOT upToDate)
+    // 2nd loop: read-wise iterative loop
+    int changed_hap, max_iter = 10, i_iter=0;
+    while (i_iter++ < max_iter) {
+        if (verbose >= 2) fprintf(stderr, "iter: %d\n", i_iter);
+        changed_hap = 0;
+        // read-wise loop
+        // re-calculate read-wise haplotype (Var-wise 1. Hap, 2. Allele, 3. Read, 4. AlleleCons are all up-to-date)
+        for (int read_i = 0; read_i < n_seq; ++read_i) {
+            if (haps[read_i] == 0) continue;
+            int cur_hap = haps[read_i];
+            // XXX TODO: potential local optima
+            int new_hap = update_het_aln_hap1(read_i, cur_hap, p, cand_hets, verbose);
+            if (new_hap != cur_hap) { // update bam_haps, hap_to_base_profile, hap_to_cons_base
+                if (verbose >= 2) {
+                    fprintf(stderr, "read %d:\t", read_i);
+                    fprintf(stderr, "\t\t cur_hap: %d, new_hap: %d\n", cur_hap, new_hap);
                 }
+                changed_hap = 1;
+                haps[read_i] = new_hap; // update intermediately
+                // bam_aux_append(chunk->reads[read_i], "XT", 'i', 4, (uint8_t*)&(chunk->haps[read_i]));
+                update_het_hap_profile_based_on_changed_hap(new_hap, cur_hap, cand_hets, 2, p, read_i, verbose);
             }
-        }
+        } if (changed_hap == 0) break;
     }
-    if (n_clu < 2) err_fatal(__func__, "# haplotypes: %d\n", n_clu);
-    if (verbose >= ABPOA_LONG_DEBUG_VERBOSE) {
-        fprintf(stderr, "n_clu: %d\n", n_clu);
-        for (i = 0; i < n_clu; ++i) {
-            for (j = 0; j < n_het_pos; ++j) {
-                fprintf(stderr, "%d\t", clu_haps[i][j]);
-            }
-            fprintf(stderr, "\tsize: %d\n", clu_size[i]);
-        }
+    // assign read to cluster based on haplotype
+    for (int read_i = 0; read_i < n_seq; ++read_i) {
+        if (haps[read_i] == 0) continue;
+        int hap = haps[read_i];
+        (*clu_read_ids)[hap-1][read_i/64] |= (1ULL << (read_i & 0x3f));
+    }
+    free(sorted_cand_het_i); free(haps);
+}
+
+int abpoa_collect_msa_dis1(uint8_t **msa, int msa_l, int n_seq, int m, cand_het_pos_t *cand_het_pos, int n_het_pos, int i, int j) {
+    int dis = 0;
+    for (int k = 0; k < n_het_pos; ++k) {
+        int pos = cand_het_pos[k].pos;
+        int var_weight = 1; // Gap
+        if (cand_het_pos[k].var_type == 0) var_weight = 2; // SNP
+        uint8_t base1 = msa[i][pos], base2 = msa[j][pos];
+        uint8_t alle_base1 = cand_het_pos[k].alle_bases[0], alle_base2 = cand_het_pos[k].alle_bases[1];
+        if (base1 != alle_base1 && base1 != alle_base2) continue;
+        if (base2 != alle_base1 && base2 != alle_base2) continue;
+        if (base1 != base2) dis += var_weight;
+    }
+    return dis;
+}
+
+int **abpoa_collect_msa_dis_matrix(uint8_t **msa, int msa_l, int n_seq, int m, cand_het_pos_t *cand_het_pos, int n_het_pos, int verbose) {
+    int i, j, **dis_matrix = (int**)malloc(n_seq * sizeof(int*));
+    for (i = 0; i < n_seq; ++i) {
+        dis_matrix[i] = (int*)calloc(n_seq, sizeof(int));
     }
 
-    // assign haplotype with reads < min_w to haplotype with reads >= min_w
-    // keep at most _max_n_cons_ haps and read ids, weight need to >= min_w
-    n_clu = reassign_hap(clu_haps, clu_size, *clu_read_ids, read_ids_n, n_clu, min_w, max_n_cons, n_het_pos);
-    if (verbose >= ABPOA_LONG_DEBUG_VERBOSE) {
-        fprintf(stderr, "After re-assign: n_clu: %d\n", n_clu);
-        for (i = 0; i < n_clu; ++i) {
-            fprintf(stderr, "%d:\tsize: %d\n", i, clu_size[i]);
+    for (i = 0; i < n_seq; ++i) {
+        for (j = i+1; j < n_seq; ++j) {
+            dis_matrix[i][j] = abpoa_collect_msa_dis1(msa, msa_l, n_seq, m, cand_het_pos, n_het_pos, i, j);
+            dis_matrix[j][i] = dis_matrix[i][j];
         }
     }
-    for (i = 0; i < m_clu; ++i) free(clu_haps[i]); free(clu_haps); free(clu_size);
-    *_m_clu = m_clu;
+    return dis_matrix;
+}
+
+// XXX TODO: > 2 clusters
+int init_kmedoids(int **dis_matrix, int n_seq, int max_n_cons, int **medoids) {
+    int max_dis = 0, med1 = -1, med2 = -1;
+    for (int i = 0; i < n_seq-1; ++i) {
+        for (int j = i+1; j < n_seq; ++j) {
+            if (dis_matrix[i][j] > max_dis) {
+                max_dis = dis_matrix[i][j];
+                med1 = i; med2 = j;
+            }
+        }
+    }
+    if (max_dis > 0) {
+        (*medoids) = (int*)malloc(2 * sizeof(int));
+        (*medoids)[0] = med1; (*medoids)[1] = med2;
+        return 0;
+    } else return -1;
+}
+
+// within each cluster, find the medoid that has the smallest sum of distances to all other members
+void abpoa_collect_kmedoids0(int **dis_matrix, int n_seq, int max_n_cons, int **clu_reads, int *n_clu_seqs, int *medoids) {
+    for (int i = 0; i < max_n_cons; ++i) {
+        int min_sum_dis = INT_MAX, min_sum_dis_read_i = -1;
+        for (int j = 0; j < n_clu_seqs[i]; ++j) {
+            int sum_dis = 0, read_i = clu_reads[i][j];
+            for (int k = 0; k < n_clu_seqs[i]; ++k) {
+                if (j == k) continue;
+                int read_j = clu_reads[i][k];
+                sum_dis += dis_matrix[read_i][read_j];
+            }
+            if (sum_dis < min_sum_dis) {
+                min_sum_dis = sum_dis;
+                min_sum_dis_read_i = read_i;
+            }
+        }
+        if (min_sum_dis_read_i != -1) medoids[i] = min_sum_dis_read_i;
+    }
+    // sort medoids, from small to large
+    for (int i = 0; i < max_n_cons-1; ++i) {
+        for (int j = i+1; j < max_n_cons; ++j) {
+            if (medoids[i] > medoids[j]) {
+                int tmp = medoids[i]; medoids[i] = medoids[j]; medoids[j] = tmp;
+            }
+        }
+    }
+}
+
+int abpoa_update_kmedoids(int **dis_matrix, int n_seq, int max_n_cons, int **medoids, int **clu_reads, int *n_clu_seqs, int verbose) {
+    int *new_medoids = (int*)malloc(max_n_cons * sizeof(int));
+
+    n_clu_seqs[0] = 0; n_clu_seqs[1] = 0;
+    for (int i = 0; i < n_seq; ++i) {
+        int min_dis = INT_MAX, min_clu = -1, tied = 0;
+        for (int j = 0; j < max_n_cons; ++j) {
+            if (dis_matrix[i][(*medoids)[j]] < min_dis) {
+                min_dis = dis_matrix[i][(*medoids)[j]];
+                min_clu = j;
+                tied = 0;
+            } else if (dis_matrix[i][(*medoids)[j]] == min_dis) {
+                tied = 1;
+            }
+        }
+        if (tied != 0 || min_clu == -1) continue;
+        clu_reads[min_clu][n_clu_seqs[min_clu]++] = i;
+    }
+    abpoa_collect_kmedoids0(dis_matrix, n_seq, max_n_cons, clu_reads, n_clu_seqs, new_medoids);
+    int changed = 0;
+    for (int i = 0; i < max_n_cons; ++i) {
+        if (new_medoids[i] != (*medoids)[i]) changed = 1;
+    } 
+    free(*medoids);
+    *medoids = new_medoids;
+    return changed;
+}
+
+int abpoa_clu_reads_kmedoids(int **dis_matrix, int n_seq, int min_het, int max_n_cons, uint64_t ***clu_read_ids, int verbose) {
+    // init
+    int *medoids = NULL;
+    if (init_kmedoids(dis_matrix, n_seq, max_n_cons, &medoids) == -1) return 0;
+
+    // iterative update clusters until convergence
+    int **clu_reads = (int**)_err_malloc(sizeof(int*) * max_n_cons);
+    int *n_clu_seqs = (int*)_err_malloc(sizeof(int) * max_n_cons);
+    for (int i = 0; i < max_n_cons; ++i) {
+        clu_reads[i] = (int*)_err_calloc(n_seq, sizeof(int));
+    }
+    int iter = 0;
+    while (1) {
+        int changed = abpoa_update_kmedoids(dis_matrix, n_seq, max_n_cons, &medoids, clu_reads, n_clu_seqs, verbose);
+        iter++;
+        if (changed == 0 || iter >= 10) break;
+    }
+    int n_clu = 0, n_clustered_reads = 0;
+    for (int i = 0; i < max_n_cons; ++i) {
+        if (n_clu_seqs[i] >= min_het) n_clu++;
+        n_clustered_reads += n_clu_seqs[i];
+    }
+    if (n_clu != max_n_cons || n_clustered_reads < ceil(n_seq * 0.8)) n_clu = 1;
+    else {
+        (*clu_read_ids) = (uint64_t**)_err_malloc(sizeof(uint64_t*) * n_clu);
+        int read_id_n = (n_seq-1)/64+1;
+        for (int i = 0; i < n_clu; ++i) {
+            (*clu_read_ids)[i] = (uint64_t*)_err_calloc(read_id_n, sizeof(uint64_t));
+            for (int j = 0; j < n_clu_seqs[i]; ++j) {
+                int read_i = clu_reads[i][j];
+                (*clu_read_ids)[i][read_i/64] |= (1ULL << (read_i & 0x3f));
+            }
+        }
+    }
+    for (int i = 0; i < max_n_cons; ++i) free(clu_reads[i]);
+    free(clu_reads); free(n_clu_seqs); free(medoids);
     return n_clu;
 }
 
-// read_weight is NOT used here
-// cluster reads into _n_clu_ groups based on heterozygous bases
-int abpoa_multip_read_clu(abpoa_graph_t *abg, int src_id, int sink_id, int n_seq, int m, int max_n_cons, double min_freq, uint64_t ***clu_read_ids, int *_m_clu, int verbose) {
+int abpoa_multip_read_clu_kmedoids(abpoa_graph_t *abg, abpoa_para_t *abpt, int src_id, int sink_id, int n_seq, int m, int max_n_cons, double min_freq, uint64_t ***clu_read_ids, int verbose) {
     abpoa_set_msa_rank(abg, src_id, sink_id);
-    int i, j, n_clu, m_clu=0, read_ids_n = (n_seq-1)/64+1;
-    int msa_l = abg->node_id_to_msa_rank[sink_id]-1, min_w = MAX_OF_TWO(1, n_seq * min_freq); // TODO fastq-qual weight
-    
-    // read_ids: support reads for each base (A/C/G/T) at each position
-    uint64_t ***read_ids = (uint64_t***)_err_malloc(sizeof(uint64_t**) * msa_l);
-    for (i = 0; i < msa_l; ++i) {
-        read_ids[i] = (uint64_t**)_err_malloc(sizeof(uint64_t*) * m);
-        for (j = 0; j < m; ++j) read_ids[i][j] = (uint64_t*)_err_calloc(read_ids_n, sizeof(uint64_t));
+    int i, n_clu;
+    uint8_t **msa = (uint8_t**)_err_malloc(sizeof(uint8_t*) * n_seq);
+    int msa_l = abpoa_collect_msa(abg, abpt, msa, n_seq); // abg->node_id_to_msa_rank[sink_id]-1, 
+    int min_w = MAX_OF_TWO(2, ceil(n_seq * min_freq));
+    cand_het_pos_t *cand_het_pos = (cand_het_pos_t*)_err_malloc(msa_l * sizeof(cand_het_pos_t));
+    int n_het_pos = abpoa_collect_cand_het_pos(msa, msa_l, n_seq, m, min_w, cand_het_pos, verbose);
+    if (n_het_pos < 1) n_clu = 1;
+    else {
+        int **dis_matrix = abpoa_collect_msa_dis_matrix(msa, msa_l, n_seq, m, cand_het_pos, n_het_pos, verbose);
+        n_clu = abpoa_clu_reads_kmedoids(dis_matrix, n_seq, min_w, max_n_cons, clu_read_ids, verbose);
+        for (i = 0; i < n_seq; ++i) free(dis_matrix[i]); free(dis_matrix);
     }
-
-    // is rc_weight necessary?
-    int **rc_weight = (int**)_err_malloc(msa_l * sizeof(int*));
-    for (i = 0; i < msa_l; ++i) {
-        rc_weight[i] = (int*)_err_calloc(m, sizeof(int)); // ACGT
-        rc_weight[i][m-1] = n_seq;
-    } 
-    // find min set of het nodes
-    int *het_poss = (int*)_err_calloc(msa_l, sizeof(int));
-    int n_het_pos = abpoa_set_het_row_column_ids_weight(abg, read_ids, het_poss, rc_weight, msa_l, n_seq, m, min_w, read_ids_n, verbose);
+    for (int i = 0; i < n_het_pos; ++i) free(cand_het_pos[i].alle_bases); free(cand_het_pos);
+    for (int i = 0; i < n_seq; ++i) free(msa[i]); free(msa);
+    return n_clu;
+}
+// XXX: more than 2 clusters
+int abpoa_multip_read_clu2(abpoa_graph_t *abg, abpoa_para_t *abpt, int src_id, int sink_id, int n_seq, int m, int max_n_cons, double min_freq, uint64_t ***clu_read_ids, int verbose) {
+    abpoa_set_msa_rank(abg, src_id, sink_id);
+    int i, j, n_clu;
+    uint8_t **msa = (uint8_t**)_err_malloc(sizeof(uint8_t*) * n_seq);
+    int msa_l = abpoa_collect_msa(abg, abpt, msa, n_seq); // abg->node_id_to_msa_rank[sink_id]-1, 
+    int min_w = MAX_OF_TWO(2, ceil(n_seq * min_freq));
     
-    if (n_het_pos < 1) { n_clu = 1; m_clu = 0; }
-    // collect at most _max_n_cons_ haplotypes and corresponding read ids
-    else n_clu = abpoa_collect_clu_hap_read_ids(het_poss, n_het_pos, read_ids, read_ids_n, n_seq, m, min_w, max_n_cons, clu_read_ids, &m_clu, verbose);
-
-    for (i = 0; i < msa_l; ++i) {
-        for (j = 0; j < m; ++j) free(read_ids[i][j]);
-        free(read_ids[i]); free(rc_weight[i]);
-    } free(read_ids); free(rc_weight); free(het_poss);
-
-    *_m_clu = m_clu;
+    cand_het_t *cand_hets = (cand_het_t*)_err_malloc(msa_l * sizeof(cand_het_t));
+    read_het_profile_t *p = (read_het_profile_t*)_err_malloc(n_seq * sizeof(read_het_profile_t));
+    int n_het_pos = abpoa_collect_cand_het_profile(msa, msa_l, n_seq, m, min_w, cand_hets, p, verbose);
+    for (i = 0; i < n_seq; ++i) free(msa[i]); free(msa);
+    
+    if (n_het_pos < 1) n_clu = 1;
+    else {
+        n_clu = 2;
+        abpoa_clu_reads_based_on_het_pos(n_het_pos, cand_hets, p, clu_read_ids, n_seq, verbose);
+    }
+    for (i = 0; i < n_het_pos; ++i) {
+        free(cand_hets[i].alle_covs); free(cand_hets[i].alle_bases);
+        free(cand_hets[i].alle_to_hap); free(cand_hets[i].hap_to_cons_alle); 
+        for (j = 0; j < 3; ++j) free(cand_hets[i].hap_to_alle_profile[j]);
+        free(cand_hets[i].hap_to_alle_profile);
+    } free(cand_hets);
+    for (i = 0; i < n_seq; ++i) {
+        free(p[i].alleles);
+    } free(p);
     return n_clu;
 }
 
@@ -967,12 +1288,13 @@ void abpoa_generate_consensus(abpoa_t *ab, abpoa_para_t *abpt) {
         out_degree[i] = abg->node[i].out_edge_n;
     }
 
-    int n_clu, m_clu=0, n_seq = ab->abs->n_seq; uint64_t **clu_read_ids=NULL;
+    int n_clu, n_seq = ab->abs->n_seq; uint64_t **clu_read_ids=NULL;
     int read_ids_n = (n_seq-1)/64+1;
 
     n_clu = 1;
-    if (abpt->max_n_cons > 1) 
-        n_clu = abpoa_multip_read_clu(abg, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, n_seq, abpt->m, abpt->max_n_cons, abpt->min_freq, &clu_read_ids, &m_clu, abpt->verbose);
+    if (abpt->max_n_cons > 1) {
+        n_clu = abpoa_multip_read_clu_kmedoids(abg, abpt, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, n_seq, abpt->m, abpt->max_n_cons, abpt->min_freq, &clu_read_ids, abpt->verbose);
+    }
 
     abpoa_cons_t *abc = ab->abc;
     abpoa_allocate_cons(abc, abg->node_n, ab->abs->n_seq, n_clu);
@@ -980,8 +1302,8 @@ void abpoa_generate_consensus(abpoa_t *ab, abpoa_para_t *abpt) {
         abpoa_heaviest_bundling(abg, abpt, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, out_degree, n_clu, read_ids_n, clu_read_ids, abc);
     else
         abpoa_most_freqent(abg, abpt, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, out_degree, n_clu, read_ids_n, clu_read_ids, abc);
-    if (m_clu > 0) {
-        for (i = 0; i < m_clu; ++i) free(clu_read_ids[i]); free(clu_read_ids);
+    if (n_clu > 1) {
+        for (i = 0; i < n_clu; ++i) free(clu_read_ids[i]); free(clu_read_ids);
     }
     abg->is_called_cons = 1; free(out_degree);
 }

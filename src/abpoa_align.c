@@ -152,7 +152,7 @@ void abpoa_post_set_para(abpoa_para_t *abpt) {
     abpoa_set_gap_mode(abpt);
     if (abpt->out_msa || abpt->out_gfa || abpt->max_n_cons > 1 || abpt->cons_algrm == ABPOA_MF) {
         abpt->use_read_ids = 1;
-        if (abpt->out_msa || abpt->out_gfa) set_65536_table();
+        if (abpt->out_msa || abpt->out_gfa || abpt->max_n_cons) set_65536_table();
         if (abpt->max_n_cons > 1 || abpt->cons_algrm == ABPOA_MF) set_bit_table16();
     }
     if (abpt->align_mode == ABPOA_LOCAL_MODE) abpt->wb = -1;
