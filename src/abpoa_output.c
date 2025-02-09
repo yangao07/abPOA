@@ -755,7 +755,7 @@ int abpoa_collect_cand_het_pos(uint8_t **msa, int msa_l, int n_seq, int m, int m
     return n_het_pos;
 }
 
-int collect_max_cov_allele(cand_het_t *het) {
+int abpoa_collect_max_cov_allele(cand_het_t *het) {
     int max_cov = 0, max_cov_alle_i = -1;
     for (int i = 0; i < het->n_uniq_alles; ++i) {
         if (het->alle_covs[i] > max_cov) {
@@ -765,7 +765,7 @@ int collect_max_cov_allele(cand_het_t *het) {
     return max_cov_alle_i;
 }
 
-void var_init_hap_profile(cand_het_t *hets, int n_cand_hets) {
+void abpoa_het_init_hap_profile(cand_het_t *hets, int n_cand_hets) {
     for (int het_i = 0; het_i < n_cand_hets; ++het_i) {
         cand_het_t *het = hets+het_i;
         if (het->hap_to_alle_profile == NULL) {
@@ -773,7 +773,7 @@ void var_init_hap_profile(cand_het_t *hets, int n_cand_hets) {
             het->hap_to_alle_profile = (int**)malloc(3 * sizeof(int*));
             for (int i = 0; i <= 2; ++i) het->hap_to_alle_profile[i] = (int*)calloc(het->n_uniq_alles, sizeof(int));
             het->hap_to_cons_alle = (int*)malloc(3 * sizeof(int));
-            het->hap_to_cons_alle[0] = collect_max_cov_allele(het);
+            het->hap_to_cons_alle[0] = abpoa_collect_max_cov_allele(het);
             for (int j = 1; j <= 2; ++j) {
                 het->hap_to_cons_alle[j] = -1;
             }
@@ -782,7 +782,7 @@ void var_init_hap_profile(cand_het_t *hets, int n_cand_hets) {
             for (int j = 1; j <= 2; ++j) {
                 memset(het->hap_to_alle_profile[j], 0, het->n_uniq_alles * sizeof(int));
             }
-            het->hap_to_cons_alle[0] = collect_max_cov_allele(het);
+            het->hap_to_cons_alle[0] = abpoa_collect_max_cov_allele(het);
             for (int j = 1; j <= 2; ++j) {
                 het->hap_to_cons_alle[j] = -1;
             }
@@ -826,7 +826,7 @@ int *sort_cand_hets(cand_het_t *cand_hets, int n_cand_hets) {
     return sorted_cand_het_i;
 }
 
-int assign_het_init_hap(cand_het_t *het, int verbose) {
+int abpoa_assign_het_init_hap(cand_het_t *het, int verbose) {
     if (verbose >= 2) fprintf(stderr, "Init Het-Var hap: %d %c\n", het->pos, "XG"[het->var_type]);
     if (het->var_type == 0) het->phase_set = het->pos; // potential start of a PhaseSet
     else het->phase_set = het->pos - 1;
@@ -838,7 +838,7 @@ int assign_het_init_hap(cand_het_t *het, int verbose) {
 // assign haplotype to a SNP based on read SNP profiles
 // 1. pick the most common haplotype and corresponding most common base 
 // 2. assign most common base to the most common haplotype, and other bases to the other haplotype
-int assign_het_hap_based_on_pre_reads1(cand_het_t *het, int verbose) {
+int abpoa_assign_het_hap_based_on_pre_reads1(cand_het_t *het, int verbose) {
     int first_hap=0, first_hap_cnt=0, first_hap_alle_i=-1;
     int sec_hap=0, sec_hap_cnt=0, sec_hap_alle_i=-1;
 
@@ -864,7 +864,7 @@ int assign_het_hap_based_on_pre_reads1(cand_het_t *het, int verbose) {
     }
     if (first_hap == sec_hap) {
         if (verbose >= 2) fprintf(stderr, "Var: %d, %c, first_hap: %d (%d: %d), sec_hap: %d (%d: %d)\n", het->pos, "XG"[het->var_type], first_hap, first_hap_alle_i, first_hap_cnt, sec_hap, sec_hap_alle_i, sec_hap_cnt);
-        assign_het_init_hap(het, verbose);
+        abpoa_assign_het_init_hap(het, verbose);
     // } else if (first_hap_alle_i == sec_hap_alle_i) { // homozygous
     } else {
         for (int i = 0; i < het->n_uniq_alles; ++i) {
@@ -876,7 +876,7 @@ int assign_het_hap_based_on_pre_reads1(cand_het_t *het, int verbose) {
     return het->phase_set;
 } 
 
-void het_init_hap_cons_alle0(cand_het_t *het, int min_alt_dp) {
+void abpoa_het_init_hap_cons_alle0(cand_het_t *het, int min_alt_dp) {
     // select the most common allele as the consensus allele, based on hap_to_alle_profile
     for (int hap = 1; hap <= 2; ++hap) {
         int max_cov = 0, max_cov_alle_i = -1;
@@ -890,7 +890,7 @@ void het_init_hap_cons_alle0(cand_het_t *het, int min_alt_dp) {
     }
 }
 
-int het_hap_profile_cov(cand_het_t *het) {
+int abpoa_het_hap_profile_cov(cand_het_t *het) {
     int cov = 0;
     for (int j = 1; j <= 2; ++j) {
         for (int i = 0; i < het->n_uniq_alles; ++i) {
@@ -900,18 +900,18 @@ int het_hap_profile_cov(cand_het_t *het) {
     return cov;
 }
 
-int assign_het_hap_based_on_pre_reads(cand_het_t *het, int min_dp, int verbose) {
-    if (het_hap_profile_cov(het) < min_dp) 
-        return assign_het_init_hap(het, verbose);
+int abpoa_assign_het_hap_based_on_pre_reads(cand_het_t *het, int min_dp, int verbose) {
+    if (abpoa_het_hap_profile_cov(het) < min_dp) 
+        return abpoa_assign_het_init_hap(het, verbose);
     else {
-        return assign_het_hap_based_on_pre_reads1(het, verbose);
+        return abpoa_assign_het_hap_based_on_pre_reads1(het, verbose);
     }
 }
 
 
 // after a read is assigned with hap, update hap of all other SNPs covered by this read
 // including homozygous and heterozygous SNPs
-void update_het_hap_profile_based_on_aln_hap(int hap, int phase_set, cand_het_t *hets, read_het_profile_t *p, int read_i) {
+void abpoa_update_het_hap_profile_based_on_aln_hap(int hap, int phase_set, cand_het_t *hets, read_het_profile_t *p, int read_i) {
     int start_het_idx = p[read_i].start_het_idx, end_het_idx = p[read_i].end_het_idx;
     for (int het_i = start_het_idx; het_i <= end_het_idx; ++het_i) {
         int read_het_idx = het_i - start_het_idx;
@@ -925,7 +925,7 @@ void update_het_hap_profile_based_on_aln_hap(int hap, int phase_set, cand_het_t 
     }
 }
 
-int collect_tmp_hap_cons_allele_by_deduct_read(cand_het_t *het, int hap, int allele_i, int *tmp_hap_to_cons_alle, int verbose) {
+int abpoa_collect_tmp_hap_cons_allele_by_deduct_read(cand_het_t *het, int hap, int allele_i, int *tmp_hap_to_cons_alle, int verbose) {
     for (int i = 1; i <= 2; ++i) {
         tmp_hap_to_cons_alle[i] = -1;
         if (i != hap || het->hap_to_cons_alle[i] != allele_i) { // no change
@@ -952,7 +952,7 @@ int collect_tmp_hap_cons_allele_by_deduct_read(cand_het_t *het, int hap, int all
 // update haplotype for a read based on SNP profiles of all other overlapping reads
 // input: target read, SNP profiles of all reads
 // output: updated haplotype of the target read
-int update_het_aln_hap1(int target_read_i, int cur_hap, read_het_profile_t *p, cand_het_t *cand_hets, int verbose) {
+int abpoa_update_het_aln_hap1(int target_read_i, int cur_hap, read_het_profile_t *p, cand_het_t *cand_hets, int verbose) {
     int start_het_idx = p[target_read_i].start_het_idx, end_het_idx = p[target_read_i].end_het_idx;
     // deduct target read from hap_to_alle_profile, then compare target read's var profile with hap_cons_alle
     int *hap_match_cnt = (int*)calloc(3, sizeof(int));
@@ -966,7 +966,7 @@ int update_het_aln_hap1(int target_read_i, int cur_hap, read_het_profile_t *p, c
 
         int allele_i = p[target_read_i].alleles[read_het_idx];
         if (allele_i == -1) continue;
-        collect_tmp_hap_cons_allele_by_deduct_read(het, cur_hap, allele_i, tmp_hap_to_cons_alle, verbose);
+        abpoa_collect_tmp_hap_cons_allele_by_deduct_read(het, cur_hap, allele_i, tmp_hap_to_cons_alle, verbose);
         for (int i = 1; i <= 2; ++i) {
             if (tmp_hap_to_cons_alle[i] == allele_i) {
                 hap_match_cnt[i] += var_weight;
@@ -993,7 +993,7 @@ int update_het_aln_hap1(int target_read_i, int cur_hap, read_het_profile_t *p, c
     return max_hap;
 }
 
-int update_het_hap_profile_based_on_changed_hap(int new_hap, int old_hap, cand_het_t *cand_hets, int min_alt_dp, read_het_profile_t *p, int read_i, int verbose) {
+int abpoa_update_het_hap_profile_based_on_changed_hap(int new_hap, int old_hap, cand_het_t *cand_hets, int min_alt_dp, read_het_profile_t *p, int read_i, int verbose) {
     int start_het_idx = p[read_i].start_het_idx, end_het_idx = p[read_i].end_het_idx;
     for (int het_i = start_het_idx; het_i <= end_het_idx; ++het_i) {
         int read_het_idx = het_i - start_het_idx;
@@ -1005,7 +1005,7 @@ int update_het_hap_profile_based_on_changed_hap(int new_hap, int old_hap, cand_h
         if (verbose >= 2) fprintf(stderr, "pos: %d, old_hap: %d, new_hap: %d, var: %d\n", het->pos, old_hap, new_hap, allele_i);
         het->hap_to_alle_profile[old_hap][allele_i] -= 1;
         het->hap_to_alle_profile[new_hap][allele_i] += 1;
-        het_init_hap_cons_alle0(het, min_alt_dp);
+        abpoa_het_init_hap_cons_alle0(het, min_alt_dp);
     }
     return 0;
 }
@@ -1018,13 +1018,13 @@ void abpoa_clu_reads_based_on_het_pos(int n_het_pos, cand_het_t *cand_hets, read
     for (int i = 0; i < 2; ++i) {
         (*clu_read_ids)[i] = (uint64_t*)_err_calloc(read_id_n, sizeof(uint64_t));
     }
-    var_init_hap_profile(cand_hets, n_het_pos);
+    abpoa_het_init_hap_profile(cand_hets, n_het_pos);
     int *sorted_cand_het_i = sort_cand_hets(cand_hets, n_het_pos);
     for (int _het_i = 0; _het_i < n_het_pos; ++_het_i) {
         int het_i = sorted_cand_het_i[_het_i];
         cand_het_t *het = cand_hets+het_i;
         // here we highly rely on reads that were assigned with HAPs previously, >= 2 reads is enough
-        int phase_set = assign_het_hap_based_on_pre_reads(het, 2, verbose); //opt->min_dp); // update alle_to_hap
+        int phase_set = abpoa_assign_het_hap_based_on_pre_reads(het, 2, verbose); //opt->min_dp); // update alle_to_hap
         for (int read_i = 0; read_i < n_seq; ++read_i) {
             if (p[read_i].start_het_idx == -1) continue;
             int read_het_idx = het_i - p[read_i].start_het_idx;
@@ -1038,11 +1038,11 @@ void abpoa_clu_reads_based_on_het_pos(int n_het_pos, cand_het_t *cand_hets, read
                     if (verbose >= 2) fprintf(stderr, "read: %d, cur_var: %d, %c, alle: %d, hap: %d\n", read_i, het->pos, "XG"[het->var_type], het_alle_i, hap);
                     // update hap_to_alle_profile for all Vars covered by this read, based on its assigned haplotype
                     // udpated profile will then be used for following Vars (assign_var_hap_based_on_pre_reads)
-                    update_het_hap_profile_based_on_aln_hap(hap, phase_set, cand_hets, p, read_i);
+                    abpoa_update_het_hap_profile_based_on_aln_hap(hap, phase_set, cand_hets, p, read_i);
                 }
             }
         }
-        het_init_hap_cons_alle0(het, 2); // update hap_to_cons_alle
+        abpoa_het_init_hap_cons_alle0(het, 2); // update hap_to_cons_alle
     } // after first round, 
     // bam_haps/hap_to_alle_profile/hap_to_cons_alle are upToDate and will be used in the following rounds
     // alle_to_hap will not be used (may be NOT upToDate)
@@ -1057,7 +1057,7 @@ void abpoa_clu_reads_based_on_het_pos(int n_het_pos, cand_het_t *cand_hets, read
             if (haps[read_i] == 0) continue;
             int cur_hap = haps[read_i];
             // XXX TODO: potential local optima
-            int new_hap = update_het_aln_hap1(read_i, cur_hap, p, cand_hets, verbose);
+            int new_hap = abpoa_update_het_aln_hap1(read_i, cur_hap, p, cand_hets, verbose);
             if (new_hap != cur_hap) { // update bam_haps, hap_to_base_profile, hap_to_cons_base
                 if (verbose >= 2) {
                     fprintf(stderr, "read %d:\t", read_i);
@@ -1066,7 +1066,7 @@ void abpoa_clu_reads_based_on_het_pos(int n_het_pos, cand_het_t *cand_hets, read
                 changed_hap = 1;
                 haps[read_i] = new_hap; // update intermediately
                 // bam_aux_append(chunk->reads[read_i], "XT", 'i', 4, (uint8_t*)&(chunk->haps[read_i]));
-                update_het_hap_profile_based_on_changed_hap(new_hap, cur_hap, cand_hets, 2, p, read_i, verbose);
+                abpoa_update_het_hap_profile_based_on_changed_hap(new_hap, cur_hap, cand_hets, 2, p, read_i, verbose);
             }
         } if (changed_hap == 0) break;
     }
@@ -1110,7 +1110,7 @@ int **abpoa_collect_msa_dis_matrix(uint8_t **msa, int msa_l, int n_seq, int m, c
 }
 
 // XXX TODO: > 2 clusters
-int init_kmedoids(int **dis_matrix, int n_seq, int max_n_cons, int **medoids) {
+int abpoa_init_kmedoids(int **dis_matrix, int n_seq, int max_n_cons, int **medoids) {
     int max_dis = 0, med1 = -1, med2 = -1;
     for (int i = 0; i < n_seq-1; ++i) {
         for (int j = i+1; j < n_seq; ++j) {
@@ -1186,7 +1186,7 @@ int abpoa_update_kmedoids(int **dis_matrix, int n_seq, int max_n_cons, int **med
 int abpoa_clu_reads_kmedoids(int **dis_matrix, int n_seq, int min_het, int max_n_cons, uint64_t ***clu_read_ids, int verbose) {
     // init
     int *medoids = NULL;
-    if (init_kmedoids(dis_matrix, n_seq, max_n_cons, &medoids) == -1) return 0;
+    if (abpoa_init_kmedoids(dis_matrix, n_seq, max_n_cons, &medoids) == -1) return 0;
 
     // iterative update clusters until convergence
     int **clu_reads = (int**)_err_malloc(sizeof(int*) * max_n_cons);
