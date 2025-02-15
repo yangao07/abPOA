@@ -164,7 +164,7 @@ int abpoa_main(char *file_fn, int is_list, abpoa_para_t *abpt){
 
 int main(int argc, char **argv) {
     int c, m, in_list=0; char *s; abpoa_para_t *abpt = abpoa_init_para();
-    while ((c = getopt_long(argc, argv, "m:M:X:t:O:E:b:f:z:e:QGLRSk:w:n:i:clpso:r:g:a:d:q:hvV:", abpoa_long_opt, NULL)) >= 0) {
+    while ((c = getopt_long(argc, argv, "m:M:X:t:O:E:b:f:z:e:GLRJQSk:w:n:i:clpso:r:g:a:d:q:hvV:", abpoa_long_opt, NULL)) >= 0) {
         switch(c)
         {
             case 'm': m = atoi(optarg);

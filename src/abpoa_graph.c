@@ -579,6 +579,7 @@ void abpoa_add_graph_sequence(abpoa_graph_t *abg, abpoa_para_t *abpt, uint8_t *s
         cur_node_id = abpoa_add_graph_node(abg, seq[i]);
         if (qpos_to_node_id) qpos_to_node_id[i] = cur_node_id;
         abpoa_add_graph_edge(abg, last_node_id, cur_node_id, 0, weight[i], add_read_id, add_read_weight, read_id, read_ids_n, tot_read_n);
+        abg->node[cur_node_id].n_span_read = abg->node[last_node_id].n_span_read;
         last_node_id = cur_node_id;
     }
 
@@ -728,6 +729,7 @@ int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_i
                     new_id = abpoa_add_graph_node(abg, seq[query_id]);
                     if (last_id != beg_node_id || inc_both_ends) add = 1; else add = 0;
                     abpoa_add_graph_edge(abg, last_id, new_id, 0, weight[query_id], add_read_id&add, add_read_weight, read_id, read_ids_n, tot_read_n);
+                    abg->node[new_id].n_span_read = abg->node[last_id].n_span_read;
                     if (add == 0) abg->node[last_id].n_read--;
                     last_id = new_id; last_new = 1;
                     // add new_id to node_id's aligned node
@@ -747,6 +749,7 @@ int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_i
                 new_id = abpoa_add_graph_node(abg, seq[query_id-j]);
                 if (last_id != beg_node_id || inc_both_ends) add = 1; else add = 0;
                 abpoa_add_graph_edge(abg, last_id, new_id, 0, weight[query_id-j], add_read_id&add, add_read_weight, read_id, read_ids_n, tot_read_n);
+                abg->node[new_id].n_span_read = abg->node[last_id].n_span_read;
                 if (add == 0) abg->node[last_id].n_read--;
                 last_id = new_id; last_new = 1;
                 if (qpos_to_node_id) qpos_to_node_id[query_id-j] = last_id;
