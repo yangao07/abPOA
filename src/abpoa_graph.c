@@ -762,7 +762,6 @@ int abpoa_add_subgraph_alignment(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_i
     // if (inc_both_ends) add = 1; else add = 0; XXX end_node_id is always excluded when adding weight
     // abpoa_add_graph_edge(abg, last_id, end_node_id, 1-last_new, w, add_read_id&add, read_id, read_ids_n);
     abpoa_add_graph_edge(abg, last_id, end_node_id, 1-last_new, weight[seq_l-1], add_read_id, add_read_weight, read_id, read_ids_n, tot_read_n);
-    if (inc_both_ends == 0) abg->node[last_id].n_read--;
     abg->is_called_cons = abg->is_set_msa_rank = abg->is_topological_sorted = 0;
     abpoa_topological_sort(abg, abpt);
     // update node.n_read
