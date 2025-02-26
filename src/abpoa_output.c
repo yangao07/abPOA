@@ -1157,7 +1157,7 @@ void abpoa_collect_kmedoids0(int **dis_matrix, int n_seq, int max_n_cons, int **
 
 int abpoa_update_kmedoids(int **dis_matrix, int n_seq, int max_n_cons, int **medoids, int **clu_reads, int *n_clu_seqs, int verbose) {
     int *new_medoids = (int*)malloc(max_n_cons * sizeof(int));
-
+    for (int i = 0; i < max_n_cons; ++i) new_medoids[i] = -1;
     n_clu_seqs[0] = 0; n_clu_seqs[1] = 0;
     for (int i = 0; i < n_seq; ++i) {
         int min_dis = INT_MAX, min_clu = -1, tied = 0;
@@ -1176,6 +1176,9 @@ int abpoa_update_kmedoids(int **dis_matrix, int n_seq, int max_n_cons, int **med
     abpoa_collect_kmedoids0(dis_matrix, n_seq, max_n_cons, clu_reads, n_clu_seqs, new_medoids);
     int changed = 0;
     for (int i = 0; i < max_n_cons; ++i) {
+        if (new_medoids[i] == -1) { // no reads in this cluster
+            changed = 0; break;
+        }
         if (new_medoids[i] != (*medoids)[i]) changed = 1;
     } 
     free(*medoids);
