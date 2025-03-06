@@ -82,6 +82,7 @@ int simd_abpoa_realloc(abpoa_t *ab, int gn, int qlen, abpoa_para_t *abpt, SIMD_p
     return 0;
 }
 
+#ifdef __SIMD_DEBUG__
 void abpoa_init_var(abpoa_para_t *abpt, uint8_t *query, int qlen, SIMDi *qp, SIMDi *qi, int *mat, int64_t qp_sn, int pn, SIMDi SIMD_INF_MIN) {
     int i, j, k; int32_t *_qi;
     /* generate the query profile */
@@ -618,3 +619,4 @@ int abpoa_cg_global_align_sequence_to_graph_core(abpoa_t *ab,
     SIMDFree(GAP_E1S); SIMDFree(GAP_E2S);
     return best_score;
 }
+#endif

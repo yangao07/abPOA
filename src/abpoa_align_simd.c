@@ -1275,7 +1275,7 @@ int simd_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int b
     SIMD_para_t simd_p32 = {128, 32, 2,  4, 16, -1};
 #endif
 
-    fprintf(stderr, "reg_n: %d\n", simd_p16.reg_n);
+    // fprintf(stderr, "reg_n: %d\n", simd_p16.reg_n);
 
     int32_t max_score, bits, mem_ret=0, gap_ext1 = abpt->gap_ext1, gap_ext2 = abpt->gap_ext2;
     int32_t gap_oe1 = abpt->gap_open1+gap_ext1, gap_oe2 = abpt->gap_open2+gap_ext2;
@@ -1287,7 +1287,6 @@ int simd_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int b
         abpoa_cg_global_align_sequence_to_graph_core(ab, beg_node_id, beg_index, end_node_id, end_index, index_map, qlen, query, abpt, _simd_p32, res);
 #else
     max_score = MAX_OF_TWO(qlen * abpt->max_mat, len * abpt->gap_ext1 + abpt->gap_open1);
-    printf("max_score: %d\n", max_score);
     if (max_score <= INT16_MAX - abpt->min_mis - gap_oe1 - gap_oe2) {
         simd_p16.inf_min = MAX_OF_THREE(INT16_MIN + abpt->min_mis, INT16_MIN + gap_oe1, INT16_MIN + gap_oe2) + 512 * MAX_OF_TWO(gap_ext1, gap_ext2);
         mem_ret = simd_abpoa_realloc(ab, gn, qlen, abpt, simd_p16);

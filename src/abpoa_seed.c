@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#include <inttypes.h>
 #include "abpoa.h"
 #include "abpoa_seed.h"
 #include "utils.h"
@@ -458,7 +459,7 @@ int abpoa_dp_chaining_of_local_chains(void *km, ab_u128_t *local_chains, int n_l
         for (i = _n; i < par_anchors->n; ++i) {
             uint64_t ia = par_anchors->a[i];
             // strand, rpos, qpos
-            fprintf(stderr, "%c\t%ld\t%d\n", "+-"[ia >> 63], (ia>>32) & 0x7fffffff, ((uint32_t)ia));
+            fprintf(stderr, "%c\t%" PRIu64 "\t%d\n", "+-"[ia >> 63], (ia>>32) & 0x7fffffff, ((uint32_t)ia));
         }
     }
     kfree(km, chain_score), kfree(km, pre_chain_id);
@@ -681,7 +682,7 @@ int LIS_chaining(void *km, ab_u64_v *anchors, ab_u64_v *par_anchors, int min_w, 
         for (i = _n; i < par_anchors->n; ++i) {
             uint64_t ia = par_anchors->a[i];
             // strand, rpos, qpos
-            fprintf(stderr, "%c\t%ld\t%d\n", "+-"[ia >> 63], (ia>>32) & 0x7fffffff, ((uint32_t)ia));
+            fprintf(stderr, "%c\t%" PRIu64 "\t%d\n", "+-"[ia >> 63], (ia>>32) & 0x7fffffff, ((uint32_t)ia));
         }
     }
     return 0;
