@@ -25,8 +25,8 @@ add_library(abpoa
     src/abpoa_seq.c
     src/kalloc.c
     src/kstring.c
-    src/simd_abpoa_align.c
-    src/simd_check.c
+    src/abpoa_simd.c
+    src/abpoa_align_simd.c
     src/utils.c)
 
 target_link_libraries(abpoa z pthread m)

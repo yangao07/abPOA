@@ -36,21 +36,22 @@ else:
             simd_flag=['-mavx2']
         #elif os.getenv('AVX512F', False):
         #    simd_flag='-mavx512f'
-        #elif os.getenv('AVX512BW', False):
-        #    simd_flag='-mavx512bw'
+        elif os.getenv('AVX512BW', False):
+           simd_flag='-mavx512bw'
 
 src_dir = 'src/'
 inc_dir = 'include/'
 sources = [
-    'abpoa_align.c', 'abpoa_graph.c', 'abpoa_output.c', 'abpoa_plot.c', 'abpoa_seed.c', 'abpoa_seq.c',
+    'abpoa_align.c', 'abpoa_align_simd.c',
+    'abpoa_graph.c', 'abpoa_output.c', 'abpoa_plot.c', 'abpoa_seed.c', 'abpoa_seq.c',
+    'abpoa_simd.c', 
     'kalloc.c', 'kstring.c',
-    'simd_abpoa_align.c', 'simd_check.c',
     'utils.c']
 depends = [
-    'abpoa.h', 'abpoa_align.h', 'abpoa_graph.h', 'abpoa_output.h', 'abpoa_seed.h', 'abpoa_seq.h',
+    'abpoa.h', 'abpoa_align.h', 'abpoa_aling_simd.h', 
+    'abpoa_graph.h', 'abpoa_output.h', 'abpoa_seed.h', 'abpoa_seq.h', 'abpoa_simd.h',
     'kalloc.h', 'khash.h', 'kdq.h', 'kseq.h', 'ksort.h', 'kstring.h', 'kvec.h',
-    'simd_abpoa_align.h', 'simd_instruction.h',
-    'utils.h']
+    'simd_instruction.h', 'utils.h']
 
 module_src = 'python/pyabpoa.pyx'
 module_dep = 'python/cabpoa.pxd'

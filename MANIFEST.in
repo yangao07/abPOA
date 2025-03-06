@@ -11,7 +11,8 @@ include src/kseq.h
 include src/ksort.h
 include src/kstring.h
 include src/kvec.h
-include src/simd_abpoa_align.h
+include src/abpoa_align_simd.h
+include src/abpoa_simd.h
 include src/simd_instruction.h
 include src/utils.h
 recursive-include include/ *.h
