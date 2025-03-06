@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include "abpoa.h"
-#include "simd_abpoa_align.h"
+#include "abpoa_align_simd.h"
 #include "abpoa_align.h"
 #include "abpoa_seq.h"
 #include "abpoa_output.h"

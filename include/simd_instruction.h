@@ -14,13 +14,11 @@
 #ifndef SIMD_INSTRUCTION_H
 #define SIMD_INSTRUCTION_H
 
-#undef __AVX512F__
-#undef __AVX512BW__
 
 #ifndef USE_SIMDE
 #include <immintrin.h>
 #else // use SIMDE
-#ifdef __AVX512F__
+#ifdef __AVX512BW__
 #include "simde/simde/x86/avx512.h"
 #else
 #ifdef __AVX2__
@@ -56,8 +54,7 @@
 #define SIMDFree(x) free(x)
 
 // Shift, Blend, ... for 8/16 and 32/64
-#ifdef __AVX512BW__
-// start of AVX512BW
+#ifdef __AVX512BW__ // start of AVX512BW
 
 typedef __m512 SIMDf;
 typedef __m512i SIMDi;
@@ -100,28 +97,7 @@ typedef __m512i SIMDi;
     ((n) < 48 ? \
     _mm512_alignr_epi8(_mm512_shuffle_i64x2(SIMDZero, x, _MM_SHUFFLE(1,0,0,0)), _mm512_shuffle_i64x2(SIMDZero, _mm512_shuffle_i64x2(SIMDZero, x, _MM_SHUFFLE(1,0,0,0)), _MM_SHUFFLE(2,0,0,0)), (48-(n))) : \
     _mm512_bslli_epi128(_mm512_shuffle_i64x2(SIMDZero,  _mm512_shuffle_i64x2(SIMDZero, x, _MM_SHUFFLE(1,0,0,0)), _MM_SHUFFLE(2,0,0,0)), ((n)-48))))
-/*
-static inline SIMDi SIMDShiftLeft(SIMDi x, const int n) { // x=a|b|c|d
-    SIMDi tmp1,tmp2;
-    if (n < 16) {
-        tmp1 = _mm512_shuffle_i64x2(x, SIMDZero, _MM_SHUFFLE(0,0,1,0)); // tmp1=0|0|c|d
-        tmp2 = _mm512_shuffle_i64x2(tmp1, x, _MM_SHUFFLE(2,1,0,2)); // tmp2=b|c|d|0
-        return _mm512_alignr_epi8(x, tmp2, 16 - n);
-    } else if (n < 32) {
-        tmp1 = _mm512_shuffle_i64x2(x, SIMDZero, _MM_SHUFFLE(0,0,1,0)); // tmp1=0|0|c|d
-        tmp2 = _mm512_shuffle_i64x2(tmp1, x, _MM_SHUFFLE(2,1,0,2)); // tmp2=b|c|d|0
-        tmp1 = _mm512_shuffle_i64x2(SIMDZero, x, _MM_SHUFFLE(1,0,0,0)); // tmp1=c|d|0|0
-        return _mm512_alignr_epi8(tmp2, tmp1, 32 - n);
-    } else if (n < 48) {
-        tmp1 = _mm512_shuffle_i64x2(SIMDZero, x, _MM_SHUFFLE(1,0,0,0));    // tmp1=c|d|0|0
-        tmp2 = _mm512_shuffle_i64x2(SIMDZero, tmp1, _MM_SHUFFLE(2,0,0,0)); // tmp2=d|0|0|0
-        return _mm512_alignr_epi8(tmp1, tmp2, 48 - n);
-    } else {
-        tmp1 = _mm512_shuffle_i64x2(SIMDZero, x, _MM_SHUFFLE(1,0,0,0));    // tmp1=c|d|0|0
-        tmp2 = _mm512_shuffle_i64x2(SIMDZero, tmp1, _MM_SHUFFLE(2,0,0,0)); // tmp2=d|0|0|0
-        return _mm512_bslli_epi128(tmp2, n - 48);
-    }
-}*/
+
 #define SIMDShiftRight(x,n) \
     (n) < 16 ? \
     _mm512_alignr_epi8(_mm512_shuffle_i64x2( _mm512_shuffle_i64x2(SIMDZero, x, _MM_SHUFFLE(3,2,0,0)), x, _MM_SHUFFLE(0,3,2,1)), x, (n)) : \
@@ -130,28 +106,7 @@ static inline SIMDi SIMDShiftLeft(SIMDi x, const int n) { // x=a|b|c|d
     ((n) < 48 ? \
     _mm512_alignr_epi8(_mm512_shuffle_i64x2(_mm512_shuffle_i64x2(x, SIMDZero, _MM_SHUFFLE(0,0,3,2)), SIMDZero, _MM_SHUFFLE(0,0,2,1)), _mm512_shuffle_i64x2(x, SIMDZero, _MM_SHUFFLE(0,0,3,2)), ((n)-32)) : \
     _mm512_bsrli_epi128(_mm512_shuffle_i64x2(_mm512_shuffle_i64x2(x, SIMDZero, _MM_SHUFFLE(0,0,3,2)), SIMDZero, _MM_SHUFFLE(0,0,2,1)), ((n)-48))))
-/*
-static inline SIMDi SIMDShiftRight(SIMDi x, int n) { // x=a|b|c|d
-    SIMDi tmp1, tmp2;
-    if (n < 16) {
-        tmp1 = _mm512_shuffle_i64x2(SIMDZero, x, _MM_SHUFFLE(3,2,0,0)); // tmp1=a|b|0|0
-        tmp2 = _mm512_shuffle_i64x2(tmp1, x, _MM_SHUFFLE(0,3,2,1)); // tmp2=0|a|b|c
-        return _mm512_alignr_epi8(tmp2, x, n);
-    } else if (n < 32) {
-        tmp1 = _mm512_shuffle_i64x2(SIMDZero, x, _MM_SHUFFLE(3,2,0,0)); // tmp1=a|b|0|0
-        tmp2 = _mm512_shuffle_i64x2(tmp1, x, _MM_SHUFFLE(0,3,2,1)); // tmp2=0|a|b|c
-        tmp1 = _mm512_shuffle_i64x2(x, SIMDZero, _MM_SHUFFLE(0,0,3,2)); // tmp1=0|0|a|b
-        return _mm512_alignr_epi8(tmp1, tmp2, n-16);
-    } else if (n < 48) {
-        tmp1 = _mm512_shuffle_i64x2(x, SIMDZero, _MM_SHUFFLE(0,0,3,2));    // tmp1=0|0|a|b
-        tmp2 = _mm512_shuffle_i64x2(tmp1, SIMDZero, _MM_SHUFFLE(0,0,2,1)); // tmp2=0|0|0|a
-        return _mm512_alignr_epi8(tmp2, tmp1, n-32);
-    } else {
-        tmp1 = _mm512_shuffle_i64x2(x, SIMDZero, _MM_SHUFFLE(0,0,3,2));    // tmp1=0|0|a|b
-        tmp2 = _mm512_shuffle_i64x2(tmp1, SIMDZero, _MM_SHUFFLE(0,0,2,1)); // tmp2=0|0|0|a
-        return _mm512_bsrli_epi128(tmp2, n - 48);
-    }
-}*/
+
 #define SIMDShiftLeftOnei16(x,y) _mm512_slli_epi16(x,y)
 #define SIMDShiftLeftOnei32(x,y) _mm512_slli_epi32(x,y)
 #define SIMDShiftLeftOnei64(x,y) _mm512_slli_epi64(x,y)
@@ -235,149 +190,11 @@ static inline SIMDi SIMDShiftRight(SIMDi x, int n) { // x=a|b|c|d
 #define SIMDGetIfLessi32(x,y,a,b,c,d) { Maski32 cmp = SIMDGreaterThani32M(b,a); x = SIMDBlendi32(d, c, cmp); y = SIMDBlendi32(b, a, cmp); } 
 #define SIMDGetIfLessi64(x,y,a,b,c,d) { Maski64 cmp = SIMDGreaterThani64M(b,a); x = SIMDBlendi64(d, c, cmp); y = SIMDBlendi64(b, a, cmp); } 
 
-// end of AVX512BW
-#else
-#ifdef __AVX512F__
-
-// start of AVX512F
-
-// XXX AVX512F has no  following instructions (AVX512BW HAS), so AVX512F is not working for 8/16 bits tasks
+// AVX512F has no  following instructions (AVX512BW HAS), so AVX512F (without AVX512BW) is not working for 8/16 bits tasks
 // addi8/16, subi8/16, alignri8, bslli_epi128, bslrli_epi128,
 // comeqi8/16, cmpneqi8/16, cmpgti8/16, cmpgei8/16, cmplti8/16, cmplei8
 // maxi8/16, blendi8/i16, slli_epi16,srli_epi16 
-typedef __m512 SIMDf;
-typedef __m512i SIMDi;
-
-#define SIMDStore(x,y) _mm512_store_ps(x,y)
-#define SIMDStorei(x,y) _mm512_store_si512(x,y)
-#define SIMDLoad(x) _mm512_load_ps(x)
-#define SIMDLoadi(x) _mm512_load_si512(x)
-#define SIMDZero _mm512_setzero_si512()
-#define SIMDSetZero() _mm512_setzero_ps()
-#define SIMDSetZeroi() _mm512_setzero_si512()
-#define SIMDSetOne(x) _mm512_set1_ps(x)
-#define SIMDSetOnei8(x) _mm512_set1_epi8(x)
-#define SIMDSetOnei16(x) _mm512_set1_epi16(x)
-#define SIMDSetOnei32(x) _mm512_set1_epi32(x)
-#define SIMDSetOnei64(x) _mm512_set1_epi64(x)
-#define SIMDAdd(x,y) _mm512_add_ps(x,y)
-//#define SIMDAddi8(x,y) _mm512_add_epi8(x,y)
-//#define SIMDAddi16(x,y) _mm512_add_epi16(x,y)
-#define SIMDAddi32(x,y) _mm512_add_epi32(x,y)
-#define SIMDAddi64(x,y) _mm512_add_epi64(x,y)
-#define SIMDSub(x,y) _mm512_sub_ps(x,y)
-//#define SIMDSubi8(x,y) _mm512_sub_epi8(x,y)
-//#define SIMDSubi16(x,y) _mm512_sub_epi16(x,y)
-#define SIMDSubi32(x,y) _mm512_sub_epi32(x,y)
-#define SIMDSubi64(x,y) _mm512_sub_epi64(x,y)
-#define SIMDMul(x,y) _mm512_mul_ps(x,y)
-#define SIMDMuli32(x,y) _mm512_mul_epi32(x,y)
-#define SIMDAnd(x,y) _mm512_and_ps(x,y)
-#define SIMDAndi(x,y) _mm512_and_si512(x,y)
-#define SIMDAndNot(x,y) _mm512_andnot_ps(x,y)
-#define SIMDAndNoti(x,y) _mm512_andnot_si512(x,y)
-#define SIMDOr(x,y) _mm512_or_ps(x,y)
-#define SIMDOri(x,y) _mm512_or_si512(x,y)
-/*#define SIMDShiftLeft(x,n) \
-    (n) < 16 ? \
-    _mm512_alignr_epi8(x, _mm512_shuffle_i64x2(_mm512_shuffle_i64x2(x, SIMDZero, _MM_SHUFFLE(0,0,1,0)), x, _MM_SHUFFLE(2,1,0,2)), (16-(n))) : \
-    ((n) < 32 ? \
-    _mm512_alignr_epi8(_mm512_shuffle_i64x2(_mm512_shuffle_i64x2(x, SIMDZero, _MM_SHUFFLE(0,0,1,0)), x, _MM_SHUFFLE(2,1,0,2)), _mm512_shuffle_i64x2(SIMDZero, x, _MM_SHUFFLE(1,0,0,0)), (32-(n))) : \
-    ((n) < 48 ? \
-    _mm512_alignr_epi8(_mm512_shuffle_i64x2(SIMDZero, x, _MM_SHUFFLE(1,0,0,0)), _mm512_shuffle_i64x2(SIMDZero, _mm512_shuffle_i64x2(SIMDZero, x, _MM_SHUFFLE(1,0,0,0)), _MM_SHUFFLE(2,0,0,0)), (48-(n))) : \
-    _mm512_bslli_epi128(_mm512_shuffle_i64x2(SIMDZero,  _mm512_shuffle_i64x2(SIMDZero, x, _MM_SHUFFLE(1,0,0,0)), _MM_SHUFFLE(2,0,0,0)), ((n)-48))))
-#define SIMDShiftRight(x,n) \
-    (n) < 16 ? \
-    _mm512_alignr_epi8(_mm512_shuffle_i64x2( _mm512_shuffle_i64x2(SIMDZero, x, _MM_SHUFFLE(3,2,0,0)), x, _MM_SHUFFLE(0,3,2,1)), x, (n)) : \
-    ((n) < 32 ? \
-    _mm512_alignr_epi8(_mm512_shuffle_i64x2(x, SIMDZero, _MM_SHUFFLE(0,0,3,2)), _mm512_shuffle_i64x2(_mm512_shuffle_i64x2(SIMDZero, x, _MM_SHUFFLE(3,2,0,0)), x, _MM_SHUFFLE(0,3,2,1)), ((n)-16)) : \
-    ((n) < 48 ? \
-    _mm512_alignr_epi8(_mm512_shuffle_i64x2(_mm512_shuffle_i64x2(x, SIMDZero, _MM_SHUFFLE(0,0,3,2)), SIMDZero, _MM_SHUFFLE(0,0,2,1)), _mm512_shuffle_i64x2(x, SIMDZero, _MM_SHUFFLE(0,0,3,2)), ((n)-32)) : \
-    _mm512_bsrli_epi128(_mm512_shuffle_i64x2(_mm512_shuffle_i64x2(x, SIMDZero, _MM_SHUFFLE(0,0,3,2)), SIMDZero, _MM_SHUFFLE(0,0,2,1)), ((n)-48))))*/
-//#define SIMDShiftLeftOnei16(x,y) _mm512_slli_epi16(x,y)
-#define SIMDShiftLeftOnei32(x,y) _mm512_slli_epi32(x,y)
-#define SIMDShiftLeftOnei64(x,y) _mm512_slli_epi64(x,y)
-//#define SIMDShiftRightOnei16(x,y) _mm512_srli_epi16(x,y)
-#define SIMDShiftRightOnei32(x,y) _mm512_srli_epi32(x,y)
-#define SIMDShiftRightOnei64(x,y) _mm512_srli_epi64(x,y)
-#define SIMDEqualM(x,y) _mm512_cmpeq_ps_mask(x,y)
-//#define SIMDEquali8M(x,y) _mm512_cmpeq_epi8_mask(x,y)
-//#define SIMDEquali16M(x,y) _mm512_cmpeq_epi16_mask(x,y)
-#define SIMDEquali32M(x,y) _mm512_cmpeq_epi32_mask(x,y)
-#define SIMDEquali64M(x,y) _mm512_cmpeq_epi64_mask(x,y)
-#define SIMDNotEqualM(x,y) _mm512_cmpneq_ps_mask(x,y)
-//#define SIMDNotEquali8M(x,y) _mm512_cmpneq_epi8_mask(x,y)
-//#define SIMDNotEquali16M(x,y) _mm512_cmpneq_epi16_mask(x,y)
-#define SIMDNotEquali32M(x,y) _mm512_cmpneq_epi32_mask(x,y)
-#define SIMDNotEquali64M(x,y) _mm512_cmpneq_epi64_mask(x,y)
-//#define SIMDGreaterThani8M(x,y) _mm512_cmpgt_epi8_mask(x,y)
-//#define SIMDGreaterThani16M(x,y) _mm512_cmpgt_epi16_mask(x,y)
-#define SIMDGreaterThani32M(x,y) _mm512_cmpgt_epi32_mask(x,y)
-#define SIMDGreaterThani64M(x,y) _mm512_cmpgt_epi64_mask(x,y)
-//#define SIMDGreaterThanOrEquali8M(x,y) _mm512_cmpge_epi8_mask(x,y)
-//#define SIMDGreaterThanOrEquali16M(x,y) _mm512_cmpge_epi16_mask(x,y)
-#define SIMDGreaterThanOrEquali32M(x,y) _mm512_cmpge_epi32_mask(x,y)
-#define SIMDGreaterThanOrEquali64M(x,y) _mm512_cmpge_epi64_mask(x,y)
-#define SIMDLessThanM(x,y) _mm512_cmplt_ps_mask(x,y)
-//#define SIMDLessThani8M(x,y) _mm512_cmplt_epi8_mask(x,y)
-//#define SIMDLessThani16M(x,y) _mm512_cmplt_epi16_mask(x,y)
-#define SIMDLessThani32M(x,y) _mm512_cmplt_epi32_mask(x,y)
-#define SIMDLessThani64M(x,y) _mm512_cmplt_epi64_mask(x,y)
-#define SIMDLessThanOrEqualM(x,y) _mm512_cmple_ps_mask(x,y)
-//#define SIMDLessThanOrEquali8M(x,y) _mm512_cmple_epi8_mask(x,y)
-//#define SIMDLessThanOrEquali16M(x,y) _mm512_cmple_epi16_mask(x,y)
-#define SIMDLessThanOrEquali32M(x,y) _mm512_cmple_epi32_mask(x,y)
-#define SIMDLessThanOrEquali64M(x,y) _mm512_cmple_epi64_mask(x,y)
-#define SIMDMax(x,y) _mm512_max_ps(x,y)
-//#define SIMDMaxi8(x,y) _mm512_max_epi8(x,y)
-//#define SIMDMaxi16(x,y) _mm512_max_epi16(x,y)
-#define SIMDMaxi32(x,y) _mm512_max_epi32(x,y)
-#define SIMDMaxi64(x,y) _mm512_max_epi64(x,y)
-#define SIMDMin(x,y) _mm512_min_ps(x,y)
-//#define SIMDMini8(x,y) _mm512_min_epi8(x,y)
-//#define SIMDMini16(x,y) _mm512_min_epi16(x,y)
-#define SIMDMini32(x,y) _mm512_min_epi32(x,y)
-#define SIMDMini64(x,y) _mm512_min_epi64(x,y)
-
-#define SIMDBlend(x,y,z) _mm512_mask_blend_ps(z, x, y)
-//#define SIMDBlendi8(x,y,z) _mm512_mask_blend_epi8(z, x, y)
-//#define SIMDBlendi16(x,y,z) _mm512_mask_blend_epi16(z, x, y)
-#define SIMDBlendi32(x,y,z) _mm512_mask_blend_epi32(z, x, y)
-#define SIMDBlendi64(x,y,z) _mm512_mask_blend_epi64(z, x, y)
-
-// with AVX512F
-//#define Maski8 __mmask64
-//#define Maski16 __mmask32
-#define Maski32 __mmask16
-#define Maski64 __mmask8
-/* x = a == b ? c : d */ 
-//#define SIMDSetIfEquali8(x,a,b,c,d)  { x = SIMDBlendi8(d, c, SIMDEquali8M(a,b)); } 
-//#define SIMDSetIfEquali16(x,a,b,c,d) { x = SIMDBlendi16(d, c, SIMDEquali16M(a,b)); } 
-#define SIMDSetIfEquali32(x,a,b,c,d) { x = SIMDBlendi32(d, c, SIMDEquali32M(a,b)); } 
-#define SIMDSetIfEquali64(x,a,b,c,d) { x = SIMDBlendi64(d, c, SIMDEquali64M(a,b)); } 
-/* x = a > b ? c : d */
-//#define SIMDSetIfGreateri8(x,a,b,c,d)  { x = SIMDBlendi8(d, c, SIMDGreaterThani8M(a,b)); } 
-//#define SIMDSetIfGreateri16(x,a,b,c,d) { x = SIMDBlendi16(d, c, SIMDGreaterThani16M(a,b)); } 
-#define SIMDSetIfGreateri32(x,a,b,c,d) { x = SIMDBlendi32(d, c, SIMDGreaterThani32M(a,b)); } 
-#define SIMDSetIfGreateri64(x,a,b,c,d) { x = SIMDBlendi64(d, c, SIMDGreaterThani64M(a,b)); } 
-/* x = a < b ? c : d */
-//#define SIMDSetIfLessi8(x,a,b,c,d)  { x = SIMDBlendVi8(d, c, SIMDGreaterThani8M(b,a)); } 
-//#define SIMDSetIfLessi16(x,a,b,c,d) { x = SIMDBlendi16(d, c, SIMDGreaterThani8M(b,a)); } 
-#define SIMDSetIfLessi32(x,a,b,c,d) { x = SIMDBlendi32(d, c, SIMDGreaterThani8M(b,a)); } 
-#define SIMDSetIfLessi64(x,a,b,c,d) { x = SIMDBlendi64(d, c, SIMDGreaterThani8M(b,a)); } 
-
-/* x = a > b ? c : d, y = a > b ? a : b */
-//#define SIMDGetIfGreateri8(x,y,a,b,c,d)  { Maski8  cmp = SIMDGreaterThani8M(a,b);  x = SIMDBlendi8(d, c, cmp);  y = SIMDBlendi8(b, a, cmp); } 
-//#define SIMDGetIfGreateri16(x,y,a,b,c,d) { Maski16 cmp = SIMDGreaterThani16M(a,b); x = SIMDBlendi16(d, c, cmp); y = SIMDBlendi16(b, a, cmp); } 
-#define SIMDGetIfGreateri32(x,y,a,b,c,d) { Maski32 cmp = SIMDGreaterThani32M(a,b); x = SIMDBlendi32(d, c, cmp); y = SIMDBlendi32(b, a, cmp); } 
-#define SIMDGetIfGreateri64(x,y,a,b,c,d) { Maski64 cmp = SIMDGreaterThani64M(a,b); x = SIMDBlendi64(d, c, cmp); y = SIMDBlendi64(b, a, cmp); } 
-/* x = a < b ? c : d, y = a < b ? a : b */
-//#define SIMDGetIfLessi8(x,y,a,b,c,d)  { Maski8  cmp = SIMDGreaterThani8M(b,a);  x = SIMDBlendi8(d, c, cmp);  y = SIMDBlendi8(b, a, cmp); } 
-//#define SIMDGetIfLessi16(x,y,a,b,c,d) { Maski16 cmp = SIMDGreaterThani16M(b,a); x = SIMDBlendi16(d, c, cmp); y = SIMDBlendi16(b, a, cmp); } 
-#define SIMDGetIfLessi32(x,y,a,b,c,d) { Maski32 cmp = SIMDGreaterThani32M(b,a); x = SIMDBlendi32(d, c, cmp); y = SIMDBlendi32(b, a, cmp); } 
-#define SIMDGetIfLessi64(x,y,a,b,c,d) { Maski64 cmp = SIMDGreaterThani64M(b,a); x = SIMDBlendi64(d, c, cmp); y = SIMDBlendi64(b, a, cmp); } 
-
-// end of AVX512F
+// end of AVX512BW
 #else  // AVX2 SSE4.1 SSE2
 #ifdef __AVX2__
 
@@ -558,7 +375,7 @@ typedef __m128i SIMDi; //for integers
 
 #endif // AVX2
 
-// start of no AVX512F (AVX2/SSE4.1/SSE2)
+// start of no AVX512BW (AVX2/SSE4.1/SSE2)
 #define SIMDBlendi16(x,y,z) SIMDOri(SIMDAndNoti(z,x), SIMDAndi(z,y))
 #define SIMDBlendi32(x,y,z) SIMDOri(SIMDAndNoti(z,x), SIMDAndi(z,y))
 #define SIMDBlendi64(x,y,z) SIMDOri(SIMDAndNoti(z,x), SIMDAndi(z,y))
@@ -589,9 +406,8 @@ typedef __m128i SIMDi; //for integers
 #define SIMDGetIfLessi16(x,y,a,b,c,d) { SIMDi cmp = SIMDGreaterThani16(b,a); x = SIMDBlendi16(d, c, cmp); y = SIMDBlendi16(b, a, cmp); } 
 #define SIMDGetIfLessi32(x,y,a,b,c,d) { SIMDi cmp = SIMDGreaterThani32(b,a); x = SIMDBlendi32(d, c, cmp); y = SIMDBlendi32(b, a, cmp); } 
 #define SIMDGetIfLessi64(x,y,a,b,c,d) { SIMDi cmp = SIMDGreaterThani64(b,a); x = SIMDBlendi64(d, c, cmp); y = SIMDBlendi64(b, a, cmp); } 
-// end of no AVX512F (AVX2/SSE4.1/SSE2)
+// end of no AVX512BW (AVX2/SSE4.1/SSE2)
 
-#endif // AVX512F
 #endif // AVX512BW
 
 #ifdef __cplusplus

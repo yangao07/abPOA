@@ -2,26 +2,8 @@
 
 
 //https://stackoverflow.com/questions/152016/detecting-cpu-architecture-compile-time                                                         
-#if MSVC
-#ifdef _M_X86
-#define ARCH_X86
-#endif
-#endif
 
-#if GCC
-#ifdef __i386__
-#define ARCH_X86
-#endif
-#endif
 
-#ifndef ARCH_X86
-
-int simd_check(void) {
-  return SIMD_AVX2;
-}
-#else
-
-#ifndef _MSC_VER
 // adapted from https://github.com/01org/linux-sgx/blob/master/common/inc/internal/linux/cpuid_gnu.h
 void __cpuidex(int cpuid[4], int func_id, int subfunc_id)
 {
@@ -35,7 +17,6 @@ void __cpuidex(int cpuid[4], int func_id, int subfunc_id)
 			: "0" (func_id), "2" (subfunc_id));
 #endif
 }
-#endif
 
 int simd_check(void) {
 	int flag = 0, cpuid[4], max_id;
@@ -86,4 +67,3 @@ int main(void) {
 }
 #endif
 
-#endif

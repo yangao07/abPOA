@@ -3,7 +3,8 @@
 #include <math.h>
 #include "abpoa_align.h"
 #include "abpoa_seq.h"
-#include "simd_abpoa_align.h"
+#include "abpoa_align_simd.h"
+#include "abpoa_simd.h"
 #include "kdq.h"
 
 KDQ_INIT(int)
