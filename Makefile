@@ -3,7 +3,7 @@ default: abpoa
 
 #CC          = gcc
 OS          := $(shell uname)
-ARCH        := $(shell arch)
+ARCH        := $(shell uname -m)
 # add -fno-tree-vectorize to avoid certain vectorization errors in O3 optimization
 # right now, we are using -O3 for the best performance, and no vectorization errors were found
 EXTRA_FLAGS = -Wall -Wno-unused-function -Wno-misleading-indentation# -fno-tree-vectorize

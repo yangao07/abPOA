@@ -48,7 +48,7 @@ sources = [
     'kalloc.c', 'kstring.c',
     'utils.c']
 depends = [
-    'abpoa.h', 'abpoa_align.h', 'abpoa_aling_simd.h', 
+    'abpoa.h', 'abpoa_align.h', 'abpoa_align_simd.h', 
     'abpoa_graph.h', 'abpoa_output.h', 'abpoa_seed.h', 'abpoa_seq.h', 'abpoa_simd.h',
     'kalloc.h', 'khash.h', 'kdq.h', 'kseq.h', 'ksort.h', 'kstring.h', 'kvec.h',
     'simd_instruction.h', 'utils.h']
@@ -80,6 +80,6 @@ setup(
             depends=[module_dep] + [src_dir + x for x in depends],
             libraries=['z', 'm', 'pthread'],
             # extra_compile_args=['-O3', '-Wno-error=declaration-after-statement', '-D __DEBUG__'] + simde + simd_flag
-            extra_compile_args=['-O3', '-Wno-misleading-indentation', '-Wno-error=declaration-after-statement'] + simde + simd_flag
+            extra_compile_args=['-O3', '-Wno-misleading-indentation', '-Wno-error=declaration-after-statement', '-DUSE_SIMDE -DSIMDE_ENABLE_NATIVE_ALIASES'] + simde + simd_flag
     )]
 )
