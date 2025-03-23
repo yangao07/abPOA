@@ -58,7 +58,8 @@ OBJS = ${BASIC_OBJS} $(addprefix $(SRC_DIR)/, abpoa_align_simd.o)
 # use ABPOA_DISPATCH_SIMD for x86_64
 ifeq ($(ARCH), $(filter $(ARCH), x86_64 amd64))
 	# SIMD_FLAG = -march=native
-	OBJS = ${BASIC_OBJS} $(addprefix $(SRC_DIR)/, abpoa_align_simd_sse2.o abpoa_align_simd_sse41.o abpoa_align_simd_avx2.o abpoa_align_simd_avx512bw.o abpoa_dispatch_simd.o)
+	OBJS = ${BASIC_OBJS} $(addprefix $(SRC_DIR)/, abpoa_align_simd_sse2.o abpoa_align_simd_sse41.o abpoa_align_simd_avx2.o abpoa_align_simd_avx512bw.o \
+	                      abpoa_dispatch_simd_sse2.o abpoa_dispatch_simd_sse41.o abpoa_dispatch_simd_avx2.o abpoa_dispatch_simd_avx512bw.o)
 endif
 
 ifeq ($(ARCH), $(filter $(ARCH), aarch64 arm64))
@@ -187,8 +188,16 @@ $(SRC_DIR)/abpoa_align_simd_avx2.o:$(SRC_DIR)/abpoa_align_simd.c $(SRC_DIR)/abpo
 	$(CC) -c $(CFLAGS) -DABPOA_SIMD_DISPATCH -mavx2 -I$(INC_DIR) $< -o $@
 $(SRC_DIR)/abpoa_align_simd_avx512bw.o:$(SRC_DIR)/abpoa_align_simd.c $(SRC_DIR)/abpoa_graph.h $(SRC_DIR)/abpoa_align.h $(SRC_DIR)/simd_instruction.h $(SRC_DIR)/utils.h
 	$(CC) -c $(CFLAGS) -DABPOA_SIMD_DISPATCH -mavx512bw -I$(INC_DIR) $< -o $@
-$(SRC_DIR)/abpoa_dispatch_simd.o:$(SRC_DIR)/abpoa_dispatch_simd.c $(SRC_DIR)/abpoa.h
-	$(CC) -c $(CFLAGS) -DABPOA_SIMD_DISPATCH -msse2 -msse4.1 -mavx2 -mavx512f -mavx512bw -I$(INC_DIR) $< -o $@
+$(SRC_DIR)/abpoa_dispatch_simd_sse2.o:$(SRC_DIR)/abpoa_dispatch_simd.c $(SRC_DIR)/abpoa.h
+	$(CC) -c $(CFLAGS) -DABPOA_SIMD_DISPATCH -msse2 -I$(INC_DIR) $< -o $@
+$(SRC_DIR)/abpoa_dispatch_simd_sse41.o:$(SRC_DIR)/abpoa_dispatch_simd.c $(SRC_DIR)/abpoa.h
+	$(CC) -c $(CFLAGS) -DABPOA_SIMD_DISPATCH -msse4.1 -I$(INC_DIR) $< -o $@
+$(SRC_DIR)/abpoa_dispatch_simd_avx2.o:$(SRC_DIR)/abpoa_dispatch_simd.c $(SRC_DIR)/abpoa.h
+	$(CC) -c $(CFLAGS) -DABPOA_SIMD_DISPATCH -mavx2 -I$(INC_DIR) $< -o $@
+$(SRC_DIR)/abpoa_dispatch_simd_avx512bw.o:$(SRC_DIR)/abpoa_dispatch_simd.c $(SRC_DIR)/abpoa.h
+	$(CC) -c $(CFLAGS) -DABPOA_SIMD_DISPATCH -mavx512bw -I$(INC_DIR) $< -o $@
+# $(SRC_DIR)/abpoa_dispatch_simd.o:$(SRC_DIR)/abpoa_dispatch_simd.c $(SRC_DIR)/abpoa.h
+# $(CC) -c $(CFLAGS) -DABPOA_SIMD_DISPATCH -msse2 -msse4.1 -mavx2 -mavx512f -mavx512bw -I$(INC_DIR) $< -o $@
 #$(CC) -c $(CFLAGS) -DABPOA_SIMD_DISPATCH -march=native -I$(INC_DIR) $< -o $@
 
 install_py: setup.py python/cabpoa.pxd python/pyabpoa.pyx python/README.md
