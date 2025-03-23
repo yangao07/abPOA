@@ -181,7 +181,7 @@ $(SRC_DIR)/abpoa_align_simd.o:$(SRC_DIR)/abpoa_align_simd.c $(SRC_DIR)/abpoa_gra
 	$(CC) -c $(CFLAGS) $(SIMD_FLAG) -I$(INC_DIR) $< -o $@
 
 $(SRC_DIR)/abpoa_align_simd_sse2.o:$(SRC_DIR)/abpoa_align_simd.c $(SRC_DIR)/abpoa_graph.h $(SRC_DIR)/abpoa_align.h $(SRC_DIR)/simd_instruction.h $(SRC_DIR)/utils.h
-	$(CC) -c $(CFLAGS) -DABPOA_SIMD_DISPATCH -msse2 -I$(INC_DIR) $< -o $@
+	$(CC) -c $(CFLAGS) -DABPOA_SIMD_DISPATCH -msse2 -U__SSE4_1__ -I$(INC_DIR) $< -o $@
 $(SRC_DIR)/abpoa_align_simd_sse41.o:$(SRC_DIR)/abpoa_align_simd.c $(SRC_DIR)/abpoa_graph.h $(SRC_DIR)/abpoa_align.h $(SRC_DIR)/simd_instruction.h $(SRC_DIR)/utils.h
 	$(CC) -c $(CFLAGS) -DABPOA_SIMD_DISPATCH -msse4.1 -I$(INC_DIR) $< -o $@
 $(SRC_DIR)/abpoa_align_simd_avx2.o:$(SRC_DIR)/abpoa_align_simd.c $(SRC_DIR)/abpoa_graph.h $(SRC_DIR)/abpoa_align.h $(SRC_DIR)/simd_instruction.h $(SRC_DIR)/utils.h
@@ -189,7 +189,7 @@ $(SRC_DIR)/abpoa_align_simd_avx2.o:$(SRC_DIR)/abpoa_align_simd.c $(SRC_DIR)/abpo
 $(SRC_DIR)/abpoa_align_simd_avx512bw.o:$(SRC_DIR)/abpoa_align_simd.c $(SRC_DIR)/abpoa_graph.h $(SRC_DIR)/abpoa_align.h $(SRC_DIR)/simd_instruction.h $(SRC_DIR)/utils.h
 	$(CC) -c $(CFLAGS) -DABPOA_SIMD_DISPATCH -mavx512bw -I$(INC_DIR) $< -o $@
 $(SRC_DIR)/abpoa_dispatch_simd_sse2.o:$(SRC_DIR)/abpoa_dispatch_simd.c $(SRC_DIR)/abpoa.h
-	$(CC) -c $(CFLAGS) -DABPOA_SIMD_DISPATCH -msse2 -I$(INC_DIR) $< -o $@
+	$(CC) -c $(CFLAGS) -DABPOA_SIMD_DISPATCH -msse2 -U__SSE4_1__ -I$(INC_DIR) $< -o $@
 $(SRC_DIR)/abpoa_dispatch_simd_sse41.o:$(SRC_DIR)/abpoa_dispatch_simd.c $(SRC_DIR)/abpoa.h
 	$(CC) -c $(CFLAGS) -DABPOA_SIMD_DISPATCH -msse4.1 -I$(INC_DIR) $< -o $@
 $(SRC_DIR)/abpoa_dispatch_simd_avx2.o:$(SRC_DIR)/abpoa_dispatch_simd.c $(SRC_DIR)/abpoa.h
