@@ -188,7 +188,8 @@ $(SRC_DIR)/abpoa_align_simd_avx2.o:$(SRC_DIR)/abpoa_align_simd.c $(SRC_DIR)/abpo
 $(SRC_DIR)/abpoa_align_simd_avx512bw.o:$(SRC_DIR)/abpoa_align_simd.c $(SRC_DIR)/abpoa_graph.h $(SRC_DIR)/abpoa_align.h $(SRC_DIR)/simd_instruction.h $(SRC_DIR)/utils.h
 	$(CC) -c $(CFLAGS) -DABPOA_SIMD_DISPATCH -mavx512bw -I$(INC_DIR) $< -o $@
 $(SRC_DIR)/abpoa_dispatch_simd.o:$(SRC_DIR)/abpoa_dispatch_simd.c $(SRC_DIR)/abpoa.h
-	$(CC) -c $(CFLAGS) -DABPOA_SIMD_DISPATCH -march=native -I$(INC_DIR) $< -o $@
+	$(CC) -c $(CFLAGS) -DABPOA_SIMD_DISPATCH -msse2 -msse4.1 -mavx2 -mavx512f -mavx512bw -I$(INC_DIR) $< -o $@
+#$(CC) -c $(CFLAGS) -DABPOA_SIMD_DISPATCH -march=native -I$(INC_DIR) $< -o $@
 
 install_py: setup.py python/cabpoa.pxd python/pyabpoa.pyx python/README.md
 	${py_SIMD_FLAG} python setup.py install

@@ -61,11 +61,19 @@ int simd_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int b
 	extern void simd_avx2_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *query, int qlen, abpoa_res_t *res);
 	extern void simd_avx512_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *query, int qlen, abpoa_res_t *res);
 	if (simd_flag < 0) simd_flag = x86_simd();
-	if (simd_flag & SIMD_AVX512BW) simd_avx512_abpoa_align_sequence_to_subgraph(ab, abpt, beg_node_id, end_node_id, query, qlen, res);
-	else if (simd_flag & SIMD_AVX2) simd_avx2_abpoa_align_sequence_to_subgraph(ab, abpt, beg_node_id, end_node_id, query, qlen, res);
-	else if (simd_flag & SIMD_SSE4_1) simd_sse41_abpoa_align_sequence_to_subgraph(ab, abpt, beg_node_id, end_node_id, query, qlen, res);
-	else if (simd_flag & SIMD_SSE2) simd_sse2_abpoa_align_sequence_to_subgraph(ab, abpt, beg_node_id, end_node_id, query, qlen, res);
-	else abort();
+	if (simd_flag & SIMD_AVX512BW) {
+        // fprintf(stderr, "AVX512\n");
+        simd_avx512_abpoa_align_sequence_to_subgraph(ab, abpt, beg_node_id, end_node_id, query, qlen, res);
+    } else if (simd_flag & SIMD_AVX2) {
+        // fprintf(stderr, "AVX2\n");
+        simd_avx2_abpoa_align_sequence_to_subgraph(ab, abpt, beg_node_id, end_node_id, query, qlen, res);
+    } else if (simd_flag & SIMD_SSE4_1) {
+        // fprintf(stderr, "SSE41\n");
+        simd_sse41_abpoa_align_sequence_to_subgraph(ab, abpt, beg_node_id, end_node_id, query, qlen, res);
+    } else if (simd_flag & SIMD_SSE2) {
+        // fprintf(stderr, "SSE2\n");
+        simd_sse2_abpoa_align_sequence_to_subgraph(ab, abpt, beg_node_id, end_node_id, query, qlen, res);
+    } else abort();
 	return 0;
 }
 int simd_abpoa_align_sequence_to_graph(abpoa_t *ab, abpoa_para_t *abpt, uint8_t *query, int qlen, abpoa_res_t *res) {
