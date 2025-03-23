@@ -143,7 +143,6 @@ else ifneq ($(avx512bw),)
 	py_SIMD_FLAG = AVX512BW=1
 endif
 
-# TODO add example
 EXAMPLE  = example
 
 
