@@ -172,7 +172,7 @@ $(ABPOALIB):$(OBJS)
 
 $(SRC_DIR)/abpoa.o:$(SRC_DIR)/abpoa.c $(SRC_DIR)/abpoa.h $(SRC_DIR)/abpoa_graph.h $(SRC_DIR)/abpoa_align.h \
                    $(SRC_DIR)/abpoa_seq.h $(SRC_DIR)/utils.h $(SRC_DIR)/simd_instruction.h
-	$(CC) -c $(CFLAGS) $(SIMD_FLAG) -I$(INC_DIR) $< -o $@
+	$(CC) -c $(CFLAGS) -I$(INC_DIR) $< -o $@
 
 $(SRC_DIR)/simd_check.o:$(SRC_DIR)/simd_check.c $(SRC_DIR)/simd_instruction.h
 	$(CC) -c $(CFLAGS) $(SIMD_FLAG) -I$(INC_DIR) $< -o $@
