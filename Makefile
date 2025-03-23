@@ -153,7 +153,7 @@ example:   $(EXAMPLE)
 
 $(BIN):$(SRC_DIR)/abpoa.o $(ABPOALIB)
 	if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi
-	nm -g $(ABPOALIB)
+# nm -g $(ABPOALIB)
 	$(CC) $(CFLAGS) $< -I$(INC_DIR) $(ABPOALIB) $(LIB) -o $@ $(PG_FLAG)
 
 # multiple SSE versions
@@ -196,9 +196,6 @@ $(SRC_DIR)/abpoa_dispatch_simd_avx2.o:$(SRC_DIR)/abpoa_dispatch_simd.c $(SRC_DIR
 	$(CC) -c $(CFLAGS) -DABPOA_SIMD_DISPATCH -mavx2 -I$(INC_DIR) $< -o $@
 $(SRC_DIR)/abpoa_dispatch_simd_avx512bw.o:$(SRC_DIR)/abpoa_dispatch_simd.c $(SRC_DIR)/abpoa.h
 	$(CC) -c $(CFLAGS) -DABPOA_SIMD_DISPATCH -mavx512bw -I$(INC_DIR) $< -o $@
-# $(SRC_DIR)/abpoa_dispatch_simd.o:$(SRC_DIR)/abpoa_dispatch_simd.c $(SRC_DIR)/abpoa.h
-# $(CC) -c $(CFLAGS) -DABPOA_SIMD_DISPATCH -msse2 -msse4.1 -mavx2 -mavx512f -mavx512bw -I$(INC_DIR) $< -o $@
-#$(CC) -c $(CFLAGS) -DABPOA_SIMD_DISPATCH -march=native -I$(INC_DIR) $< -o $@
 
 install_py: setup.py python/cabpoa.pxd python/pyabpoa.pyx python/README.md
 	${py_SIMD_FLAG} python setup.py install
