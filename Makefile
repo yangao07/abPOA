@@ -154,7 +154,7 @@ example:   $(EXAMPLE)
 
 $(BIN):$(SRC_DIR)/abpoa.o $(ABPOALIB)
 	if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi
-	nm -t $(ABPOALIB)
+	nm -g $(ABPOALIB)
 	$(CC) $(CFLAGS) $< -I$(INC_DIR) $(ABPOALIB) $(LIB) -o $@ $(PG_FLAG)
 
 # multiple SSE versions
