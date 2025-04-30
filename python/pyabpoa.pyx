@@ -165,6 +165,8 @@ cdef class msa_aligner:
         else: self.abpt.out_cons = 0
         if out_msa: self.abpt.out_msa = 1
         else: self.abpt.out_msa = 0
+        if max_n_cons < 1 or max_n_cons > 2:
+            raise Exception('Error: max number of consensus sequences should be 1 or 2.')
         self.abpt.max_n_cons = max_n_cons
         self.abpt.min_freq = min_freq
         if out_pog: 

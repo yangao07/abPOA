@@ -16,7 +16,7 @@ char PROG[20] = "abpoa";
 #define _bO BOLD UNDERLINE "O" NONE
 #define _bA BOLD UNDERLINE "A" NONE
 char DESCRIPTION[100] = _ba "daptive " _bb "anded " _bP "artial " _bO "rder " _bA "lignment";
-char VERSION[20] = "1.5.3";
+char VERSION[20] = "1.5.4";
 char CONTACT[30] = "yangao@ds.dfci.harvard.edu";
 
 const struct option abpoa_long_opt [] = {
@@ -131,7 +131,8 @@ int abpoa_usage(void)
     err_printf("                            - %d: heaviest bundling path in partial order graph\n", ABPOA_HB);
     err_printf("                            - %d: most frequent bases at each position\n", ABPOA_MF);
     err_printf("    -d --maxnum-cons INT    max. number of consensus sequence to generate [1]\n");
-    err_printf("    -q --min-freq  FLOAT    min. frequency of each consensus sequence (only effective when -d/--num-cons > 1) [%.2f]\n", MULTIP_MIN_FREQ);
+    err_printf("                            only 1 or 2 is supported currently\n");
+    err_printf("    -q --min-freq  FLOAT    min. frequency of each consensus sequence (only effective when -d/--num-cons == 2) [%.2f]\n", MULTIP_MIN_FREQ);
     err_printf("    -g --out-pog    FILE    dump final alignment graph to FILE (.pdf/.png) [Null]\n\n");
 
     err_printf("    -h --help               print this help usage information\n");
@@ -169,7 +170,7 @@ int main(int argc, char **argv) {
         {
             case 'm': m = atoi(optarg);
                       if (m != ABPOA_GLOBAL_MODE && m != ABPOA_EXTEND_MODE && m != ABPOA_LOCAL_MODE) { 
-                          err_printf("Unknown alignment mode: %d.\n", m); return abpoa_usage();
+                          err_printf("Unknown alignment mode: %d.\n", m); return 1;
                       } abpt->align_mode=m; break;
             case 'M': abpt->match = atoi(optarg); break;
             case 'X': abpt->mismatch = atoi(optarg); break;
@@ -212,7 +213,12 @@ int main(int argc, char **argv) {
             case 'g': abpt->out_pog= strdup(optarg); break;
 
             case 'a': abpt->cons_algrm = atoi(optarg); break;
-            case 'd': abpt->max_n_cons = atoi(optarg); break; 
+            case 'd': abpt->max_n_cons = atoi(optarg);
+                      if (abpt->max_n_cons < 1 || abpt->max_n_cons > 2) {
+                          err_printf("Error: max number of consensus sequences should be 1 or 2.\n");
+                          return 1;
+                      }
+                      break; 
             case 'q': abpt->min_freq = atof(optarg); break;
 
             case 'h': return abpoa_usage();

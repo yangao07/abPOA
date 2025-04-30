@@ -152,7 +152,7 @@ void abpoa_post_set_para(abpoa_para_t *abpt) {
     abpoa_set_gap_mode(abpt);
     if (abpt->out_msa || abpt->out_gfa || abpt->max_n_cons > 1 || abpt->cons_algrm == ABPOA_MF) {
         abpt->use_read_ids = 1;
-        if (abpt->out_msa || abpt->out_gfa || abpt->max_n_cons) set_65536_table();
+        if (abpt->out_msa || abpt->out_gfa || abpt->max_n_cons > 1) set_65536_table();
         if (abpt->max_n_cons > 1 || abpt->cons_algrm == ABPOA_MF) set_bit_table16();
     }
     if (abpt->align_mode == ABPOA_LOCAL_MODE) abpt->wb = -1;
@@ -207,7 +207,7 @@ int abpoa_anchor_poa(abpoa_t *ab, abpoa_para_t *abpt, uint8_t **seqs, int **weig
     // uint8_t *seq1;
     for (_i = 0; _i < n_seq; ++_i) {
         i = read_id_map[_i]; read_id = exist_n_seq + i; qlen = seq_lens[i]; whole_res.n_cigar = 0, whole_res.m_cigar = 0, whole_res.graph_cigar = 0;
-        fprintf(stderr, "seq: # %d\n", i);
+        // fprintf(stderr, "seq: # %d\n", i);
         if (abpt->verbose >= ABPOA_DEBUG_VERBOSE) fprintf(stderr, "seq: # %d\n", i);
         // seq-to-graph alignment and add alignment within each split window
         if (_i == 0) ai = 0; else ai = par_c[_i-1];
