@@ -34,8 +34,6 @@ else:
             simd_flag=['-msse2']
         elif os.getenv('AVX2', False):
             simd_flag=['-mavx2']
-        #elif os.getenv('AVX512F', False):
-        #    simd_flag='-mavx512f'
         elif os.getenv('AVX512BW', False):
            simd_flag='-mavx512bw'
 
@@ -80,6 +78,6 @@ setup(
             depends=[module_dep] + [src_dir + x for x in depends],
             libraries=['z', 'm', 'pthread'],
             # extra_compile_args=['-O3', '-Wno-error=declaration-after-statement', '-D __DEBUG__'] + simde + simd_flag
-            extra_compile_args=['-O3', '-Wno-misleading-indentation', '-Wno-error=declaration-after-statement', '-DUSE_SIMDE -DSIMDE_ENABLE_NATIVE_ALIASES'] + simde + simd_flag
+            extra_compile_args=['-O3', '-Wno-unused-function', '-Wno-misleading-indentation', '-Wno-error=declaration-after-statement'] + simde + simd_flag
     )]
 )
