@@ -1234,16 +1234,16 @@
 // generally: beg/end are the SRC/SINK_node
 #ifdef ABPOA_SIMD_DISPATCH
 #ifdef __AVX512BW__
-#warning "Compiling with AVX512BW"
+// #warning "Compiling with AVX512BW"
 int simd_avx512_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *query, int qlen, abpoa_res_t *res)
 #elif defined(__AVX2__)
-#warning "Compiling with AVX2"
+// #warning "Compiling with AVX2"
 int simd_avx2_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *query, int qlen, abpoa_res_t *res)
 #elif defined(__SSE4_1__)
-#warning "Compiling with SSE4.1"
+// #warning "Compiling with SSE4.1"
 int simd_sse41_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *query, int qlen, abpoa_res_t *res)
 #elif defined(__SSE2__)
-#warning "Compiling with SSE2"
+// #warning "Compiling with SSE2"
 int simd_sse2_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int beg_node_id, int end_node_id, uint8_t *query, int qlen, abpoa_res_t *res)
 #endif
 #else
