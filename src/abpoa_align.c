@@ -85,6 +85,13 @@ void abpoa_set_mat_from_file(abpoa_para_t *abpt, char *mat_fn) {
 }
 
 void abpoa_set_gap_mode(abpoa_para_t *abpt) {
+    if (abpt->match < 0 || abpt->mismatch < 0 || abpt->gap_open1 < 0 || abpt->gap_open2 < 0 || abpt->gap_ext1 < 0 || abpt->gap_ext2 < 0) {
+        err_fatal(__func__, "Invalid negative scoring parameters: match=%d, mismatch=%d, gap_open1=%d, gap_open2=%d, gap_ext1=%d, gap_ext2=%d.",
+                  abpt->match, abpt->mismatch, abpt->gap_open1, abpt->gap_open2, abpt->gap_ext1, abpt->gap_ext2);
+    }
+    if (abpt->gap_ext1 == 0 && abpt->gap_ext2 == 0) {
+        err_fatal(__func__, "Invalid gap extension parameters, expect at least one postive: gap_ext1=%d, gap_ext2=%d.", abpt->gap_ext1, abpt->gap_ext2);
+    }
     if (abpt->gap_open1 == 0) abpt->gap_mode = ABPOA_LINEAR_GAP;
     else if (abpt->gap_open1 > 0 && abpt->gap_open2 == 0) abpt->gap_mode = ABPOA_AFFINE_GAP;
     else abpt->gap_mode = ABPOA_CONVEX_GAP;

@@ -175,8 +175,8 @@ int main(int argc, char **argv) {
             case 'M': abpt->match = atoi(optarg); break;
             case 'X': abpt->mismatch = atoi(optarg); break;
             case 't': abpt->use_score_matrix = 1; abpt->mat_fn = strdup(optarg); break;
-            case 'O': abpt->gap_open1 = strtol(optarg, &s, 10); if (*s == ',') abpt->gap_open2 = strtol(s+1, &s, 10); break;
-            case 'E': abpt->gap_ext1 = strtol(optarg, &s, 10); if (*s == ',') abpt->gap_ext2 = strtol(s+1, &s, 10); break;
+            case 'O': abpt->gap_open1 = strtol(optarg, &s, 10); if (*s == ',') abpt->gap_open2 = strtol(s+1, &s, 10); else abpt->gap_open2 = 0; break;
+            case 'E': abpt->gap_ext1 = strtol(optarg, &s, 10); if (*s == ',') abpt->gap_ext2 = strtol(s+1, &s, 10); else abpt->gap_ext2 = 0; break;
 
             case 'G': abpt->inc_path_score = 1; break;
             case 'L': abpt->sort_input_seq = 1; break;
