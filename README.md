@@ -13,6 +13,7 @@
 * Add SIMD dispatch
 * Fix pyabpoa installation error in python 3.13 (#81)
 * More robust 2-consensus mode (used in [longcallD](https://github.com/yangao07/longcallD))
+* Available with `brew install abpoa` on macOS
 
 ## Getting started
 Download the [latest release](https://github.com/yangao07/abPOA/releases):
@@ -41,7 +42,7 @@ abpoa ./test_data/seq.fa > cons.fa
   - [Table of Contents](#table-of-contents)
   - [Introduction](#introduction)
   - [Installation](#installation)
-    - [Installing abPOA via conda](#installing-abpoa-via-conda)
+    - [Installing abPOA via conda/brew](#installing-abpoa-via-condabrew)
     - [Building abPOA from source files](#building-abpoa-from-source-files)
     - [Pre-built binary executable file for Linux/Unix or MacOS](#pre-built-binary-executable-file-for-linuxunix-or-macos)
   - [General usage](#general-usage)
@@ -84,10 +85,15 @@ For more information, please refer to our [paper](https://dx.doi.org/10.1093/bio
 
 ## Installation
 
-### Installing abPOA via conda
-On Linux/Unix and Mac OS, abPOA can be installed via
+### Installing abPOA via conda/brew
+On Linux/Unix and macOS, abPOA can be installed:
 ```
-conda install -c bioconda abpoa   # install abPOA program
+conda install -c bioconda abpoa
+```
+
+On macOS:
+```
+brew install abpoa
 ```
 
 ### Building abPOA from source files
