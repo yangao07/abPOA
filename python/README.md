@@ -31,12 +31,23 @@ seqs=[
 'CCCGGAAGA',
 'CCGAAGA'
 ]
-res=a.msa(seqs, out_cons=True, out_msa=True) # perform multiple sequence alignment 
+a_res=a.msa(seqs, out_cons=True, out_msa=True) # perform multiple sequence alignment 
 
 for seq in res.cons_seq:
     print(seq)  # print consensus sequence
 
-res.print_msa() # print row-column multiple sequence alignment in PIR format
+a_res.print_msa() # print row-column multiple sequence alignment in PIR format
+
+# incrementally add new seqs
+new_seqs=[
+'CCAGA',
+'CCGAAAGA'
+]
+b = pa.msa_aligner()
+b.msa_align(seqs, out_cons=True, out_msa=True)
+b.msa_add(new_seqs)
+b_res = b.msa_output()
+b_res.print_msa
 ```
 You can also try the example script provided in the source folder:
 ```
@@ -65,7 +76,7 @@ This constructs a multiple sequence alignment handler of pyabpoa, it accepts the
 * **extra_f**: second adaptive banding paremete; the number of extra bases added on both sites of the band is *b+f\*L*, where *L* is the length of the aligned sequence; default : **0.01**
 * **cons_algrm**: consensus calling algorithm. 'HB': heaviest bunlding, 'MF': most frequent bases; default: **'HB'**
 
-The `msa_aligner` handler provides one method which performs multiple sequence alignment and takes four arguments:
+The `msa_aligner` handler provides one method `msa` which performs multiple sequence alignment and takes four arguments:
 ```
 pyabpoa.msa_aligner.msa(seqs, out_cons, out_msa, out_pog='', incr_fn='')
 ```
@@ -77,6 +88,18 @@ pyabpoa.msa_aligner.msa(seqs, out_cons, out_msa, out_pog='', incr_fn='')
 * **min_freq**: minimum frequency of each consensus to output (effective when **max_n_cons** > 1); default: **0.3**
 * **out_pog**: name of a file (`.png` or `.pdf`) to store the plot of the final alignment graph; default: **''**
 * **incr_fn**: name of an existing graph (GFA) or MSA (FASTA) file, incrementally align sequence to this graph/MSA; default: **''**
+
+`msa_aligner` also provides three methods for incrementally adding sequences to graph/MSA:
+
+```
+pyabpoa.msa_aligner.msa_align(seqs, out_cons, out_msa, max_n_cons=1, min_freq=0.25, incr_fn=b'')
+pyabpoa.msa_aligner.msa_add(new_seqs)
+pyabpoa.msa_aligner.msa_output()
+```
+
+Intuitively, `msa()` = `msa_align()`+`msa_add()`+`msa_output()`.
+
+To collect consenus sequence and RC-MSA result, `msa_output()` needs to be called after `msa_align()` and `msa_add()`, which returns an object of `pyabpoa.msa_result`.
 
 ### Class pyabpoa.msa_result
 ```

@@ -236,3 +236,109 @@ cdef class msa_aligner:
             abpoa_dump_pog(self.ab, &self.abpt)
         return msa_result(tot_n, n_cons, clu_n_seq, clu_read_ids, cons_len, cons_seq, cons_cov, msa_len, msa_seq)
 
+    def msa_align(self, seqs, out_cons, out_msa, max_n_cons=1, min_freq=0.25, incr_fn=b''):
+        cdef int seq_n = len(seqs)
+        cdef int exist_n = 0
+        cdef int tot_n = seq_n
+        cdef uint8_t *bseq
+        cdef abpoa_res_t res
+        cdef abpoa_cons_t abc
+
+        if out_cons: self.abpt.out_cons = 1
+        else: self.abpt.out_cons = 0
+        if out_msa: self.abpt.out_msa = 1
+        else: self.abpt.out_msa = 0
+        if max_n_cons < 1 or max_n_cons > 2:
+            raise Exception('Error: max number of consensus sequences should be 1 or 2.')
+        self.abpt.max_n_cons = max_n_cons
+        self.abpt.min_freq = min_freq
+
+        abpoa_post_set_para(&self.abpt)
+        abpoa_reset(self.ab, &self.abpt, len(seqs[0]))
+        if incr_fn:
+            if isinstance(incr_fn, str):
+                incr_fn = bytes(incr_fn, 'utf-8')
+            self.abpt.incr_fn = incr_fn
+            abpoa_restore_graph(self.ab, &self.abpt)
+            exist_n = self.ab[0].abs[0].n_seq
+            tot_n += exist_n
+        else:
+            self.abpt.incr_fn = NULL
+
+        self.ab[0].abs[0].n_seq += seq_n
+
+        for read_i, seq in enumerate(seqs):
+            seq_l = len(seq)
+            bseq = <uint8_t*>malloc(seq_l * cython.sizeof(uint8_t))
+            for i in range(seq_l):
+                bseq[i] = self.seq2int_dict[seq[i]]
+            res.n_cigar = 0
+            abpoa_align_sequence_to_graph(self.ab, &self.abpt, bseq, seq_l, &res)
+
+            abpoa_add_graph_alignment(self.ab, &self.abpt, bseq, NULL, seq_l, NULL, res, exist_n+read_i, tot_n, 1)
+            free(bseq)
+            if res.n_cigar: free(res.graph_cigar)
+        return self
+
+    def msa_add(self, new_seqs):
+        cdef int exist_n = 0
+        exist_n = self.ab[0].abs[0].n_seq
+        if (exist_n == 0):
+            raise Exception('Error: no existing sequences in the graph. Please run msa() or msa_align() first.')
+        cdef int seq_n = len(new_seqs)
+        cdef int tot_n = seq_n
+        cdef uint8_t *bseq
+        cdef abpoa_res_t res
+        cdef abpoa_cons_t abc
+
+        tot_n += exist_n
+        self.ab[0].abs[0].n_seq += seq_n
+
+        for read_i, seq in enumerate(new_seqs):
+            seq_l = len(seq)
+            bseq = <uint8_t*>malloc(seq_l * cython.sizeof(uint8_t))
+            for i in range(seq_l):
+                bseq[i] = self.seq2int_dict[seq[i]]
+            res.n_cigar = 0
+            abpoa_align_sequence_to_graph(self.ab, &self.abpt, bseq, seq_l, &res)
+
+            abpoa_add_graph_alignment(self.ab, &self.abpt, bseq, NULL, seq_l, NULL, res, exist_n+read_i, tot_n, 1)
+            free(bseq)
+            if res.n_cigar: free(res.graph_cigar)
+        return self
+
+    def msa_output(self):
+        if self.abpt.out_msa:
+            abpoa_generate_rc_msa(self.ab, &self.abpt)
+        elif self.abpt.out_cons:
+            abpoa_generate_consensus(self.ab, &self.abpt)
+        seq_n = self.ab[0].abs[0].n_seq
+        abc = self.ab[0].abc[0]
+
+        n_cons, clu_n_seq, clu_read_ids, cons_len, cons_seq, cons_cov, msa_len, msa_seq = 0, [], [], [], [], [], 0, []
+        n_cons = abc.n_cons
+        for i in range(n_cons):
+            clu_n_seq.append(abc.clu_n_seq[i])
+            cons_len.append(abc.cons_len[i])
+            clu_read_ids1, cons_seq1, cons_cov1 = [], '', []
+            for j in range(abc.clu_n_seq[i]):
+                clu_read_ids1.append(abc.clu_read_ids[i][j])
+            clu_read_ids.append(clu_read_ids1)
+            for j in range(abc.cons_len[i]):
+                c = abc.cons_base[i][j]
+                if isinstance(c, bytes): c = ord(c)
+                cons_seq1 += self.int2seq_dict[c]
+                cons_cov1.append(abc.cons_cov[i][j])
+            cons_seq.append(cons_seq1)
+            cons_cov.append(cons_cov1)
+
+        msa_len = abc.msa_len
+        if msa_len > 0:
+            for i in range(abc.n_seq + n_cons):
+                msa_seq1 = ''
+                for c in abc.msa_base[i][:msa_len]:
+                    if isinstance(c, bytes): c = ord(c)
+                    msa_seq1 += self.int2seq_dict[c]
+                msa_seq.append(msa_seq1)
+        return msa_result(seq_n, n_cons, clu_n_seq, clu_read_ids, cons_len, cons_seq, cons_cov, msa_len, msa_seq)
+
