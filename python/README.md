@@ -33,7 +33,7 @@ seqs=[
 ]
 a_res=a.msa(seqs, out_cons=True, out_msa=True) # perform multiple sequence alignment 
 
-for seq in res.cons_seq:
+for seq in a_res.cons_seq:
     print(seq)  # print consensus sequence
 
 a_res.print_msa() # print row-column multiple sequence alignment in PIR format
@@ -47,7 +47,7 @@ b = pa.msa_aligner()
 b.msa_align(seqs, out_cons=True, out_msa=True)
 b.msa_add(new_seqs)
 b_res = b.msa_output()
-b_res.print_msa
+b_res.print_msa()
 ```
 You can also try the example script provided in the source folder:
 ```
