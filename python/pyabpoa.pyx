@@ -281,6 +281,9 @@ cdef class msa_aligner:
         return self
 
     def msa_add(self, new_seqs):
+        if isinstance(new_seqs, str):
+            raise TypeError('Expected a list of strings. If you want to add a single sequence, pass it as a list: ["ACGT..."]')
+
         cdef int exist_n = 0
         exist_n = self.ab[0].abs[0].n_seq
         if (exist_n == 0):
