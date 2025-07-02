@@ -149,6 +149,7 @@ abpoa_para_t *abpoa_init_para(void) {
     abpt->progressive_poa = 0; // progressive partial order alignment
 
     abpt->verbose = ABPOA_NONE_VERBOSE;
+    abpt->batch_index = 0; // 0 means not in batch mode
 
     // abpt->simd_flag = simd_check();
 

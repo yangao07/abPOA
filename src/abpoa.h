@@ -83,6 +83,7 @@ typedef struct {
     int align_mode, gap_mode, max_n_cons, cons_algrm; // consensus calling algorithm: 0: partial order graph, 1: majority voting
     double min_freq; // for multiploid data
     int verbose; // to control output msg
+    int batch_index; // index of current file in batch mode (for output header)
 
     // char LogTable65536[65536];
     // char bit_table16[65536];

@@ -150,9 +150,12 @@ int abpoa_main(char *file_fn, int is_list, abpoa_para_t *abpt){
     abpoa_t *ab = abpoa_init();
     if (is_list) { // input file list
         FILE *list_fp = fopen(file_fn, "r"); char read_fn[1024];
+        int batch_index = 1;
         while (fgets(read_fn, sizeof(read_fn), list_fp)) {
             read_fn[strlen(read_fn)-1] = '\0';
+            abpt->batch_index = batch_index;
             abpoa_msa1(ab, abpt, read_fn, stdout);
+            batch_index++;
         }
         fclose(list_fp);
     } else // input file
