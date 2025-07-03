@@ -579,6 +579,9 @@ void abpoa_output_fx_consensus(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp) {
     for (cons_i = 0; cons_i < abc->n_cons; ++cons_i) {
         if (abpt->out_fq) fprintf(out_fp, "@Consensus_sequence");
         else fprintf(out_fp, ">Consensus_sequence");
+        if (abpt->batch_index > 0) {
+            fprintf(out_fp, "_%d", abpt->batch_index); // batch index for file mapping
+        }
         if (abc->n_cons > 1) {
             fprintf(out_fp, "_%d ", cons_i+1); // cons_id
             for (j = 0; j < abc->clu_n_seq[cons_i]; ++j) { // cluter read_id
@@ -592,6 +595,9 @@ void abpoa_output_fx_consensus(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp) {
         } fprintf(out_fp, "\n");
         if (abpt->out_fq) {
             fprintf(out_fp, "+Consensus_sequence");
+            if (abpt->batch_index > 0) {
+                fprintf(out_fp, "_%d", abpt->batch_index); // batch index for file mapping
+            }
             if (abc->n_cons > 1) {
                 fprintf(out_fp, "_%d ", cons_i+1); // cons_id
                 for (j = 0; j < abc->clu_n_seq[cons_i]; ++j) { // cluter read_id
