@@ -462,6 +462,15 @@ void set_clu_read_ids(abpoa_cons_t *abc, uint64_t **read_ids, int cons_i, int n_
         err_fatal(__func__, "Error in set cluster read ids. (%d, %d)", n, abc->clu_n_seq[cons_i]);
 }
 
+void set_clu_read_ids0(abpoa_cons_t *abc, uint64_t **read_ids, int n_seq) {
+    int i;
+    for (i = 0; i < n_seq; ++i) {
+        abc->clu_read_ids[0][i] = i;
+    }
+    if (i != abc->clu_n_seq[0])
+        err_fatal(__func__, "Error in set cluster read ids. (%d, %d)", i, abc->clu_n_seq[0]);
+}
+
 // heaviest_bundling
 // 1. argmax{cur->weight}
 // 2. argmax{out_node->weight}
@@ -472,8 +481,10 @@ void abpoa_heaviest_bundling(abpoa_graph_t *abg, abpoa_para_t *abpt, int src_id,
     int *score = (int*)_err_malloc(abg->node_n * sizeof(int));
     int **max_out_id = (int**)_err_malloc(n_clu * sizeof(int*));
     for (i = 0; i < n_clu; ++i) max_out_id[i] = (int*)_err_malloc(abg->node_n * sizeof(int));
-    if (n_clu == 1) abc->clu_n_seq[0] = abc->n_seq;
-    else {
+    if (n_clu == 1) {
+        abc->clu_n_seq[0] = abc->n_seq;
+        set_clu_read_ids0(abc, clu_read_ids, abc->n_seq);
+    } else {
         for (cons_i = 0; cons_i < n_clu; cons_i++) {
             abc->clu_n_seq[cons_i] = get_read_cnt(clu_read_ids[cons_i], read_ids_n);
             set_clu_read_ids(abc, clu_read_ids, cons_i, abc->n_seq);
@@ -551,8 +562,10 @@ void abpoa_most_freqent(abpoa_graph_t *abg, abpoa_para_t *abpt, int src_id, int 
     }
     for (i = 0; i < msa_l; ++i) msa_node_id[i] = (int*)_err_calloc(abpt->m, sizeof(int));
     abc->n_cons = n_clu;
-    if (n_clu == 1) abc->clu_n_seq[0] = abc->n_seq;
-    else {
+    if (n_clu == 1) {
+        abc->clu_n_seq[0] = abc->n_seq;
+        set_clu_read_ids0(abc, clu_read_ids, abc->n_seq);
+    } else {
         for (cons_i = 0; cons_i < n_clu; ++cons_i) {
             abc->clu_n_seq[cons_i] = get_read_cnt(clu_read_ids[cons_i], read_ids_n);
             set_clu_read_ids(abc, clu_read_ids, cons_i, abc->n_seq);
