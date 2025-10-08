@@ -546,7 +546,7 @@ void abpoa_heaviest_bundling(abpoa_graph_t *abg, abpoa_para_t *abpt, int src_id,
     for (i = 0; i < n_clu; ++i) free(max_out_id[i]); free(max_out_id);
 }
 
-void abpoa_most_freqent(abpoa_graph_t *abg, abpoa_para_t *abpt, int src_id, int sink_id, int *out_degree, int n_clu, int read_ids_n, uint64_t **clu_read_ids, abpoa_cons_t *abc) {
+void abpoa_most_frequent(abpoa_graph_t *abg, abpoa_para_t *abpt, int src_id, int sink_id, int n_clu, int read_ids_n, uint64_t **clu_read_ids, abpoa_cons_t *abc) {
     int use_span_read_count = abpt->sub_aln;
     abpoa_set_msa_rank(abg, src_id, sink_id);
     int i, cons_i, msa_l = abg->node_id_to_msa_rank[sink_id]-1;
@@ -727,6 +727,8 @@ int abpoa_collect_cand_het_profile(uint8_t **msa, int msa_l, int n_seq, int m, i
 int abpoa_collect_cand_het_pos(uint8_t **msa, int msa_l, int n_seq, int m, int min_het, cand_het_pos_t *cand_het_pos, int verbose) {
     int n_het_pos = 0;
     int i, j;
+    // int min_hom = n_seq - min_het; // het >= min_het && <= min_hom
+    min_het = MAX_OF_TWO(2, min_het/2);
     int min_hom = n_seq - min_het; // het >= min_het && <= min_hom
     int *depth = (int*)_err_malloc((m+1) * sizeof(int));
 
@@ -1102,8 +1104,13 @@ int abpoa_collect_msa_dis1(uint8_t **msa, int msa_l, int n_seq, int m, cand_het_
     int dis = 0;
     for (int k = 0; k < n_het_pos; ++k) {
         int pos = cand_het_pos[k].pos;
+    // for (int pos = 0; pos < msa_l; ++pos) {
         int var_weight = 1; // Gap
         if (cand_het_pos[k].var_type == 0) var_weight = 2; // SNP
+        // if (cand_het_pos[k].pos == 34)
+        //     var_weight *= 16;
+        // else
+        //     var_weight *= 4;
         uint8_t base1 = msa[i][pos], base2 = msa[j][pos];
         uint8_t alle_base1 = cand_het_pos[k].alle_bases[0], alle_base2 = cand_het_pos[k].alle_bases[1];
         if (base1 != alle_base1 && base1 != alle_base2) continue;
@@ -1125,6 +1132,13 @@ int **abpoa_collect_msa_dis_matrix(uint8_t **msa, int msa_l, int n_seq, int m, c
             dis_matrix[j][i] = dis_matrix[i][j];
         }
     }
+    // print dis_matrix
+    // for (i = 0; i < n_seq; ++i) {
+    //     for (j = 0; j < n_seq; ++j) {
+    //         printf("%d vs %d: %d\n", i, j, dis_matrix[i][j]);
+    //     }
+    //     printf("\n");
+    // }
     return dis_matrix;
 }
 
@@ -1189,10 +1203,28 @@ int abpoa_update_kmedoids(int **dis_matrix, int n_seq, int max_n_cons, int **med
                 tied = 1;
             }
         }
-        if (tied != 0 || min_clu == -1) continue;
+        // if (tied != 0 || min_clu == -1) continue;
+        if (min_clu == -1) continue;
+        if (tied == 1) {
+            if (n_clu_seqs[0] < n_clu_seqs[1]) min_clu = 0;
+            else min_clu = 1;
+        }
         clu_reads[min_clu][n_clu_seqs[min_clu]++] = i;
     }
     abpoa_collect_kmedoids0(dis_matrix, n_seq, max_n_cons, clu_reads, n_clu_seqs, new_medoids);
+    // print clu_reads and new_medoids
+    // for (int i = 0; i < max_n_cons; ++i) {
+    //     printf("Cluster %d: ", i);
+    //     for (int j = 0; j < n_clu_seqs[i]; ++j) {
+    //         printf("%d ", clu_reads[i][j]);
+    //     }
+    //     printf("\n");
+    // }
+    // printf("New Medoids: ");
+    // for (int i = 0; i < max_n_cons; ++i) {
+    //     printf("%d ", new_medoids[i]);
+    // }
+    // printf("\n");
     int changed = 0;
     for (int i = 0; i < max_n_cons; ++i) {
         if (new_medoids[i] == -1) { // no reads in this cluster
@@ -1209,6 +1241,11 @@ int abpoa_clu_reads_kmedoids(int **dis_matrix, int n_seq, int min_het, int max_n
     // init
     int *medoids = NULL;
     if (abpoa_init_kmedoids(dis_matrix, n_seq, max_n_cons, &medoids) == -1) return 0;
+    // print init medoids
+    // for (int i = 0; i < max_n_cons; ++i) {
+        // printf("Init Medoids: %d ", medoids[i]);
+    // }
+    // printf("\n");
 
     // iterative update clusters until convergence
     int **clu_reads = (int**)_err_malloc(sizeof(int*) * max_n_cons);
@@ -1244,14 +1281,47 @@ int abpoa_clu_reads_kmedoids(int **dis_matrix, int n_seq, int min_het, int max_n
     return n_clu;
 }
 
+// for each position in MSA, count base frequencies, output the top 2 frequent bases
+int abpoa_collect_allele_freq(uint8_t **msa, int msa_l, int n_seq, int m, int verbose) {
+    int *base_cnt = (int*)calloc(6, sizeof(int));
+    for (int i = 0; i < msa_l; ++i) {
+        for (int j = 0; j < n_seq; ++j) {
+            if (msa[j][i] < 6) base_cnt[msa[j][i]]++;
+        }
+        int top1 = 0, top2 = 1;
+        if (base_cnt[top2] > base_cnt[top1]) { int tmp = top1; top1 = top2; top2 = tmp; }
+        for (int k = 1; k < 6; ++k) {
+            if (base_cnt[k] > base_cnt[top1]) {
+                top2 = top1; top1 = k;
+            } else if (base_cnt[k] > base_cnt[top2]) {
+                top2 = k;
+            }
+        }
+        printf("pos: %d, A: %d, C: %d, G: %d, T: %d, -: %d; top1: %c %d %.3f top2: %c %d %.3f\n", i, base_cnt[0], base_cnt[1], base_cnt[2], base_cnt[3], base_cnt[5], "ACGTN-"[top1], base_cnt[top1], (double)base_cnt[top1]/n_seq, "ACGTN-"[top2], base_cnt[top2], (double)base_cnt[top2]/n_seq);
+        for (int k = 0; k < 6; ++k) base_cnt[k] = 0;
+    }
+    free(base_cnt);
+    return 0;
+}
+
 int abpoa_multip_read_clu_kmedoids(abpoa_graph_t *abg, abpoa_para_t *abpt, int src_id, int sink_id, int n_seq, int m, int max_n_cons, double min_freq, uint64_t ***clu_read_ids, int verbose) {
     abpoa_set_msa_rank(abg, src_id, sink_id);
     int i, n_clu;
     uint8_t **msa = (uint8_t**)_err_malloc(sizeof(uint8_t*) * n_seq);
     int msa_l = abpoa_collect_msa(abg, abpt, msa, n_seq); // abg->node_id_to_msa_rank[sink_id]-1, 
+    // abpoa_collect_allele_freq(msa, msa_l, n_seq, m, verbose);
     int min_w = MAX_OF_TWO(2, ceil(n_seq * min_freq));
     cand_het_pos_t *cand_het_pos = (cand_het_pos_t*)_err_malloc(msa_l * sizeof(cand_het_pos_t));
     int n_het_pos = abpoa_collect_cand_het_pos(msa, msa_l, n_seq, m, min_w, cand_het_pos, verbose);
+    // print cand_het_pos
+    // printf("n_het_pos: %d\n", n_het_pos);
+    // for (i = 0; i < n_het_pos; ++i) {
+    //     fprintf(stdout, "pos: %d, var_type: %d, n_uniq_alles: %d, alle_bases: ", cand_het_pos[i].pos, cand_het_pos[i].var_type, cand_het_pos[i].n_uniq_alles);
+    //     for (int j = 0; j < cand_het_pos[i].n_uniq_alles; ++j) {
+    //         fprintf(stdout, "%c", "ACGTN-"[cand_het_pos[i].alle_bases[j]]);
+    //     }
+    //     fprintf(stdout, "\n");
+    // }
     if (n_het_pos < 1) n_clu = 1;
     else {
         int **dis_matrix = abpoa_collect_msa_dis_matrix(msa, msa_l, n_seq, m, cand_het_pos, n_het_pos, verbose);
@@ -1323,7 +1393,7 @@ void abpoa_generate_consensus(abpoa_t *ab, abpoa_para_t *abpt) {
     if (abpt->cons_algrm == ABPOA_HB)
         abpoa_heaviest_bundling(abg, abpt, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, out_degree, n_clu, read_ids_n, clu_read_ids, abc);
     else
-        abpoa_most_freqent(abg, abpt, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, out_degree, n_clu, read_ids_n, clu_read_ids, abc);
+        abpoa_most_frequent(abg, abpt, ABPOA_SRC_NODE_ID, ABPOA_SINK_NODE_ID, n_clu, read_ids_n, clu_read_ids, abc);
     if (n_clu > 1) {
         for (i = 0; i < n_clu; ++i) free(clu_read_ids[i]); free(clu_read_ids);
     }
