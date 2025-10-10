@@ -289,11 +289,12 @@ With all the similarity scores (minimizer-based Jaccard similarity), abPOA build
 Then, abPOA performs partial order alignment following the order of sequences in this progressive tree set.
 
 ### Multiple consensus sequences
-abPOA supports generating multiple consensus sequences from the final alignment graph (set -d/--max-num-cons as >1).
+abPOA supports generating multiple consensus sequences from the final alignment graph (set -d/--maxnum-cons as >1).
+Since v1.5.5, more than 2 consensus sequences can be generated.
 
-The general underlying idea is to group input sequences into multiple clusters based on the heterozygous bases in the graph,
+The general underlying idea is to group input sequences into multiple clusters based on the heterozygous bases in the MSA.
 Then, one consensus sequence is separately generated for each cluster of input sequences.
-The minimum allele frequency for each heterozygous base is 0.25 (by default, -q/--min-freq). 
+The minimum allele frequency, i.e., ratio of cluster size to the total number of sequences for each cluster, is 0.25 (by default, -q/--min-freq).
 
 ## For development
 abPOA is not only a stand-alone tool for MSA and consensus calling, it can also work as a programming library. [example.c](example.c) shows how to use the C APIs of abPOA to take a set of sequences as input and perform MSA and consensus calling. Basically, the library file `libabpoa.a` and two header files [abpoa.h](include/abpoa.h) and [simd_instruction.h](include/simd_instruction.h) are needed to make the abPOA library work in your program.
