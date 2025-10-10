@@ -16,8 +16,8 @@
 ## Getting started
 Download the [latest release](https://github.com/yangao07/abPOA/releases):
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.5.4/abPOA-v1.5.4.tar.gz
-tar -zxvf abPOA-v1.5.4.tar.gz && cd abPOA-v1.5.4
+wget https://github.com/yangao07/abPOA/releases/download/v1.5.5/abPOA-v1.5.5.tar.gz
+tar -zxvf abPOA-v1.5.5.tar.gz && cd abPOA-v1.5.5
 ```
 Make from source and run with test data:
 ```
@@ -99,9 +99,9 @@ You can also build abPOA from source files.
 Make sure you have gcc (>=6.4.0) and zlib installed before compiling.
 It is recommended to download the [latest release](https://github.com/yangao07/abPOA/releases).
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.5.4/abPOA-v1.5.4.tar.gz
-tar -zxvf abPOA-v1.5.4.tar.gz
-cd abPOA-v1.5.4; make
+wget https://github.com/yangao07/abPOA/releases/download/v1.5.5/abPOA-v1.5.5.tar.gz
+tar -zxvf abPOA-v1.5.5.tar.gz
+cd abPOA-v1.5.5; make
 ```
 Or, you can use `git clone` command to download the source code.
 This gives you the latest version of abPOA, which might be still under development.
@@ -113,13 +113,13 @@ cd abPOA; make
 ### Pre-built binary executable file for Linux/Unix or MacOS
 If you meet any compiling issue, please try the pre-built binary file for linux:
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.5.4/abPOA-v1.5.4_x64-linux.tar.gz
-tar -zxvf abPOA-v1.5.4_x64-linux.tar.gz
+wget https://github.com/yangao07/abPOA/releases/download/v1.5.5/abPOA-v1.5.5_x64-linux.tar.gz
+tar -zxvf abPOA-v1.5.5_x64-linux.tar.gz
 ```
 or for macos:
 ```
-wget https://github.com/yangao07/abPOA/releases/download/v1.5.4/abPOA-v1.5.4_arm64-macos.tar.gz
-tar -zxvf abPOA-v1.5.4_arm64-macos.tar.gz
+wget https://github.com/yangao07/abPOA/releases/download/v1.5.5/abPOA-v1.5.5_arm64-macos.tar.gz
+tar -zxvf abPOA-v1.5.5_arm64-macos.tar.gz
 ```
 
 ## General usage

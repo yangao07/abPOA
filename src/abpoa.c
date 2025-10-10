@@ -16,7 +16,7 @@ char PROG[20] = "abpoa";
 #define _bO BOLD UNDERLINE "O" NONE
 #define _bA BOLD UNDERLINE "A" NONE
 char DESCRIPTION[100] = _ba "daptive " _bb "anded " _bP "artial " _bO "rder " _bA "lignment";
-char VERSION[20] = "1.5.4";
+char VERSION[20] = "1.5.5";
 char CONTACT[30] = "yangao@ds.dfci.harvard.edu";
 
 const struct option abpoa_long_opt [] = {
@@ -53,7 +53,7 @@ const struct option abpoa_long_opt [] = {
     { "result", 1, NULL, 'r' },
     { "out-pog", 1, NULL, 'g' },
     { "cons-algrm", 1, NULL, 'a'},
-    { "max-num-cons", 1, NULL, 'd', },
+    { "maxnum-cons", 1, NULL, 'd', },
     { "min-freq", 1, NULL, 'q', },
 
     { "help", 0, NULL, 'h' },
@@ -127,12 +127,13 @@ int abpoa_usage(void)
     err_printf("                            - %d: graph in GFA format\n", ABPOA_OUT_GFA);
     err_printf("                            - %d: graph with consensus path in GFA format\n", ABPOA_OUT_CONS_GFA);
     err_printf("                            - %d: consensus in FASTQ format\n", ABPOA_OUT_CONS_FQ);
-    err_printf("    -a --cons-algrm INT     consensus algorithm [%d]\n", ABPOA_HB);
+    err_printf("    -a --cons-algrm  INT    consensus algorithm [%d]\n", ABPOA_HB);
     err_printf("                            - %d: heaviest bundling path in partial order graph\n", ABPOA_HB);
     err_printf("                            - %d: most frequent bases at each position\n", ABPOA_MF);
     err_printf("    -d --maxnum-cons INT    max. number of consensus sequence to generate [1]\n");
-    err_printf("                            only 1 or 2 is supported currently\n");
-    err_printf("    -q --min-freq  FLOAT    min. frequency of each consensus sequence (only effective when -d/--num-cons == 2) [%.2f]\n", MULTIP_MIN_FREQ);
+    err_printf("                            if >=2, sequences will be clustered based on MSA and consensus will be generated within each cluster\n");
+    err_printf("                            up to 10 is supported currently (experimental for >=2)\n");
+    err_printf("    -q --min-freq  FLOAT    min. frequency of each cluster (only effective when -d/--maxnum-cons >= 2) [%.2f]\n", MULTIP_MIN_FREQ);
     err_printf("    -g --out-pog    FILE    dump final alignment graph to FILE (.pdf/.png) [Null]\n\n");
 
     err_printf("    -h --help               print this help usage information\n");
