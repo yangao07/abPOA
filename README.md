@@ -145,6 +145,7 @@ abpoa seq.fa -a1 > cons.fa
 
 ```
 abpoa heter.fa -d2 > 2cons.fa
+abpoa 3alleles.fa -d3 > 3cons.fa
 ```
 
 ### Generate row-column multiple sequence alignment in FASTA format
@@ -291,6 +292,8 @@ Then, abPOA performs partial order alignment following the order of sequences in
 ### Multiple consensus sequences
 abPOA supports generating multiple consensus sequences from the final alignment graph (set -d/--maxnum-cons as >1).
 Since v1.5.5, more than 2 consensus sequences can be generated.
+
+While -d is the maximum number of consensus sequences to generate, the actual number of consensus sequences generated can be less than -d, depending on the input sequences and the minimum allele frequency (-q/--min-freq).
 
 The general underlying idea is to group input sequences into multiple clusters based on the heterozygous bases in the MSA.
 Then, one consensus sequence is separately generated for each cluster of input sequences.
