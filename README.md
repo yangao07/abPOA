@@ -8,12 +8,10 @@
 [![C/C++ CI](https://github.com/yangao07/abPOA/actions/workflows/linux-CI.yml/badge.svg)](https://github.com/yangao07/abPOA/actions/workflows/linux-CI.yml)
 [![C/C++ CI](https://github.com/yangao07/abPOA/actions/workflows/macos-CI.yml/badge.svg)](https://github.com/yangao07/abPOA/actions/workflows/macos-CI.yml)
 [![License](https://img.shields.io/badge/License-MIT-black.svg)](https://github.com/yangao07/abPOA/blob/main/LICENSE)
-## Updates (v1.5.4)
+## Updates (v1.5.5)
 
-* Add SIMD dispatch
-* Fix pyabpoa installation error in python 3.13 (#81)
-* More robust 2-consensus mode (used in [longcallD](https://github.com/yangao07/longcallD))
-* Available with `brew install abpoa` on macOS
+* Allow >2 consensus sequences (#73) (may be buggy)
+* Fix a bug regarding cluster read IDs (#85)
 
 ## Getting started
 Download the [latest release](https://github.com/yangao07/abPOA/releases):
@@ -37,7 +35,7 @@ abpoa ./test_data/seq.fa > cons.fa
 ## Table of Contents
 
 - [abPOA: adaptive banded Partial Order Alignment](#abpoa-adaptive-banded-partial-order-alignment)
-  - [Updates (v1.5.4)](#updates-v154)
+  - [Updates (v1.5.5)](#updates-v155)
   - [Getting started](#getting-started)
   - [Table of Contents](#table-of-contents)
   - [Introduction](#introduction)

@@ -217,8 +217,8 @@ int main(int argc, char **argv) {
 
             case 'a': abpt->cons_algrm = atoi(optarg); break;
             case 'd': abpt->max_n_cons = atoi(optarg);
-                      if (abpt->max_n_cons < 1 || abpt->max_n_cons > 2) {
-                          err_printf("Error: max number of consensus sequences should be 1 or 2.\n");
+                      if (abpt->max_n_cons < 1 || abpt->max_n_cons > 10) {
+                          err_printf("Error: max number of consensus sequences should be 1~10.\n");
                           return 1;
                       }
                       break; 

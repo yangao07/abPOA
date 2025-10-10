@@ -8,9 +8,11 @@ extern "C" {
 #endif
 
 typedef struct cand_het_pos_t {
-    int pos, depth, var_type;
+    int pos, depth, var_type, count; // count: number of heterogeneous bases with same profile
     int n_uniq_alles;
-    uint8_t *alle_bases;
+    int *n_clu_reads, **clu_read_ids; // size: (m+1) * n_clu_reads[i]; allele -> read ids belong to this allele
+    int *read_id_to_allele_idx; // size: n_seq, -1:not cover this het pos, else: allele index (0... n_uniq_alles-1)
+    uint8_t *alle_bases; // size: n_uniq_alles, sorted by allele's first appearance position
 } cand_het_pos_t;
 
 typedef struct read_het_profile_t {
