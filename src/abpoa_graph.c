@@ -571,6 +571,7 @@ void abpoa_update_node_n_span_reads(abpoa_graph_t *abg, int src_id, int sink_id,
 }
 
 void abpoa_add_graph_sequence(abpoa_graph_t *abg, abpoa_para_t *abpt, uint8_t *seq, int *weight, int seq_l, int *qpos_to_node_id, int start, int end, uint8_t add_read_id, uint8_t add_read_weight, int read_id, int read_ids_n, int tot_read_n) {
+    if (seq_l <= 0) return;
     if (start >= seq_l || end <= start) err_fatal(__func__, "seq_l: %d\tstart: %d\tend: %d.", seq_l, start, end);
     if (end > seq_l) end = seq_l;
 
