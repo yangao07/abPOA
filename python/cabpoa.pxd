@@ -65,6 +65,7 @@ cdef extern from "abpoa.h":
         int align_mode, gap_mode, max_n_cons, cons_algrm
         double min_freq # for diploid data
         int verbose
+        # int batch_index # index of current file in batch mode (for output header), not used now
 
 
     ctypedef struct abpoa_node_t:
@@ -138,6 +139,7 @@ cdef extern from "abpoa.h":
 
     # do msa for a set of input sequences
     int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seqs, char **seq_names, int *seq_lens, uint8_t **seqs, int ** qual_weights, FILE *out_fp)
+    void abpoa_clean_msa_cons(abpoa_t *ab)
     int abpoa_msa1(abpoa_t *ab, abpoa_para_t *abpt, char *read_fn, FILE *out_fp)
 
     # clean alignment graph
