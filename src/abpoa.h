@@ -158,6 +158,7 @@ void abpoa_free(abpoa_t *ab);
 
 // perform msa
 int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seqs, char **seq_names, int *seq_lens, uint8_t **seqs, int **qual_weights, FILE *out_fp);
+void abpoa_clean_msa_cons(abpoa_t *ab); // clean MSA & consensus-related memory to avoid leak, called before incremental MSA
 
 int abpoa_msa1(abpoa_t *ab, abpoa_para_t *abpt, char *read_fn, FILE *out_fp);
 

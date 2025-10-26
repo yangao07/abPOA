@@ -399,10 +399,17 @@ void abpoa_sort_seq_by_length(abpoa_seq_t *abs, int exist_n_seq, int n_seq) {
 //    seq_len: array of input sequence length, size: seq_n
 //    seqs: array of input sequences, 0123 for ACGT, size: seq_n * seq_len[]
 int abpoa_msa(abpoa_t *ab, abpoa_para_t *abpt, int n_seq, char **seq_names, int *seq_lens, uint8_t **seqs, int **qual_weights, FILE *out_fp) {
-    if ((!abpt->out_msa && !abpt->out_cons && !abpt->out_gfa) || n_seq <= 0) return 0;
-    abpoa_reset(ab, abpt, 1024);
-    if (abpt->incr_fn) abpoa_restore_graph(ab, abpt); // restore existing graph
-    abpoa_seq_t *abs = ab->abs; int i, exist_n_seq = abs->n_seq;
+    // if ((!abpt->out_msa && !abpt->out_cons && !abpt->out_gfa) || n_seq <= 0) return 0;
+    if (n_seq <= 0) return 0;
+    abpoa_seq_t *abs = ab->abs; 
+    if (abs->n_seq <= 0) { 
+        abpoa_reset(ab, abpt, 1024);
+        if (abpt->incr_fn) abpoa_restore_graph(ab, abpt); // restore existing graph
+    } else {
+        if (abpt->incr_fn != NULL) // WARNING: graph already exists, but incr_fn is also provided
+            err_func_format_printf(__func__, "Graph already exists, but incr_fn is also provided. Not restoring graph from file.");
+    }
+    int i, exist_n_seq = abs->n_seq;
 
     // set ab->abs, name
     abs->n_seq += n_seq; abpoa_realloc_seq(abs);

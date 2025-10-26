@@ -627,8 +627,8 @@ void abpoa_output_fx_consensus(abpoa_t *ab, abpoa_para_t *abpt, FILE *out_fp) {
 }
 
 abpoa_cons_t *abpoa_allocate_cons(abpoa_cons_t *abc, int n_node, int n_seq, int n_cons) {
-    int i;
-    abc->n_cons = n_cons, abc->n_seq = n_seq;
+    int i; abc->n_cons = n_cons, abc->n_seq = n_seq;
+    // allocate
     abc->clu_n_seq = (int*)_err_calloc(n_cons, sizeof(int));
     abc->cons_len = (int*)_err_calloc(n_cons, sizeof(int));
     abc->cons_node_ids = (int**)_err_malloc(n_cons * sizeof(int*));
