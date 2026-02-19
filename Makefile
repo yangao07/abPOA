@@ -197,7 +197,7 @@ $(SRC_DIR)/abpoa_dispatch_simd_avx512bw.o:$(SRC_DIR)/abpoa_dispatch_simd.c $(SRC
 	$(CC) -c $(CFLAGS) -DABPOA_SIMD_DISPATCH -mavx512bw -I$(INC_DIR) $< -o $@
 
 install_py: setup.py python/cabpoa.pxd python/pyabpoa.pyx python/README.md
-	${py_SIMD_FLAG} python setup.py install
+	${py_SIMD_FLAG} python -m pip install .
 	
 sdist: setup.py python/cabpoa.pxd python/pyabpoa.pyx python/README.md
 	${py_SIMD_FLAG} python setup.py sdist #bdist_wheel
