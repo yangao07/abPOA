@@ -10,7 +10,7 @@ jobs:
   build-macos:
     strategy:
       matrix:
-        os: [macos-latest, macos-13] # test on arm64 and x64
+        os: [macos-latest, macos-15-intel] # test on arm64 and x64
     runs-on: ${{ matrix.os }}
     
     steps:
