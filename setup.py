@@ -58,16 +58,8 @@ long_description = open('python/README.md').read()
 
 setup(
     # Information
-    name = "pyabpoa",
-    description = "pyabpoa: SIMD-based partial order alignment using adaptive band",
     long_description = long_description,
     long_description_content_type="text/markdown",
-    version = "1.5.5",
-    url = "https://github.com/yangao07/abPOA",
-    author = "Yan Gao",
-    author_email = "yangao@ds.dfci.harvard.edu",
-    license = "MIT",
-    keywords = "multiple-sequence-alignment  partial-order-graph-alignment",
     setup_requires=["cython"],
     # Build instructions
     ext_modules = [
