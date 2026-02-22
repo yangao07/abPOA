@@ -14,6 +14,7 @@ abpoa.dot.pdf
 
 # readme
 README.html
+TODO.md
 
 # Precompiled Headers
 *.gch
@@ -51,6 +52,7 @@ sub_example
 #data
 data/*
 test_data/cons.fa
+test_data/tmp/
 *.dot
 *.png
 *.pdf
@@ -68,6 +70,7 @@ python/dist/*
 python/example.png
 python/pyabpoa.c
 python/pyabpoa.egg-info/*
+src/pyabpoa.egg-info/*
 python/src/*
 
 # eval file
