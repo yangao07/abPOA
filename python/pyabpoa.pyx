@@ -74,6 +74,13 @@ def set_seq_int_dict(m):
     elif m == 27:  # ACGTN    ==> 01234, BDEFH... ==> 56789...
         seqs = 'ACGTNBDEFHIJKLMOPQRSUVWXYZ*'
         ints = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+    elif m == 128: # Custom ASCII support for tokenized TVRs
+        seq2int_dict = dd(lambda: 127) 
+        int2seq_dict = dd(lambda: '~')
+        for i in range(128):
+            seq2int_dict[chr(i)] = i
+            int2seq_dict[i] = chr(i)
+        return seq2int_dict, int2seq_dict
     else:
         raise Exception('Unexpected m: {}'.format(m))
 
