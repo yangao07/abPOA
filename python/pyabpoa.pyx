@@ -100,7 +100,8 @@ cdef class msa_aligner:
     cdef char* _score_mat_fn
     cdef bytes _score_mat_fn_b
 
-    def __cinit__(self, aln_mode='g', is_aa=False,
+    # Add is_ascii=False to the signature
+    def __cinit__(self, aln_mode='g', is_aa=False, is_ascii=False,
                   match=2, mismatch=4, score_matrix=b'', gap_open1=4, gap_open2=24, gap_ext1=2, gap_ext2=1,
                   extra_b=10, extra_f=0.01,
                   cons_algrm='HB'):
@@ -114,12 +115,18 @@ cdef class msa_aligner:
             self.abpt.align_mode = ABPOA_EXTEND_MODE
         else:
             raise Exception('Unknown align mode: {}'.format(aln_mode))
-        if is_aa:
+            
+        # Add the routing for new 128 character mode
+        if is_ascii:
+            self.abpt.m = 128
+            self.abpt.mat = <int*>malloc(128 * 128 * cython.sizeof(int))
+        elif is_aa:
             self.abpt.m = 27
             self.abpt.mat = <int*>malloc(27 * 27 * cython.sizeof(int))
         else:
             self.abpt.m = 5
             self.abpt.mat = <int*>malloc(25 * cython.sizeof(int))
+
         self.abpt.match = match
         self.abpt.mismatch = mismatch
 
