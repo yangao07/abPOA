@@ -1,6 +1,6 @@
 import pyabpoa as pa
 
-#@parameters of msa_aligner:
+# @parameters of msa_aligner:
 #   aln_mode='g' # g: global, l: local, e: extension
 #   is_aa=False # set as True if input is amino acid sequence
 #   score_matrix='' # file of score matrix, e.g. HOXD70.mtx/BLOSUM62.mtx
@@ -20,71 +20,95 @@ a = pa.msa_aligner()
 
 print("==== First exmaple: 2 consensus sequences ====\n")
 # for multiple consensus
-seqs=[
- 'CGATCGATCGATCGATGCATGCATCGATGCATCGATCGATGCATGCAT',
- 'CGATCGATCGATAAAAAAAAAAAAAAAAAAACGATGCATGCATCGATGCATCGATCGATGCATGCAT',
- 'CGATCGATCGATCGATGCATGCATCGATGCATCGATCGATGCATGCAT',
- 'CGATCGATCGATCGATGCATGCATCGATGCATCGATCGATGCATGCAT',
- 'CGATCGATCGATAAAAAAAAAAAAAAAAAAACGATGCATGCATCGATGCATCGATCGATGCATGCAT',
- 'CGATCGATCGATAAAAAAAAAAAAAAAAAAACGATGCATGCATCGATGCATCGATCGATGCATGCAT',
- 'CGATCGATCGATAAAAAAAAAAAAAAAAAAACGATGCATGCATCGATGCATCGATCGATGCATGCAT',
- 'CGATCGATCGATCGATGCATGCATCGATGCATCGATCGATGCATGCAT',
- 'CGATCGATCGATCGATGCATGCATCGATGCATCGATCGATGCATGCAT',
- 'CGATCGATCGATCGATGCATGCATCGATGCATCGATCGATGCATGCAT'
- ]
+seqs = [
+    "CGATCGATCGATCGATGCATGCATCGATGCATCGATCGATGCATGCAT",
+    "CGATCGATCGATAAAAAAAAAAAAAAAAAAACGATGCATGCATCGATGCATCGATCGATGCATGCAT",
+    "CGATCGATCGATCGATGCATGCATCGATGCATCGATCGATGCATGCAT",
+    "CGATCGATCGATCGATGCATGCATCGATGCATCGATCGATGCATGCAT",
+    "CGATCGATCGATAAAAAAAAAAAAAAAAAAACGATGCATGCATCGATGCATCGATCGATGCATGCAT",
+    "CGATCGATCGATAAAAAAAAAAAAAAAAAAACGATGCATGCATCGATGCATCGATCGATGCATGCAT",
+    "CGATCGATCGATAAAAAAAAAAAAAAAAAAACGATGCATGCATCGATGCATCGATCGATGCATGCAT",
+    "CGATCGATCGATCGATGCATGCATCGATGCATCGATCGATGCATGCAT",
+    "CGATCGATCGATCGATGCATGCATCGATGCATCGATCGATGCATGCAT",
+    "CGATCGATCGATCGATGCATGCATCGATGCATCGATCGATGCATGCAT",
+]
 
-#@parameters of msa
-#seqs: multiple sequences
-out_cons=True # generate consensus sequence, set as False to disable
-out_msa=True # generate row-column multiple sequence alignment, set as False to disable
-#out_pog="example1.png" # generate plot of alignment graph, set None to disable, require `dot` to be installed
+# @parameters of msa
+# seqs: multiple sequences
+out_cons = True  # generate consensus sequence, set as False to disable
+out_msa = True   # generate row-column multiple sequence alignment, set as False to disable
+# out_pog="example1.png" # generate plot of alignment graph, set None to disable, require `dot` to be installed
 max_n_cons = 2
 
 # multiple sequence alignment for 'seqs'
-res=a.msa(seqs, out_cons=out_cons, out_msa=out_msa, max_n_cons=max_n_cons) #, out_pog=out_pog)
+res = a.msa(seqs, out_cons=out_cons, out_msa=out_msa, max_n_cons=max_n_cons)  # , out_pog=out_pog)
 
 # output result
 if out_cons:
     for i in range(res.n_cons):
-        print(">Consensus_sequence_{}".format(i+1))
+        print(f">Consensus_sequence_{i + 1}")
         print(res.cons_seq[i])
 if out_msa:
     res.print_msa()
 
 
 print("\n\n==== Second exmaple: 1 consensus sequence ====\n")
-seqs=[
-'CGTCAATCTATCGAAGCATACGCGGGCAGAGCCGAAGACCTCGGCAATCCA',
-'CCACGTCAATCTATCGAAGCATACGCGGCAGCCGAACTCGACCTCGGCAATCAC',
-'CGTCAATCTATCGAAGCATACGCGGCAGAGCCCGGAAGACCTCGGCAATCAC',
-'CGTCAATGCTAGTCGAAGCAGCTGCGGCAGAGCCGAAGACCTCGGCAATCAC',
-'CGTCAATCTATCGAAGCATTCTACGCGGCAGAGCCGACCTCGGCAATCAC',
-'CGTCAATCTAGAAGCATACGCGGCAAGAGCCGAAGACCTCGGCCAATCAC',
-'CGTCAATCTATCGGTAAAGCATACGCTCTGTAGCCGAAGACCTCGGCAATCAC',
-'CGTCAATCTATCTTCAAGCATACGCGGCAGAGCCGAAGACCTCGGCAATC',
-'CGTCAATGGATCGAGTACGCGGCAGAGCCGAAGACCTCGGCAATCAC',
-'CGTCAATCTAATCGAAGCATACGCGGCAGAGCCGTCTACCTCGGCAATCACGT'
+seqs = [
+    "CGTCAATCTATCGAAGCATACGCGGGCAGAGCCGAAGACCTCGGCAATCCA",
+    "CCACGTCAATCTATCGAAGCATACGCGGCAGCCGAACTCGACCTCGGCAATCAC",
+    "CGTCAATCTATCGAAGCATACGCGGCAGAGCCCGGAAGACCTCGGCAATCAC",
+    "CGTCAATGCTAGTCGAAGCAGCTGCGGCAGAGCCGAAGACCTCGGCAATCAC",
+    "CGTCAATCTATCGAAGCATTCTACGCGGCAGAGCCGACCTCGGCAATCAC",
+    "CGTCAATCTAGAAGCATACGCGGCAAGAGCCGAAGACCTCGGCCAATCAC",
+    "CGTCAATCTATCGGTAAAGCATACGCTCTGTAGCCGAAGACCTCGGCAATCAC",
+    "CGTCAATCTATCTTCAAGCATACGCGGCAGAGCCGAAGACCTCGGCAATC",
+    "CGTCAATGGATCGAGTACGCGGCAGAGCCGAAGACCTCGGCAATCAC",
+    "CGTCAATCTAATCGAAGCATACGCGGCAGAGCCGTCTACCTCGGCAATCACGT",
 ]
 
-#@parameters of msa
-#seqs: multiple sequences
-out_cons=True # generate consensus sequence, set as False to disable
-out_msa=True # generate row-column multiple sequence alignment, set as False to disable
+# @parameters of msa
+# seqs: multiple sequences
+out_cons = True  # generate consensus sequence, set as False to disable
+out_msa = True  # generate row-column multiple sequence alignment, set as False to disable
 # out_pog="example2.png" # generate plot of alignment graph, set None to disable
 max_n_cons = 1
 
 # multiple sequence alignment for 'seqs'
-res=a.msa(seqs, out_cons=out_cons, out_msa=out_msa, max_n_cons=max_n_cons) #, out_pog=out_pog)
+res = a.msa(seqs, out_cons=out_cons, out_msa=out_msa, max_n_cons=max_n_cons)  # , out_pog=out_pog)
 
 # output result
 if out_cons:
     for i in range(res.n_cons):
-        print(">Consensus_sequence_{}".format(i+1))
+        print(f">Consensus_sequence_{i + 1}")
         print(res.cons_seq[i])
 if out_msa:
     for i in range(res.n_seq):
-        print(">Seq_{}".format(i+1))
+        print(f">Seq_{i + 1}")
         print(res.msa_seq[i])
     for i in range(res.n_cons):
-        print(">Consensus_sequence_{}".format(i+1))
-        print(res.msa_seq[res.n_seq+i])
+        print(f">Consensus_sequence_{i + 1}")
+        print(res.msa_seq[res.n_seq + i])
+
+
+print("\n\n==== Third exmaple: quality-weighted consensus ====\n")
+seqs = [
+    "ACGT",
+    "ACGT",
+    "ACGA",
+]
+
+# Per-base Phred qualities. This matches the shape returned by
+# Biopython's record.letter_annotations["phred_quality"] for FASTQ input.
+qscores = [
+    [40, 40, 40, 40],
+    [35, 35, 35, 35],
+    [30, 30, 30, 5],
+]
+
+res = a.msa(seqs, out_cons=True, out_msa=False, qscores=qscores)
+
+for i in range(res.n_cons):
+    print(f"@Consensus_sequence_{i + 1}")
+    print(res.cons_seq[i])
+    print("+")
+    print(res.cons_qv[i])

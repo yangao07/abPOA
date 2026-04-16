@@ -76,9 +76,9 @@ This constructs a multiple sequence alignment handler of pyabpoa, it accepts the
 * **extra_f**: second adaptive banding paremete; the number of extra bases added on both sites of the band is *b+f\*L*, where *L* is the length of the aligned sequence; default : **0.01**
 * **cons_algrm**: consensus calling algorithm. 'HB': heaviest bunlding, 'MF': most frequent bases; default: **'HB'**
 
-The `msa_aligner` handler provides one method `msa` which performs multiple sequence alignment and takes four arguments:
+The `msa_aligner` handler provides one method `msa` which performs multiple sequence alignment and accepts the following arguments:
 ```
-pyabpoa.msa_aligner.msa(seqs, out_cons, out_msa, out_pog='', incr_fn='')
+pyabpoa.msa_aligner.msa(seqs, out_cons, out_msa, out_pog='', incr_fn='', qscores=None)
 ```
 
 * **seqs**: a list variable containing a set of input sequences; **positional**
@@ -88,12 +88,15 @@ pyabpoa.msa_aligner.msa(seqs, out_cons, out_msa, out_pog='', incr_fn='')
 * **min_freq**: minimum frequency of each consensus to output (effective when **max_n_cons** > 1); default: **0.3**
 * **out_pog**: name of a file (`.png` or `.pdf`) to store the plot of the final alignment graph; default: **''**
 * **incr_fn**: name of an existing graph (GFA) or MSA (FASTA) file, incrementally align sequence to this graph/MSA; default: **''**
+* **qscores**: optional per-sequence quality information used to weight the consensus graph. Each entry must match the corresponding sequence length and should be a list of integer Phred scores, e.g. `record.letter_annotations["phred_quality"]` from Biopython; default: **None**
+
+When `qscores` is provided, pyabpoa enables quality-weighted consensus (`use_qv`) for that run. This is effective for heaviest-bundling consensus (`cons_algrm='HB'`), matching the CLI `-Q/--use-qual-weight` behavior.
 
 `msa_aligner` also provides three methods for incrementally adding sequences to graph/MSA:
 
 ```
-pyabpoa.msa_aligner.msa_align(seqs, out_cons, out_msa, max_n_cons=1, min_freq=0.25, incr_fn=b'')
-pyabpoa.msa_aligner.msa_add(new_seqs)
+pyabpoa.msa_aligner.msa_align(seqs, out_cons, out_msa, max_n_cons=1, min_freq=0.25, incr_fn=b'', qscores=None)
+pyabpoa.msa_aligner.msa_add(new_seqs, qscores=None)
 pyabpoa.msa_aligner.msa_output()
 ```
 
@@ -113,6 +116,7 @@ This class describes the information of the generated consensus sequence and the
 * **cons_len**: an array of consensus sequence length(s)
 * **cons_seq**: an array of consensus sequence(s)
 * **cons_cov**: an array of consensus sequence coverage for each base
+* **cons_qv**: an array of consensus quality strings in FASTQ encoding
 * **msa_len**: size of each row in the RC-MSA
 * **msa_seq**: an array containing `n_seq`+`n_cons` strings that demonstrates the RC-MSA, each consisting of one input sequence and several `-` indicating the alignment gaps. 
 
