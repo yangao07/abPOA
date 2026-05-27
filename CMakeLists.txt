@@ -1,6 +1,18 @@
 cmake_minimum_required(VERSION 3.2)
 project(abpoa LANGUAGES C VERSION 3.0.0)
 
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.21")
+    # PROJECT_IS_TOP_LEVEL is set automatically
+else()
+    if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+        set(PROJECT_IS_TOP_LEVEL TRUE)
+    else()
+        set(PROJECT_IS_TOP_LEVEL FALSE)
+    endif()
+endif()
+
+option(ABPOA_BUILD_EXE "Build the abpoa command-line executable" ${PROJECT_IS_TOP_LEVEL})
+
 include(GNUInstallDirs)
 find_package(ZLIB REQUIRED)
 
@@ -31,11 +43,11 @@ add_library(abpoa
 
 target_link_libraries(abpoa z pthread m)
 
-add_executable(abpoa_bin
-    src/abpoa.c)
-
-target_link_libraries(abpoa_bin abpoa)
-set_target_properties(abpoa_bin PROPERTIES OUTPUT_NAME abpoa)
+if(ABPOA_BUILD_EXE)
+    add_executable(abpoa_bin src/abpoa.c)
+    target_link_libraries(abpoa_bin abpoa)
+    set_target_properties(abpoa_bin PROPERTIES OUTPUT_NAME abpoa)
+endif()
 
 target_include_directories(abpoa PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
@@ -43,7 +55,9 @@ target_include_directories(abpoa PUBLIC
 
 
 install(TARGETS abpoa DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(TARGETS abpoa_bin DESTINATION ${CMAKE_INSTALL_BINDIR})
+if(ABPOA_BUILD_EXE)
+    install(TARGETS abpoa_bin DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN "*.h")
 
 # configure and install pkg-config file
