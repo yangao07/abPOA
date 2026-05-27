@@ -74,7 +74,10 @@ target_include_directories(abpoa
 
 # --- SIMD compilation strategy ---
 if(ABPOA_SIMD_DISPATCH AND _ABPOA_X86_64)
-    # Multi-ISA dispatch: compile align and dispatch sources 4x each
+    # Propagate PIC to OBJECT libraries so shared library builds work
+    get_target_property(_abpoa_pic abpoa POSITION_INDEPENDENT_CODE)
+
+    # Multi-ISA dispatch: compile align source 4x (once per ISA)
     set(_ABPOA_ISA_NAMES  sse2    sse41    avx2    avx512bw)
     set(_ABPOA_ISA_FLAGS  "-msse2" "-msse4.1" "-mavx2" "-mavx512bw")
     set(_ABPOA_ISA_EXTRAS "-U__SSE4_1__" "" "" "")
@@ -92,8 +95,9 @@ if(ABPOA_SIMD_DISPATCH AND _ABPOA_X86_64)
         list(GET _ABPOA_ISA_FLAGS  ${_idx} _isa_flag)
         list(GET _ABPOA_ISA_EXTRAS ${_idx} _isa_extra)
 
-        # Align SIMD object
         add_library(abpoa_align_${_isa_name} OBJECT src/abpoa_align_simd.c)
+        set_target_properties(abpoa_align_${_isa_name} PROPERTIES
+            POSITION_INDEPENDENT_CODE "${_abpoa_pic}")
         target_compile_options(abpoa_align_${_isa_name} PRIVATE
             -Wall -Wno-unused-function ${_isa_flag})
         if(_isa_extra)
@@ -105,23 +109,22 @@ if(ABPOA_SIMD_DISPATCH AND _ABPOA_X86_64)
             ${CMAKE_CURRENT_SOURCE_DIR}/include
             ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-        # Dispatch SIMD object
-        add_library(abpoa_dispatch_${_isa_name} OBJECT src/abpoa_dispatch_simd.c)
-        target_compile_options(abpoa_dispatch_${_isa_name} PRIVATE
-            -Wall -Wno-unused-function ${_isa_flag})
-        if(_isa_extra)
-            target_compile_options(abpoa_dispatch_${_isa_name} PRIVATE ${_isa_extra})
-        endif()
-        target_compile_definitions(abpoa_dispatch_${_isa_name} PRIVATE
-            ABPOA_SIMD_DISPATCH USE_SIMDE SIMDE_ENABLE_NATIVE_ALIASES)
-        target_include_directories(abpoa_dispatch_${_isa_name} PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/include
-            ${CMAKE_CURRENT_SOURCE_DIR}/src)
-
         target_sources(abpoa PRIVATE
-            $<TARGET_OBJECTS:abpoa_align_${_isa_name}>
-            $<TARGET_OBJECTS:abpoa_dispatch_${_isa_name}>)
+            $<TARGET_OBJECTS:abpoa_align_${_isa_name}>)
     endforeach()
+
+    # Dispatch source compiled once — contains only the runtime
+    # CPUID dispatcher, no ISA-specific instructions
+    add_library(abpoa_dispatch OBJECT src/abpoa_dispatch_simd.c)
+    set_target_properties(abpoa_dispatch PROPERTIES
+        POSITION_INDEPENDENT_CODE "${_abpoa_pic}")
+    target_compile_options(abpoa_dispatch PRIVATE -Wall -Wno-unused-function)
+    target_compile_definitions(abpoa_dispatch PRIVATE
+        ABPOA_SIMD_DISPATCH USE_SIMDE SIMDE_ENABLE_NATIVE_ALIASES)
+    target_include_directories(abpoa_dispatch PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    target_sources(abpoa PRIVATE $<TARGET_OBJECTS:abpoa_dispatch>)
 
 elseif(_ABPOA_AARCH64)
     # ARM64: single compile with SIMDE translating AVX2 to NEON
