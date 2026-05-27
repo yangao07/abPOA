@@ -3,12 +3,21 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
+#if SIZE_MAX <= 0xFFFFFFFFUL
+#define __KDQ_TYPE(type) \
+	typedef struct { \
+		size_t front, bits, count, mask; \
+		type *a; \
+	} kdq_##type##_t;
+#else
 #define __KDQ_TYPE(type) \
 	typedef struct { \
 		size_t front:58, bits:6, count, mask; \
 		type *a; \
 	} kdq_##type##_t;
+#endif
 
 #define kdq_t(type) kdq_##type##_t
 #define kdq_size(q) ((q)->count)
