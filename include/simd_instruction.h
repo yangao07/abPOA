@@ -49,9 +49,13 @@
 #define SIMD_AVX512F  0x100
 #define SIMD_AVX512BW 0x200
 
-// #define SIMDFree(x) _mm_free(x)
-// posix_memalign and free
-#define SIMDFree(x) free(x)
+// Platform-portable aligned allocation/deallocation
+#ifdef _MSC_VER
+  #include <malloc.h>
+  static void SIMDFree(void *ptr) { _aligned_free(ptr); }
+#else
+  static void SIMDFree(void *ptr) { free(ptr); }
+#endif
 
 // Shift, Blend, ... for 8/16 and 32/64
 #ifdef __AVX512BW__ // start of AVX512BW
@@ -416,30 +420,23 @@ extern "C" {
 
 // int simd_check(void);
 
-/*
 static void *SIMDMalloc(size_t size, size_t align) {
-    void *ret = (void*)_mm_malloc(size, align);
+#ifdef _MSC_VER
+    void *ret = _aligned_malloc(size, align);
     if (ret == NULL) {
-        fprintf(stderr, "[%s] mm_Malloc fail!\nSize: %ld\n", __func__, size);
+        fprintf(stderr, "[%s] _aligned_malloc fail! Size: %zu\n", __func__, size);
         exit(1);
     }
-    else return ret;
-}*/
-
-// use posix_memalign
-static void *SIMDMalloc(size_t size, size_t align) {
-    void *ret; int res;
-    res = posix_memalign(&ret, align, size);
+    return ret;
+#else
+    void *ret;
+    int res = posix_memalign(&ret, align, size);
     if (res != 0) {
-        char error[10];
-        if (res == EINVAL) strcpy(error, "EINVAR");
-        else if (res == ENOMEM)
-            strcpy(error, "ENOMEM");
-        else strcpy(error, "Unknown");
-        fprintf(stderr, "[%s] posix_memalign fail!\nSize: %ld, Error: %s\n", __func__, size, error);
+        fprintf(stderr, "[%s] posix_memalign fail! Size: %zu, Error: %d\n", __func__, size, res);
         exit(1);
     }
-    else return ret;
+    return ret;
+#endif
 }
 #ifdef __cplusplus
 }
