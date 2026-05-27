@@ -3,7 +3,7 @@ includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
 
 Name: abPOA
 Description: abPOA 
-Version: @abPOA_VERSION@
+Version: @PROJECT_VERSION@
 
 Libs: -L${libdir} -labpoa @abPOA_ADDITIONAL_LINK_LIBRARIES@
 Cflags: -I${includedir}

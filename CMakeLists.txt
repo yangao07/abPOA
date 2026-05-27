@@ -19,7 +19,7 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64)$")
     set(_ABPOA_X86_64 TRUE)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|ARM64)$")
     set(_ABPOA_AARCH64 TRUE)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(armv7|armv8)")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^armv7")
     set(_ABPOA_ARM32 TRUE)
 endif()
 
@@ -29,14 +29,9 @@ else()
     set(ABPOA_SIMD_DISPATCH OFF)
 endif()
 
-if(_ABPOA_AARCH64 OR _ABPOA_ARM32)
-    option(ABPOA_USE_SIMDE "Use SIMDE for cross-platform SIMD" ON)
-else()
-    option(ABPOA_USE_SIMDE "Use SIMDE for cross-platform SIMD" OFF)
-endif()
-
 include(GNUInstallDirs)
 find_package(ZLIB REQUIRED)
+find_package(Threads REQUIRED)
 
 if(PROJECT_IS_TOP_LEVEL)
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
@@ -45,7 +40,9 @@ if(PROJECT_IS_TOP_LEVEL)
 endif()
 
 # build abPOA as a static library by default
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build all libraries as shared")
+if(NOT DEFINED BUILD_SHARED_LIBS)
+    set(BUILD_SHARED_LIBS OFF)
+endif()
 if(PROJECT_IS_TOP_LEVEL)
     set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 endif()
@@ -66,7 +63,7 @@ set(ABPOA_BASE_SOURCES
 add_library(abpoa ${ABPOA_BASE_SOURCES})
 target_compile_options(abpoa PRIVATE -Wall -Wno-unused-function)
 target_compile_definitions(abpoa PRIVATE USE_SIMDE SIMDE_ENABLE_NATIVE_ALIASES)
-target_link_libraries(abpoa z pthread m)
+target_link_libraries(abpoa ZLIB::ZLIB Threads::Threads m)
 
 target_include_directories(abpoa
     PUBLIC
@@ -82,7 +79,12 @@ if(ABPOA_SIMD_DISPATCH AND _ABPOA_X86_64)
     set(_ABPOA_ISA_FLAGS  "-msse2" "-msse4.1" "-mavx2" "-mavx512bw")
     set(_ABPOA_ISA_EXTRAS "-U__SSE4_1__" "" "" "")
 
-    list(LENGTH _ABPOA_ISA_NAMES _isa_count)
+    list(LENGTH _ABPOA_ISA_NAMES  _isa_count)
+    list(LENGTH _ABPOA_ISA_FLAGS  _n_flags)
+    list(LENGTH _ABPOA_ISA_EXTRAS _n_extras)
+    if(NOT _isa_count EQUAL _n_flags OR NOT _isa_count EQUAL _n_extras)
+        message(FATAL_ERROR "ISA name/flag/extra lists have different lengths")
+    endif()
     math(EXPR _isa_last "${_isa_count} - 1")
 
     foreach(_idx RANGE 0 ${_isa_last})
@@ -125,14 +127,14 @@ elseif(_ABPOA_AARCH64)
     # ARM64: single compile with SIMDE translating AVX2 to NEON
     target_sources(abpoa PRIVATE src/abpoa_align_simd.c)
     if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-        target_compile_options(abpoa PRIVATE -mcpu=apple-m1)
+        target_compile_options(abpoa PRIVATE -mcpu=native)
     else()
         target_compile_options(abpoa PRIVATE -march=armv8-a+simd)
     endif()
     target_compile_definitions(abpoa PRIVATE __AVX2__)
 
 elseif(_ABPOA_ARM32)
-    # ARMv7/v8 32-bit: single compile with NEON
+    # ARMv7 32-bit: single compile with NEON
     target_sources(abpoa PRIVATE src/abpoa_align_simd.c)
     target_compile_options(abpoa PRIVATE -march=armv7-a -mfpu=neon)
     target_compile_definitions(abpoa PRIVATE __AVX2__)
