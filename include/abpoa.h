@@ -2,7 +2,6 @@
 #define ABPOA_H
 
 #include <stdint.h>
-#include "simd_instruction.h"
 
 #define ABPOA_GLOBAL_MODE 0
 #define ABPOA_LOCAL_MODE  1
@@ -134,10 +133,7 @@ typedef struct {
     uint8_t *is_rc;
 } abpoa_seq_t;
 
-typedef struct {
-    SIMDi *s_mem; uint64_t s_msize; // qp, DP_HE, dp_f OR qp, DP_H, dp_f : based on (qlen, num_of_value, m, node_n)
-    int *dp_beg, *dp_end, *dp_beg_sn, *dp_end_sn, rang_m; // if band : based on (node_m)
-} abpoa_simd_matrix_t;
+typedef struct abpoa_simd_matrix_t abpoa_simd_matrix_t;
 
 typedef struct {
     abpoa_graph_t *abg;

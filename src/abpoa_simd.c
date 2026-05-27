@@ -4,7 +4,7 @@
 #include "abpoa.h"
 #include "abpoa_align.h"
 #include "abpoa_simd.h"
-#include "simd_instruction.h"
+#include "abpoa_simd_internal.h"
 #include "utils.h"
 
 #define simd_abpoa_print_cg_matrix(score_t, beg_index, end_index) {                                          \
