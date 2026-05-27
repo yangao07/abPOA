@@ -22,6 +22,9 @@ static inline int ilog2_32(uint32_t v) {
     return (t = v>>8) ? 8 + LogTable256[t] : LogTable256[v];
 }
 
+#define mm_sketch     abpoa_mm_sketch
+#define mm_aa_sketch  abpoa_mm_aa_sketch
+
 #define ab_sort_key_128x(a) ((a).x)
 #define rs_insertsort_ab_128x abpoa_rs_insertsort_ab_128x
 #define rs_sort_ab_128x       abpoa_rs_sort_ab_128x
