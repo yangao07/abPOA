@@ -17,6 +17,7 @@
 
 #ifndef _MSC_VER
 // adapted from https://github.com/01org/linux-sgx/blob/master/common/inc/internal/linux/cpuid_gnu.h
+#define __cpuidex abpoa___cpuidex
 void __cpuidex(int cpuid[4], int func_id, int subfunc_id) {
 #if defined(__x86_64__)
 	__asm__ volatile ("cpuid"
