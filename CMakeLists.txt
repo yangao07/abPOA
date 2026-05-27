@@ -15,7 +15,9 @@ option(ABPOA_BUILD_EXE "Build the abpoa command-line executable" ${PROJECT_IS_TO
 option(ABPOA_INSTALL "Generate install targets" ${PROJECT_IS_TOP_LEVEL})
 
 # Auto-detect architecture
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64)$")
+if(EMSCRIPTEN OR CMAKE_SYSTEM_PROCESSOR MATCHES "^wasm")
+    set(_ABPOA_WASM TRUE)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64)$")
     set(_ABPOA_X86_64 TRUE)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|ARM64)$")
     set(_ABPOA_AARCH64 TRUE)
@@ -147,6 +149,12 @@ elseif(_ABPOA_ARM32)
     target_sources(abpoa PRIVATE src/abpoa_align_simd.c)
     target_compile_options(abpoa PRIVATE -march=armv7-a -mfpu=neon)
     target_compile_definitions(abpoa PRIVATE __AVX2__)
+
+elseif(_ABPOA_WASM)
+    # WASM SIMD128: 128-bit vectors, maps to SSE2 path through SIMDE
+    # (USE_SIMDE and SIMDE_ENABLE_NATIVE_ALIASES set on base target above)
+    target_sources(abpoa PRIVATE src/abpoa_align_simd.c)
+    target_compile_options(abpoa PRIVATE -msimd128)
 
 else()
     # Fallback: single compile with -march=native
