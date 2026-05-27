@@ -13,9 +13,15 @@ trap "rm -rf $BUILD_DIR" EXIT
 ERRORS=0
 
 # Test 1: Build with ABPOA_BUILD_EXE=OFF
-cmake -B "$BUILD_DIR" -S . -DABPOA_BUILD_EXE=OFF \
-      -DCMAKE_BUILD_TYPE=Release >/dev/null 2>&1 || true
-cmake --build "$BUILD_DIR" -j$(nproc) >/dev/null 2>&1 || true
+if ! cmake -B "$BUILD_DIR" -S . -DABPOA_BUILD_EXE=OFF \
+      -DCMAKE_BUILD_TYPE=Release >/dev/null 2>&1; then
+    echo "FAIL: cmake configure failed (ABPOA_BUILD_EXE=OFF)"
+    exit 1
+fi
+if ! cmake --build "$BUILD_DIR" -j$(nproc) >/dev/null 2>&1; then
+    echo "FAIL: cmake build failed (ABPOA_BUILD_EXE=OFF)"
+    exit 1
+fi
 
 # Library must exist
 if find "$BUILD_DIR" -name 'libabpoa.a' | grep -q .; then
@@ -35,8 +41,14 @@ fi
 BUILD_DIR2="/tmp/abpoa_build_default_$$"
 trap "rm -rf $BUILD_DIR $BUILD_DIR2" EXIT
 
-cmake -B "$BUILD_DIR2" -S . -DCMAKE_BUILD_TYPE=Release >/dev/null 2>&1 || true
-cmake --build "$BUILD_DIR2" -j$(nproc) >/dev/null 2>&1 || true
+if ! cmake -B "$BUILD_DIR2" -S . -DCMAKE_BUILD_TYPE=Release >/dev/null 2>&1; then
+    echo "FAIL: cmake configure failed (default build)"
+    exit 1
+fi
+if ! cmake --build "$BUILD_DIR2" -j$(nproc) >/dev/null 2>&1; then
+    echo "FAIL: cmake build failed (default build)"
+    exit 1
+fi
 
 if ! find "$BUILD_DIR2" -name 'abpoa' -type f -executable | grep -q .; then
     echo "FAIL: abpoa binary not found in default build (should be built)"

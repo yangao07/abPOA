@@ -421,14 +421,14 @@ extern "C" {
 // int simd_check(void);
 
 static void *SIMDMalloc(size_t size, size_t align) {
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
     void *ret = _aligned_malloc(size, align);
     if (ret == NULL) {
         fprintf(stderr, "[%s] _aligned_malloc fail! Size: %zu\n", __func__, size);
         exit(1);
     }
     return ret;
-#else
+#elif defined(__unix__) || defined(__APPLE__) || defined(__CYGWIN__)
     void *ret;
     int res = posix_memalign(&ret, align, size);
     if (res != 0) {
@@ -436,6 +436,16 @@ static void *SIMDMalloc(size_t size, size_t align) {
         exit(1);
     }
     return ret;
+#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+    size_t padded = (size + align - 1) & ~(align - 1);
+    void *ret = aligned_alloc(align, padded);
+    if (ret == NULL) {
+        fprintf(stderr, "[%s] aligned_alloc fail! Size: %zu\n", __func__, size);
+        exit(1);
+    }
+    return ret;
+#else
+    #error "No aligned allocation available (need POSIX, MSVC, or C11)"
 #endif
 }
 #ifdef __cplusplus

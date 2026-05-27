@@ -62,7 +62,6 @@ set(ABPOA_BASE_SOURCES
 
 add_library(abpoa ${ABPOA_BASE_SOURCES})
 target_compile_options(abpoa PRIVATE -Wall -Wno-unused-function)
-target_compile_definitions(abpoa PRIVATE USE_SIMDE SIMDE_ENABLE_NATIVE_ALIASES)
 target_link_libraries(abpoa ZLIB::ZLIB Threads::Threads m)
 
 target_include_directories(abpoa
@@ -71,6 +70,13 @@ target_include_directories(abpoa
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+# SIMDE definitions only needed when NOT using x86_64 multi-ISA dispatch
+# (dispatch mode compiles SIMD sources as separate OBJECT libraries
+# that carry their own definitions; base sources use native <immintrin.h>)
+if(NOT (ABPOA_SIMD_DISPATCH AND _ABPOA_X86_64))
+    target_compile_definitions(abpoa PRIVATE USE_SIMDE SIMDE_ENABLE_NATIVE_ALIASES)
+endif()
 
 # --- SIMD compilation strategy ---
 if(ABPOA_SIMD_DISPATCH AND _ABPOA_X86_64)
