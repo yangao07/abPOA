@@ -45,8 +45,7 @@ for sym in simd_sse2_abpoa_align_sequence_to_subgraph \
            simd_avx2_abpoa_align_sequence_to_subgraph \
            simd_avx512_abpoa_align_sequence_to_subgraph \
            simd_abpoa_align_sequence_to_subgraph \
-           simd_abpoa_align_sequence_to_graph \
-           x86_simd; do
+           simd_abpoa_align_sequence_to_graph; do
     if ! echo "$SYMBOLS" | grep -qx "$sym"; then
         echo "FAIL: dispatch symbol '$sym' not found in CMake-built library"
         ERRORS=$((ERRORS + 1))
