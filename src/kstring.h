@@ -51,6 +51,15 @@
  * and either ownership of the underlying buffer should be given away before
  * the object disappears (see ks_release() below) or the kstring_t should be
  * destroyed with  free(str.s);  */
+#define kvsprintf   abpoa_kvsprintf
+#define ksprintf    abpoa_ksprintf
+#define ksplit_core abpoa_ksplit_core
+#define kstrstr     abpoa_kstrstr
+#define kstrnstr    abpoa_kstrnstr
+#define kmemmem     abpoa_kmemmem
+#define kstrtok     abpoa_kstrtok
+#define kgetline    abpoa_kgetline
+
 #ifndef KSTRING_T
 #define KSTRING_T kstring_t
 typedef struct __kstring_t {

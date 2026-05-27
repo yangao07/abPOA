@@ -3,6 +3,15 @@
 
 #include <stddef.h> /* for size_t */
 
+#define kmalloc    abpoa_kmalloc
+#define krealloc   abpoa_krealloc
+#define kcalloc    abpoa_kcalloc
+#define kfree      abpoa_kfree
+#define km_init    abpoa_km_init
+#define km_init2   abpoa_km_init2
+#define km_destroy abpoa_km_destroy
+#define km_stat    abpoa_km_stat
+
 #ifdef __cplusplus
 extern "C" {
 #endif
