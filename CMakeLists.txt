@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.10)
 project(abpoa LANGUAGES C VERSION 3.0.0)
 
 if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.21")
