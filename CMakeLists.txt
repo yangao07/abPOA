@@ -85,23 +85,36 @@ if(ABPOA_SIMD_DISPATCH AND _ABPOA_X86_64)
     # Propagate PIC to OBJECT libraries so shared library builds work
     get_target_property(_abpoa_pic abpoa POSITION_INDEPENDENT_CODE)
 
-    # Multi-ISA dispatch: compile align source 4x (once per ISA)
-    set(_ABPOA_ISA_NAMES  sse2    sse41    avx2    avx512bw)
-    set(_ABPOA_ISA_FLAGS  "-msse2" "-msse4.1" "-mavx2" "-mavx512bw")
-    set(_ABPOA_ISA_EXTRAS "-U__SSE4_1__" "" "" "")
+    # Multi-ISA dispatch: compile align source 4x (once per ISA).
+    # Each lower-ISA build must explicitly disable higher ISAs — otherwise
+    # a toolchain baseline (e.g. -march=x86-64-v3, vcpkg/conan triplet,
+    # distro CFLAGS) that pre-defines __AVX2__/__AVX512BW__ leaks through
+    # -msse2/-msse4.1, makes the function-name selector in
+    # abpoa_align_simd.c pick the wrong branch, and produces e.g.
+    # simd_avx2_* symbols in the SSE2 object — breaking the dispatch link.
+    # -mno-* both undefines the matching predefined macros on GCC/Clang
+    # and prevents higher-ISA instructions from leaking into the object.
+    set(_ABPOA_ISA_NAMES sse2 sse41 avx2 avx512bw)
 
-    list(LENGTH _ABPOA_ISA_NAMES  _isa_count)
-    list(LENGTH _ABPOA_ISA_FLAGS  _n_flags)
-    list(LENGTH _ABPOA_ISA_EXTRAS _n_extras)
-    if(NOT _isa_count EQUAL _n_flags OR NOT _isa_count EQUAL _n_extras)
-        message(FATAL_ERROR "ISA name/flag/extra lists have different lengths")
-    endif()
-    math(EXPR _isa_last "${_isa_count} - 1")
+    set(_ABPOA_FLAGS_sse2     -msse2)
+    set(_ABPOA_FLAGS_sse41    -msse4.1)
+    set(_ABPOA_FLAGS_avx2     -mavx2)
+    set(_ABPOA_FLAGS_avx512bw -mavx512bw)
 
-    foreach(_idx RANGE 0 ${_isa_last})
-        list(GET _ABPOA_ISA_NAMES  ${_idx} _isa_name)
-        list(GET _ABPOA_ISA_FLAGS  ${_idx} _isa_flag)
-        list(GET _ABPOA_ISA_EXTRAS ${_idx} _isa_extra)
+    set(_ABPOA_EXTRAS_sse2     -mno-avx512bw -mno-avx2 -mno-avx -mno-sse4.2 -mno-sse4.1 -U__SSE4_1__)
+    set(_ABPOA_EXTRAS_sse41    -mno-avx512bw -mno-avx2 -mno-avx)
+    set(_ABPOA_EXTRAS_avx2     -mno-avx512bw)
+    set(_ABPOA_EXTRAS_avx512bw "")
+
+    foreach(_isa_name IN LISTS _ABPOA_ISA_NAMES)
+        if(NOT DEFINED _ABPOA_FLAGS_${_isa_name})
+            message(FATAL_ERROR "Missing _ABPOA_FLAGS_${_isa_name}")
+        endif()
+        if(NOT DEFINED _ABPOA_EXTRAS_${_isa_name})
+            message(FATAL_ERROR "Missing _ABPOA_EXTRAS_${_isa_name}")
+        endif()
+        set(_isa_flag  ${_ABPOA_FLAGS_${_isa_name}})
+        set(_isa_extra ${_ABPOA_EXTRAS_${_isa_name}})
 
         add_library(abpoa_align_${_isa_name} OBJECT src/abpoa_align_simd.c)
         set_target_properties(abpoa_align_${_isa_name} PROPERTIES
