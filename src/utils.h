@@ -37,6 +37,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <limits.h>
 #include <zlib.h>
 #include <sys/resource.h>
 #include <sys/time.h>
