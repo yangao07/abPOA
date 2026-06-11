@@ -35,7 +35,13 @@ fi
 
 # Compile and run the alignment verification test
 if [ -f tests/test_aligned_alloc.c ]; then
-    if gcc -march=native tests/test_aligned_alloc.c -I src -I include \
+    ARCH=$(uname -m)
+    if [ "$ARCH" = "x86_64" ] || [ "$ARCH" = "amd64" ]; then
+        EXTRA_DEFS=""
+    else
+        EXTRA_DEFS="-DUSE_SIMDE -DSIMDE_ENABLE_NATIVE_ALIASES"
+    fi
+    if gcc -march=native $EXTRA_DEFS tests/test_aligned_alloc.c -I src -I include \
            -o /tmp/test_aligned_alloc 2>/tmp/test_aligned_alloc.err; then
         if ! /tmp/test_aligned_alloc; then
             echo "FAIL: aligned allocation test failed at runtime"

@@ -14,7 +14,7 @@ if [ ! -f "$LIB" ]; then
     exit 1
 fi
 
-SYMBOLS=$(nm -g "$LIB" 2>/dev/null | grep " T " | awk '{print $3}')
+SYMBOLS=$(nm -g "$LIB" 2>/dev/null | grep " T " | awk '{print $3}' | sed 's/^_//')
 ERRORS=0
 
 # These bare symbols must NOT appear

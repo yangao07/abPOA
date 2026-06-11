@@ -18,7 +18,7 @@ if ! cmake -B "$BUILD_DIR" -S . -DABPOA_BUILD_EXE=OFF \
     echo "FAIL: cmake configure failed (ABPOA_BUILD_EXE=OFF)"
     exit 1
 fi
-if ! cmake --build "$BUILD_DIR" -j$(nproc) >/dev/null 2>&1; then
+if ! cmake --build "$BUILD_DIR" -j$(sysctl -n hw.logicalcpu 2>/dev/null || nproc 2>/dev/null || echo 4) >/dev/null 2>&1; then
     echo "FAIL: cmake build failed (ABPOA_BUILD_EXE=OFF)"
     exit 1
 fi
@@ -32,7 +32,7 @@ else
 fi
 
 # Binary must NOT exist
-if find "$BUILD_DIR" -name 'abpoa' -type f -executable | grep -q .; then
+if find "$BUILD_DIR" -name 'abpoa' -type f -perm +111 | grep -q .; then
     echo "FAIL: abpoa binary found in lib-only build (should be disabled)"
     ERRORS=$((ERRORS + 1))
 fi
@@ -45,12 +45,12 @@ if ! cmake -B "$BUILD_DIR2" -S . -DCMAKE_BUILD_TYPE=Release >/dev/null 2>&1; the
     echo "FAIL: cmake configure failed (default build)"
     exit 1
 fi
-if ! cmake --build "$BUILD_DIR2" -j$(nproc) >/dev/null 2>&1; then
+if ! cmake --build "$BUILD_DIR2" -j$(sysctl -n hw.logicalcpu 2>/dev/null || nproc 2>/dev/null || echo 4) >/dev/null 2>&1; then
     echo "FAIL: cmake build failed (default build)"
     exit 1
 fi
 
-if ! find "$BUILD_DIR2" -name 'abpoa' -type f -executable | grep -q .; then
+if ! find "$BUILD_DIR2" -name 'abpoa' -type f -perm +111 | grep -q .; then
     echo "FAIL: abpoa binary not found in default build (should be built)"
     ERRORS=$((ERRORS + 1))
 fi
