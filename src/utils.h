@@ -28,8 +28,16 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#define cputime          abpoa_cputime
+#define realtime         abpoa_realtime
+#define peakrss          abpoa_peakrss
+#define usr_sys_cputime  abpoa_usr_sys_cputime
+#define print_format_time abpoa_print_format_time
+#define get_cur_time     abpoa_get_cur_time
+
 #include <stdint.h>
 #include <stdio.h>
+#include <limits.h>
 #include <zlib.h>
 #include <sys/resource.h>
 #include <sys/time.h>

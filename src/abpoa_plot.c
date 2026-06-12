@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "abpoa.h"
 #include "abpoa_graph.h"
 #include "utils.h"

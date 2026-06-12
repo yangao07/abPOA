@@ -22,13 +22,25 @@ static inline int ilog2_32(uint32_t v) {
     return (t = v>>8) ? 8 + LogTable256[t] : LogTable256[v];
 }
 
+#define mm_sketch     abpoa_mm_sketch
+#define mm_aa_sketch  abpoa_mm_aa_sketch
+
 #define ab_sort_key_128x(a) ((a).x)
+#define rs_insertsort_ab_128x abpoa_rs_insertsort_ab_128x
+#define rs_sort_ab_128x       abpoa_rs_sort_ab_128x
+#define radix_sort_ab_128x    abpoa_radix_sort_ab_128x
 KRADIX_SORT_INIT(ab_128x, ab_u128_t, ab_sort_key_128x, 8)
 
 #define ab_sort_key_128y(a) ((a).y)
+#define rs_insertsort_ab_128y abpoa_rs_insertsort_ab_128y
+#define rs_sort_ab_128y       abpoa_rs_sort_ab_128y
+#define radix_sort_ab_128y    abpoa_radix_sort_ab_128y
 KRADIX_SORT_INIT(ab_128y, ab_u128_t, ab_sort_key_128y, 8)
 
 #define ab_sort_key_64(a) (a)
+#define rs_insertsort_64  abpoa_rs_insertsort_64
+#define rs_sort_64        abpoa_rs_sort_64
+#define radix_sort_64     abpoa_radix_sort_64
 KRADIX_SORT_INIT(64, uint64_t, ab_sort_key_64, 8)
 
 /* from lh3/minimap2/sketch.c */

@@ -3,7 +3,7 @@
 #include <assert.h>
 #include "abpoa_align.h"
 #include "abpoa_simd.h"
-#include "simd_instruction.h"
+#include "abpoa_simd_internal.h"
 #include "utils.h"
 
 // #ifdef ABPOA_SIMD_DISPATCH
