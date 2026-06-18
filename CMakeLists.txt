@@ -23,6 +23,8 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|ARM64)$")
     set(_ABPOA_AARCH64 TRUE)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^armv7")
     set(_ABPOA_ARM32 TRUE)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(riscv64|riscv32|riscv)")
+    set(_ABPOA_RISCV TRUE)
 endif()
 
 if(_ABPOA_X86_64)
@@ -168,6 +170,12 @@ elseif(_ABPOA_WASM)
     # (USE_SIMDE and SIMDE_ENABLE_NATIVE_ALIASES set on base target above)
     target_sources(abpoa PRIVATE src/abpoa_align_simd.c)
     target_compile_options(abpoa PRIVATE -msimd128)
+
+elseif(_ABPOA_RISCV)
+    # RISC-V: use the existing SIMDE-backed portable SIMD path without
+    # injecting host-specific march flags or x86 dispatch machinery.
+    message(STATUS "RISC-V target detected; building abPOA with the portable SIMDE path")
+    target_sources(abpoa PRIVATE src/abpoa_align_simd.c)
 
 else()
     # Fallback: single compile with -march=native
