@@ -172,10 +172,13 @@ elseif(_ABPOA_WASM)
     target_compile_options(abpoa PRIVATE -msimd128)
 
 elseif(_ABPOA_RISCV)
-    # RISC-V: use the existing SIMDE-backed portable SIMD path without
-    # injecting host-specific march flags or x86 dispatch machinery.
+    # RISC-V: like ARM, use the existing SIMDE-backed AVX2-flavored path
+    # without injecting host-specific march flags or x86 dispatch machinery.
+    # Leaving __AVX2__ undefined falls back to the 128-bit SSE2-style path,
+    # which is not the project's validated portable configuration.
     message(STATUS "RISC-V target detected; building abPOA with the portable SIMDE path")
     target_sources(abpoa PRIVATE src/abpoa_align_simd.c)
+    target_compile_definitions(abpoa PRIVATE __AVX2__)
 
 else()
     # Fallback: single compile with -march=native

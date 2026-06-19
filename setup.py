@@ -27,7 +27,7 @@ else:
     elif machine_arch in ["aarch32"]:
         simd_flag = ['-march=armv8-a+simd', '-mfpu=auto -D__AVX2__']
     elif machine_arch.startswith("riscv"):
-        simd_flag = []
+        simd_flag = ['-D__AVX2__']
     else: # x86_64
         simd_flag=['-march=native']
         if os.getenv('SSE4', False):

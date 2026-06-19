@@ -73,7 +73,7 @@ endif
 endif
 
 ifneq ($(filter riscv%,$(ARCH)),)
-	SIMD_FLAG =
+	SIMD_FLAG = -D__AVX2__
 	OBJS = ${BASIC_OBJS} $(addprefix $(SRC_DIR)/, abpoa_align_simd.o)
 endif
 
