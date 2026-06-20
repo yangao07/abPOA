@@ -72,6 +72,11 @@ else
 endif
 endif
 
+ifneq ($(filter riscv%,$(ARCH)),)
+	SIMD_FLAG = -D__AVX2__
+	OBJS = ${BASIC_OBJS} $(addprefix $(SRC_DIR)/, abpoa_align_simd.o)
+endif
+
 # override if user specified
 ifneq ($(armv7),) # for ARMv7
 	SIMD_FLAG   =  -march=armv7-a -mfpu=neon -D__AVX2__

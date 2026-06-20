@@ -79,6 +79,9 @@ significant speed improvement over existing tools.
 
 abPOA supports three alignment modes (global, local, extension) and flexible scoring schemes that allow linear, affine and convex gap penalties. 
 It right now supports SSE2/SSE4.1/AVX2 vectorization.
+For `riscv64`, the current portability path uses the existing SIMDE-backed
+AVX2-style generic build rather than x86 runtime dispatch or a dedicated RVV
+backend.
 
 For more information, please refer to our [paper](https://dx.doi.org/10.1093/bioinformatics/btaa963) published in Bioinformatics.
 
