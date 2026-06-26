@@ -312,7 +312,7 @@ abPOA also provides Python bindings to all the primary C APIs. Refer to [python/
 The evaluation datasets and scripts used in [abPOA paper](https://dx.doi.org/10.1093/bioinformatics/btaa963) can be found in [abPOA-v1.0.5](https://github.com/yangao07/abPOA/releases/tag/v1.0.5).
 
 ## Contact
-Yan Gao yangao@ds.dfci.harvard.edu
+Yan Gao yangao07@hit.edu.cn
 
 Yi Xing xingyi@chop.edu
 
