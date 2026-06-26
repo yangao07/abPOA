@@ -65,7 +65,7 @@ else
 fi
 
 # Compare output with Makefile reference
-CMAKE_BIN=$(find "$BUILD_DIR" -name 'abpoa' -type f -perm +111 | head -1)
+CMAKE_BIN=$(find "$BUILD_DIR" -name 'abpoa' -type f -exec test -x {} \; -print | head -1)
 if [ -z "$CMAKE_BIN" ]; then
     echo "FAIL: abpoa binary not found in CMake build"
     ERRORS=$((ERRORS + 1))

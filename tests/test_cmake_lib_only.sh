@@ -32,7 +32,7 @@ else
 fi
 
 # Binary must NOT exist
-if find "$BUILD_DIR" -name 'abpoa' -type f -perm +111 | grep -q .; then
+if find "$BUILD_DIR" -name 'abpoa' -type f -exec test -x {} \; -print | grep -q .; then
     echo "FAIL: abpoa binary found in lib-only build (should be disabled)"
     ERRORS=$((ERRORS + 1))
 fi
@@ -50,7 +50,7 @@ if ! cmake --build "$BUILD_DIR2" -j$(sysctl -n hw.logicalcpu 2>/dev/null || npro
     exit 1
 fi
 
-if ! find "$BUILD_DIR2" -name 'abpoa' -type f -perm +111 | grep -q .; then
+if ! find "$BUILD_DIR2" -name 'abpoa' -type f -exec test -x {} \; -print | grep -q .; then
     echo "FAIL: abpoa binary not found in default build (should be built)"
     ERRORS=$((ERRORS + 1))
 fi
