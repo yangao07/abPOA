@@ -16,8 +16,8 @@ char PROG[20] = "abpoa";
 #define _bO BOLD UNDERLINE "O" NONE
 #define _bA BOLD UNDERLINE "A" NONE
 char DESCRIPTION[100] = _ba "daptive " _bb "anded " _bP "artial " _bO "rder " _bA "lignment";
-char VERSION[20] = "1.5.6";
-char CONTACT[30] = "yangao@ds.dfci.harvard.edu";
+char VERSION[20] = "1.5.7";
+char CONTACT[30] = "yangao07@hit.edu.cn";
 
 const struct option abpoa_long_opt [] = {
     { "align-mode", 1, NULL, 'm' },

@@ -7,9 +7,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyabpoa"
-version = "1.5.6"
+version = "1.5.7"
 urls = {Project-URL = "https://github.com/yangao07/abPOA"}
-authors = [{name = "Yan Gao", email = "yangao@ds.dfci.harvard.edu"}]
+authors = [{name = "Yan Gao", email = "yangao07@hit.edu.cn"}]
 license = "MIT"
 keywords = ["multiple-sequence-alignment", "partial-order-graph-alignment"]
 description = "pyabpoa: SIMD-based partial order alignment using adaptive band"
