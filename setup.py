@@ -25,7 +25,7 @@ else:
     if machine_arch in ["aarch64", "arm64"]:
         simd_flag = ['-march=armv8-a+simd', '-D__AVX2__']
     elif machine_arch in ["aarch32"]:
-        simd_flag = ['-march=armv8-a+simd', '-mfpu=auto -D__AVX2__']
+        simd_flag = ['-march=armv8-a+simd', '-mfpu=auto', '-D__AVX2__']
     elif machine_arch.startswith("riscv"):
         simd_flag = ['-D__AVX2__']
     else: # x86_64
@@ -37,7 +37,7 @@ else:
         elif os.getenv('AVX2', False):
             simd_flag=['-mavx2']
         elif os.getenv('AVX512BW', False):
-           simd_flag='-mavx512bw'
+           simd_flag=['-mavx512bw']
 
 src_dir = 'src/'
 inc_dir = 'include/'
@@ -49,7 +49,7 @@ sources = [
     'utils.c']
 depends = [
     'abpoa.h', 'abpoa_align.h', 'abpoa_align_simd.h', 
-    'abpoa_graph.h', 'abpoa_output.h', 'abpoa_seed.h', 'abpoa_seq.h', 'abpoa_simd.h',
+    'abpoa_graph.h', 'abpoa_output.h', 'abpoa_seed.h', 'abpoa_seq.h', 'abpoa_simd.h', 'abpoa_simd_internal.h',
     'kalloc.h', 'khash.h', 'kdq.h', 'kseq.h', 'ksort.h', 'kstring.h', 'kvec.h',
     'simd_instruction.h', 'utils.h']
 

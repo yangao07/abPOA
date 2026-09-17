@@ -13,6 +13,7 @@ include src/kstring.h
 include src/kvec.h
 include src/abpoa_align_simd.h
 include src/abpoa_simd.h
+include src/abpoa_simd_internal.h
 include src/simd_instruction.h
 include src/utils.h
 recursive-include include/ *.h

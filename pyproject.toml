@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyabpoa"
-version = "1.5.7"
+version = "1.5.7.1"
 urls = {Project-URL = "https://github.com/yangao07/abPOA"}
 authors = [{name = "Yan Gao", email = "yangao07@hit.edu.cn"}]
 license = "MIT"
